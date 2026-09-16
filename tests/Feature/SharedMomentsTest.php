@@ -103,6 +103,24 @@ test('guests cannot visit the moments page', function () {
     $this->get(route('moments'))->assertRedirect(route('login'));
 });
 
+test('an unpaired user can save a private personal moment', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user);
+
+    Livewire::test('shared-moments')
+        ->assertSee('Keep moments for yourself now.')
+        ->set('body', 'A personal moment before pairing.')
+        ->call('logMoment')
+        ->assertHasNoErrors()
+        ->assertSee('A personal moment before pairing.');
+
+    $moment = SharedMoment::query()->sole();
+
+    expect($moment->relationship_id)->toBeNull()
+        ->and($moment->user_id)->toBe($user->id);
+});
+
 test('shared moment photos stay private to relationship members', function () {
     Storage::fake('local');
 
@@ -129,6 +147,47 @@ test('shared moment photos stay private to relationship members', function () {
     $this->actingAs($author)->get(route('moment-photos.show', $photo))->assertOk();
     $this->actingAs($partner)->get(route('moment-photos.show', $photo))->assertOk();
     $this->actingAs($outsider)->get(route('moment-photos.show', $photo))->assertForbidden();
+});
+
+test('personal moment history becomes visible to both partners after pairing', function () {
+    Storage::fake('local');
+    $author = User::factory()->create();
+    $futurePartner = User::factory()->create();
+    $outsider = User::factory()->create();
+    $moment = SharedMoment::query()->create([
+        'relationship_id' => null,
+        'user_id' => $author->id,
+        'intensity' => 5,
+        'body' => 'Personal before pairing.',
+    ]);
+    Storage::disk('local')->put('moments/personal.jpg', 'private image');
+    $photo = $moment->photos()->create([
+        'disk' => 'local',
+        'path' => 'moments/personal.jpg',
+        'original_name' => 'personal.jpg',
+        'mime_type' => 'image/jpeg',
+        'size' => 13,
+        'position' => 1,
+    ]);
+
+    $relationship = Relationship::query()->create();
+    $relationship->members()->attach([$author->id, $futurePartner->id], ['joined_at' => now()]);
+
+    $this->actingAs($author)->get(route('moment-photos.show', $photo))->assertOk();
+    $this->actingAs($futurePartner)->get(route('moment-photos.show', $photo))->assertOk();
+    $this->actingAs($outsider)->get(route('moment-photos.show', $photo))->assertForbidden();
+
+    $this->actingAs($author);
+    Livewire::test('shared-moments', ['showFeed' => true])
+        ->assertSee('Personal before pairing.');
+
+    $this->actingAs($futurePartner);
+    Livewire::test('shared-moments', ['showFeed' => true])
+        ->assertSee('Personal before pairing.');
+
+    $this->actingAs($outsider);
+    Livewire::test('shared-moments', ['showFeed' => true])
+        ->assertDontSee('Personal before pairing.');
 });
 
 test('shared moment fields stay within their supported limits', function () {

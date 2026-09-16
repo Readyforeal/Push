@@ -6,6 +6,7 @@ use App\Models\SharedMomentComment;
 use App\Models\User;
 use App\Services\PhotoStorage;
 use Flux\Flux;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -55,24 +56,23 @@ new class extends Component
         ]);
 
         $relationship = $this->relationship;
-
-        if (! $relationship) {
-            return;
-        }
+        $user = $this->user();
 
         $storedPaths = [];
         $mediaDisk = (string) config('filesystems.media_disk', 'homelab_cloud');
+        $storageOwner = $relationship ? "relationships/{$relationship->id}" : "users/{$user->id}";
 
         try {
-            DB::transaction(function () use ($relationship, $validated, $mediaDisk, $photoStorage, &$storedPaths): void {
-                $moment = $relationship->sharedMoments()->create([
-                    'user_id' => $this->user()->id,
+            DB::transaction(function () use ($relationship, $user, $validated, $mediaDisk, $storageOwner, $photoStorage, &$storedPaths): void {
+                $moment = SharedMoment::query()->create([
+                    'relationship_id' => $relationship?->id,
+                    'user_id' => $user->id,
                     'intensity' => $validated['intensity'],
                     'body' => filled($validated['body']) ? trim($validated['body']) : null,
                 ]);
 
                 foreach ($this->photos as $position => $photo) {
-                    $stored = $photoStorage->store($photo, "moments/{$relationship->id}/{$moment->id}", $mediaDisk);
+                    $stored = $photoStorage->store($photo, "moments/{$storageOwner}/{$moment->id}", $mediaDisk);
 
                     $storedPaths[] = $stored['path'];
                     $moment->photos()->create([
@@ -229,11 +229,11 @@ new class extends Component
     #[Computed]
     public function moments(): Collection
     {
-        return $this->relationship?->sharedMoments()
+        return $this->visibleMomentsQuery()
             ->with(['author', 'photos', 'comments.author'])
             ->latest()
             ->limit($this->showFeed ? 24 : 1)
-            ->get() ?? new Collection;
+            ->get();
     }
 
     public function intensityLabel(int $value): string
@@ -258,21 +258,48 @@ new class extends Component
 
     private function momentForRelationship(int $momentId): SharedMoment
     {
-        $relationship = $this->relationship;
-        abort_unless($relationship, 404);
-
-        return $relationship->sharedMoments()->findOrFail($momentId);
+        return $this->visibleMomentsQuery()->findOrFail($momentId);
     }
 
     private function commentForRelationship(int $commentId): SharedMomentComment
     {
-        $relationship = $this->relationship;
-        abort_unless($relationship, 404);
+        $comment = SharedMomentComment::query()->with('moment')->findOrFail($commentId);
+        abort_unless($this->canViewMoment($comment->moment), 404);
 
-        return SharedMomentComment::query()
-            ->whereKey($commentId)
-            ->whereHas('moment', fn ($query) => $query->where('relationship_id', $relationship->id))
-            ->firstOrFail();
+        return $comment;
+    }
+
+    /** @return Builder<SharedMoment> */
+    private function visibleMomentsQuery(): Builder
+    {
+        $user = $this->user();
+        $relationship = $this->relationship;
+        $personalAuthorIds = $relationship
+            ? $relationship->members()->pluck('users.id')->all()
+            : [$user->id];
+
+        return SharedMoment::query()->where(function (Builder $query) use ($relationship, $personalAuthorIds): void {
+            $query->where(function (Builder $personal) use ($personalAuthorIds): void {
+                $personal->whereNull('relationship_id')->whereIn('user_id', $personalAuthorIds);
+            });
+
+            if ($relationship) {
+                $query->orWhere('relationship_id', $relationship->id);
+            }
+        });
+    }
+
+    private function canViewMoment(SharedMoment $moment): bool
+    {
+        if ($moment->relationship_id === null) {
+            if ($moment->user_id === $this->user()->id) {
+                return true;
+            }
+
+            return $this->relationship?->members()->whereKey($moment->user_id)->exists() ?? false;
+        }
+
+        return $moment->relationship_id === $this->relationship?->id;
     }
 }; ?>
 
@@ -288,7 +315,11 @@ new class extends Component
             <span>{{ __('Moments') }}</span>
         </div>
         <flux:heading size="lg" class="mt-2 tracking-tight">{{ __('Keep something from your day') }}</flux:heading>
-        <flux:text class="mt-1 max-w-xl">{{ __('A private, shared log for whatever feels worth remembering.') }}</flux:text>
+        <flux:text class="mt-1 max-w-xl">
+            {{ $this->relationship
+                ? __('A private, shared log for whatever feels worth remembering.')
+                : __('Keep moments for yourself now. Your full history will be shared once you pair with your partner.') }}
+        </flux:text>
 
         <flux:modal.trigger name="log-shared-moment">
             <flux:button variant="primary" icon="plus" class="mt-5 w-full justify-center">
