@@ -5,6 +5,8 @@ use App\Services\DailyPromptScheduler;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -21,5 +23,28 @@ Artisan::command('prompts:schedule {--force : Ignore the local delivery hour}', 
 
     $this->info("Scheduled {$scheduled} daily prompt round(s).");
 })->purpose('Schedule the next daily prompt for eligible couples');
+
+Artisan::command('homelab:check', function () {
+    $disk = (string) config('filesystems.media_disk', 'homelab_cloud');
+    $probe = '.health/'.Str::uuid().'.txt';
+
+    try {
+        Storage::disk($disk)->put($probe, now()->toIso8601String());
+
+        if (! Storage::disk($disk)->exists($probe)) {
+            throw new RuntimeException('The probe file was not visible after writing it.');
+        }
+
+        Storage::disk($disk)->delete($probe);
+    } catch (Throwable $exception) {
+        $this->error("Homelab media storage is unavailable: {$exception->getMessage()}");
+
+        return 1;
+    }
+
+    $this->info("Homelab media storage is writable ({$disk}).");
+
+    return 0;
+})->purpose('Verify that homelab media storage is mounted and writable');
 
 Schedule::command('prompts:schedule')->everyMinute()->withoutOverlapping();

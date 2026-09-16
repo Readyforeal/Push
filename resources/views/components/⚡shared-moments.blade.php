@@ -60,9 +60,10 @@ new class extends Component
         }
 
         $storedPaths = [];
+        $mediaDisk = (string) config('filesystems.media_disk', 'homelab_cloud');
 
         try {
-            DB::transaction(function () use ($relationship, $validated, &$storedPaths): void {
+            DB::transaction(function () use ($relationship, $validated, $mediaDisk, &$storedPaths): void {
                 $moment = $relationship->sharedMoments()->create([
                     'user_id' => $this->user()->id,
                     'intensity' => $validated['intensity'],
@@ -70,7 +71,7 @@ new class extends Component
                 ]);
 
                 foreach ($this->photos as $position => $photo) {
-                    $path = $photo->store("moments/{$relationship->id}/{$moment->id}", 'local');
+                    $path = $photo->store("moments/{$relationship->id}/{$moment->id}", $mediaDisk);
 
                     if (! is_string($path)) {
                         throw new RuntimeException('The photo could not be stored.');
@@ -78,7 +79,7 @@ new class extends Component
 
                     $storedPaths[] = $path;
                     $moment->photos()->create([
-                        'disk' => 'local',
+                        'disk' => $mediaDisk,
                         'path' => $path,
                         'original_name' => $photo->getClientOriginalName(),
                         'mime_type' => $photo->getMimeType(),
@@ -89,7 +90,7 @@ new class extends Component
             });
         } catch (Throwable) {
             foreach ($storedPaths as $storedPath) {
-                Storage::disk('local')->delete($storedPath);
+                Storage::disk($mediaDisk)->delete($storedPath);
             }
 
             $this->addError('photos', __('This moment could not be saved. Please try again.'));

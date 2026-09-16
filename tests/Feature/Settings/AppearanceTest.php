@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 test('a user can upload replace and remove a private app background', function () {
-    Storage::fake('local');
+    Storage::fake('homelab_cloud');
     $user = User::factory()->create();
     $otherUser = User::factory()->create();
 
@@ -30,9 +30,10 @@ test('a user can upload replace and remove a private app background', function (
     $firstPath = $user->background_image_path;
 
     expect($user->background_mode)->toBe(AppBackgroundMode::Upload)
+        ->and($user->background_image_disk)->toBe('homelab_cloud')
         ->and($firstPath)->not->toBeNull()
         ->and(config('livewire.temporary_file_upload.rules'))->toContain('max:51200');
-    Storage::disk('local')->assertExists($firstPath);
+    Storage::disk('homelab_cloud')->assertExists($firstPath);
 
     $this->get(route('background.show'))
         ->assertOk()
@@ -50,8 +51,8 @@ test('a user can upload replace and remove a private app background', function (
         ->assertHasNoErrors();
 
     $user->refresh();
-    Storage::disk('local')->assertMissing($firstPath);
-    Storage::disk('local')->assertExists($user->background_image_path);
+    Storage::disk('homelab_cloud')->assertMissing($firstPath);
+    Storage::disk('homelab_cloud')->assertExists($user->background_image_path);
 
     $replacementPath = $user->background_image_path;
 
@@ -62,8 +63,9 @@ test('a user can upload replace and remove a private app background', function (
     $user->refresh();
 
     expect($user->background_mode)->toBe(AppBackgroundMode::Auto)
+        ->and($user->background_image_disk)->toBeNull()
         ->and($user->background_image_path)->toBeNull();
-    Storage::disk('local')->assertMissing($replacementPath);
+    Storage::disk('homelab_cloud')->assertMissing($replacementPath);
 });
 
 test('a user can pin a library favorite as their app background', function () {

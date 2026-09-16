@@ -119,11 +119,30 @@ new #[Title('Appearance settings')] class extends Component
             'background_photo_id' => $photoId,
         ];
         $oldUploadPath = null;
+        $oldUploadDisk = null;
 
         if ($mode === AppBackgroundMode::Upload) {
             if ($this->backgroundUpload) {
                 $oldUploadPath = $user->background_image_path;
-                $attributes['background_image_path'] = $this->backgroundUpload->store("backgrounds/{$user->id}", 'local');
+                $oldUploadDisk = $user->background_image_disk ?: 'local';
+                $mediaDisk = (string) config('filesystems.media_disk', 'homelab_cloud');
+                $attributes['background_image_disk'] = $mediaDisk;
+
+                try {
+                    $storedPath = $this->backgroundUpload->store("backgrounds/{$user->id}", $mediaDisk);
+                } catch (Throwable) {
+                    throw ValidationException::withMessages([
+                        'backgroundUpload' => __('The background could not be saved. Please try again.'),
+                    ]);
+                }
+
+                if (! is_string($storedPath)) {
+                    throw ValidationException::withMessages([
+                        'backgroundUpload' => __('The background could not be saved. Please try again.'),
+                    ]);
+                }
+
+                $attributes['background_image_path'] = $storedPath;
                 $attributes['background_image_mime_type'] = $this->backgroundUpload->getMimeType();
             } elseif (! $user->background_image_path) {
                 throw ValidationException::withMessages([
@@ -135,7 +154,7 @@ new #[Title('Appearance settings')] class extends Component
         $user->update($attributes);
 
         if ($oldUploadPath && $oldUploadPath !== $user->background_image_path) {
-            Storage::disk('local')->delete($oldUploadPath);
+            Storage::disk($oldUploadDisk)->delete($oldUploadPath);
         }
 
         $this->reset('backgroundUpload');
@@ -153,18 +172,20 @@ new #[Title('Appearance settings')] class extends Component
     {
         $user = $this->user();
         $path = $user->background_image_path;
+        $disk = $user->background_image_disk ?: 'local';
         $mode = $user->background_mode === AppBackgroundMode::Upload
             ? AppBackgroundMode::Auto
             : ($user->background_mode ?? AppBackgroundMode::Auto);
 
         $user->update([
             'background_mode' => $mode,
+            'background_image_disk' => null,
             'background_image_path' => null,
             'background_image_mime_type' => null,
         ]);
 
         if ($path) {
-            Storage::disk('local')->delete($path);
+            Storage::disk($disk)->delete($path);
         }
 
         $this->backgroundMode = $mode->value;

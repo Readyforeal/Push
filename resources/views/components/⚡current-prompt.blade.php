@@ -95,17 +95,18 @@ new class extends Component
         }
 
         $storedPhotos = [];
+        $mediaDisk = (string) config('filesystems.media_disk', 'homelab_cloud');
 
         try {
             foreach ($this->photos as $position => $photo) {
-                $path = $photo->store("rounds/{$task->prompt_round_id}/{$task->id}", 'local');
+                $path = $photo->store("rounds/{$task->prompt_round_id}/{$task->id}", $mediaDisk);
 
                 if (! is_string($path)) {
                     throw new RuntimeException('The photo could not be stored.');
                 }
 
                 $storedPhotos[] = $task->photos()->create([
-                    'disk' => 'local',
+                    'disk' => $mediaDisk,
                     'path' => $path,
                     'original_name' => $photo->getClientOriginalName(),
                     'mime_type' => $photo->getMimeType(),

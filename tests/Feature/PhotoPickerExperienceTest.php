@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 test('one partner uploads three photos and the other picks a favorite', function () {
-    Storage::fake('local');
+    Storage::fake('homelab_cloud');
     Notification::fake();
     [$uploader, $picker, $round] = photoPickerRound();
     $photos = [
@@ -43,7 +43,8 @@ test('one partner uploads three photos and the other picks a favorite', function
         ->and($uploadTask->photos()->count())->toBe(3);
 
     foreach ($uploadTask->photos as $photo) {
-        Storage::disk('local')->assertExists($photo->path);
+        expect($photo->disk)->toBe('homelab_cloud');
+        Storage::disk('homelab_cloud')->assertExists($photo->path);
     }
 
     $this->actingAs($picker);

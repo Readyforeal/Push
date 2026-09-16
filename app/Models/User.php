@@ -33,7 +33,7 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password', 'background_mode', 'background_photo_id', 'background_image_path', 'background_image_mime_type'])]
+#[Fillable(['name', 'email', 'password', 'background_mode', 'background_photo_id', 'background_image_disk', 'background_image_path', 'background_image_mime_type'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {

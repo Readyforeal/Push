@@ -14,9 +14,10 @@ class UserBackgroundController
         $user = $request->user();
 
         abort_unless($user instanceof User && $user->background_image_path, 404);
-        abort_unless(Storage::disk('local')->exists($user->background_image_path), 404);
+        $disk = $user->background_image_disk ?: 'local';
+        abort_unless(Storage::disk($disk)->exists($user->background_image_path), 404);
 
-        return Storage::disk('local')->response(
+        return Storage::disk($disk)->response(
             $user->background_image_path,
             basename($user->background_image_path),
             [

@@ -16,6 +16,13 @@ return [
     'default' => env('FILESYSTEM_DISK', 'local'),
 
     /*
+    | Permanent user media is kept separate from Laravel's local runtime
+    | storage. In production this path should be a CIFS mount backed by the
+    | private homelab share; Laravel continues to stream the files itself.
+    */
+    'media_disk' => 'homelab_cloud',
+
+    /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
@@ -36,6 +43,14 @@ return [
             'serve' => true,
             'throw' => false,
             'report' => false,
+        ],
+
+        'homelab_cloud' => [
+            'driver' => 'local',
+            'root' => env('HOMELAB_CLOUD_URL', storage_path('app/private')),
+            'serve' => false,
+            'throw' => true,
+            'report' => true,
         ],
 
         'public' => [

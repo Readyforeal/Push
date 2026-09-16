@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 test('partners can log and view shared moments with an intensity note and photos', function () {
-    Storage::fake('local');
+    Storage::fake('homelab_cloud');
 
     $author = User::factory()->create(['name' => 'Alex']);
     $partner = User::factory()->create(['name' => 'Sam']);
@@ -38,7 +38,8 @@ test('partners can log and view shared moments with an intensity note and photos
         ->and($moment->photos)->toHaveCount(2);
 
     foreach ($moment->photos as $photo) {
-        Storage::disk('local')->assertExists($photo->path);
+        expect($photo->disk)->toBe('homelab_cloud');
+        Storage::disk('homelab_cloud')->assertExists($photo->path);
     }
 
     $this->get(route('dashboard'))
