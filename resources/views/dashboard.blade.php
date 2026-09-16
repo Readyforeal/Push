@@ -25,7 +25,7 @@
             </p>
         </div>
 
-        <div class="relative space-y-6">
+        <div class="relative space-y-6" data-home-card-stack>
             @if ($relationship)
                 <livewire:temperature-gauge />
                 <livewire:current-prompt />

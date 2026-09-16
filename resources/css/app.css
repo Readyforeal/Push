@@ -166,6 +166,10 @@
         background-color: rgb(20 18 24 / 62%) !important;
     }
 
+    .app-photo-background [data-home-card-stack] {
+        margin-top: clamp(3rem, 10dvh, 7rem);
+    }
+
     .home-shell::before {
         content: '';
         position: fixed;
