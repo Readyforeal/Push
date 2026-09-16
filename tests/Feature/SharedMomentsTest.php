@@ -46,6 +46,7 @@ test('partners can log and view shared moments with an intensity note and photos
         ->assertOk()
         ->assertSee('Extracurriculars')
         ->assertSee('Latest moment')
+        ->assertSeeInOrder(['Latest moment', 'Ready for your first prompt'])
         ->assertSee(route('moment-photos.show', $moment->photos->first()), false)
         ->assertDontSee('Keep something from your day');
 

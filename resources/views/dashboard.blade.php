@@ -28,9 +28,9 @@
         <div class="relative space-y-6" data-home-card-stack>
             @if ($relationship)
                 <livewire:temperature-gauge />
+                <livewire:shared-moments :show-composer="false" />
                 <livewire:current-prompt />
                 <x-extracurriculars-card />
-                <livewire:shared-moments :show-composer="false" />
             @else
                 <livewire:relationship-invitation />
             @endif

@@ -77,6 +77,7 @@ const hydrateImageFades = (root = document) => {
 };
 
 let homeScrollFrame;
+let temperatureStickyFrame;
 
 const syncHomeBackgroundState = () => {
     const homeScreen = document.querySelector('[data-home-screen]');
@@ -105,6 +106,28 @@ const queueHomeBackgroundSync = () => {
     });
 };
 
+const syncTemperatureStickyState = () => {
+    const scrollTop = document.scrollingElement?.scrollTop ?? window.scrollY;
+
+    document.querySelectorAll('[data-temperature-card]').forEach((card) => {
+        const stickyTop = Number.parseFloat(window.getComputedStyle(card).top) || 0;
+        const isStuck = scrollTop > 1 && card.getBoundingClientRect().top <= stickyTop + 1;
+
+        card.toggleAttribute('data-temperature-stuck', isStuck);
+    });
+};
+
+const queueTemperatureStickySync = () => {
+    if (temperatureStickyFrame) {
+        return;
+    }
+
+    temperatureStickyFrame = requestAnimationFrame(() => {
+        syncTemperatureStickyState();
+        temperatureStickyFrame = undefined;
+    });
+};
+
 const syncBrowserChromeTheme = () => {
     const themeColor = document.querySelector('#app-theme-color');
 
@@ -117,8 +140,11 @@ document.addEventListener('DOMContentLoaded', () => {
     animatePageEntry();
     hydrateImageFades();
     syncHomeBackgroundState();
+    syncTemperatureStickyState();
     syncBrowserChromeTheme();
     window.addEventListener('scroll', queueHomeBackgroundSync, { passive: true });
+    window.addEventListener('scroll', queueTemperatureStickySync, { passive: true });
+    window.addEventListener('resize', queueTemperatureStickySync, { passive: true });
 
     const appearanceObserver = new MutationObserver(syncBrowserChromeTheme);
     appearanceObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
@@ -131,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
+        queueTemperatureStickySync();
     });
     imageFadeObserver.observe(document.body, { childList: true, subtree: true });
 });
@@ -149,6 +176,7 @@ document.addEventListener('livewire:navigated', () => {
         animatePageEntry();
         hydrateImageFades();
         syncHomeBackgroundState();
+        syncTemperatureStickyState();
     });
     navigationInProgress = false;
 });
