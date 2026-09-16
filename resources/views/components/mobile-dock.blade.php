@@ -40,7 +40,7 @@
 >
     <nav
         aria-label="{{ __('Primary navigation') }}"
-        class="mx-auto flex max-w-md items-center gap-1 rounded-full border border-pink-200/70 bg-white/90 p-1.5 shadow-xl shadow-pink-950/10 backdrop-blur-xl dark:border-pink-400/20 dark:bg-zinc-900/90 dark:shadow-black/30"
+        class="mx-auto flex max-w-md items-center gap-1 rounded-full border border-pink-200/55 bg-white/65 p-1.5 shadow-xl shadow-pink-950/10 backdrop-blur-xl dark:border-pink-400/15 dark:bg-zinc-900/65 dark:shadow-black/30"
     >
         @foreach ($items as $item)
             <a

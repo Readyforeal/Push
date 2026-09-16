@@ -152,9 +152,9 @@ new #[Title('Moment')] class extends Component
                 >
             @endif
 
-            <div class="absolute inset-x-0 top-0 h-[72%] bg-gradient-to-b from-white via-white/90 via-45% to-transparent dark:from-zinc-950 dark:via-zinc-950/90"></div>
+            <div class="absolute inset-x-0 top-0 h-[72%] bg-gradient-to-b from-white/78 via-white/55 via-45% to-transparent dark:from-zinc-950/78 dark:via-zinc-950/55"></div>
 
-            <header class="relative z-10 p-5 sm:p-8 lg:p-10">
+            <header class="relative z-10 p-5 pt-[calc(1.25rem+env(safe-area-inset-top,0px))] sm:p-8 lg:p-10">
                 <div class="flex items-center justify-between gap-4">
                     <a href="{{ route('moments') }}" wire:navigate.hover class="inline-flex size-11 items-center justify-center rounded-full bg-white/75 text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white dark:bg-black/35 dark:text-white dark:ring-white/15 dark:hover:bg-black/55" aria-label="{{ __('Back to moments') }}">
                         <flux:icon.arrow-left class="size-5" />
@@ -198,11 +198,11 @@ new #[Title('Moment')] class extends Component
         </section>
 
         @foreach ($remainingPhotos as $photo)
-            <figure class="flex min-h-[75svh] items-center justify-center border-t border-black/5 bg-zinc-100 dark:border-white/10 dark:bg-black">
+            <figure class="bg-zinc-100 leading-none dark:bg-black">
                 <img
                     src="{{ route('moment-photos.show', $photo) }}"
                     alt="{{ __('Photo shared by :name', ['name' => $moment->author->name]) }}"
-                    class="max-h-[100svh] w-full object-contain"
+                    class="block h-auto w-full"
                     loading="lazy"
                 >
             </figure>
@@ -258,7 +258,7 @@ new #[Title('Moment')] class extends Component
     </article>
 
     <form wire:submit="addComment" class="fixed inset-x-4 bottom-[calc(6.75rem+env(safe-area-inset-bottom,0px))] z-40 mx-auto max-w-2xl lg:bottom-6">
-        <div class="flex items-center gap-2 rounded-full border border-pink-200/70 bg-white/90 p-2 ps-5 shadow-[0_18px_55px_rgba(41,38,46,0.2)] backdrop-blur-2xl dark:border-pink-400/20 dark:bg-zinc-900/90">
+        <div class="flex items-center gap-2 rounded-full border border-pink-200/55 bg-white/65 p-2 ps-5 shadow-[0_18px_55px_rgba(41,38,46,0.18)] backdrop-blur-2xl dark:border-pink-400/15 dark:bg-zinc-900/65">
             <label for="moment-comment" class="sr-only">{{ __('Leave a comment') }}</label>
             <input id="moment-comment" wire:model="commentBody" type="text" maxlength="2000" placeholder="{{ __('Leave a comment…') }}" class="min-w-0 flex-1 border-0 bg-transparent py-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:ring-0 dark:text-white">
             <button type="submit" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-pink-600 text-white shadow-sm transition hover:bg-pink-700 disabled:opacity-50 dark:bg-pink-500 dark:hover:bg-pink-400" wire:loading.attr="disabled" wire:target="addComment" aria-label="{{ __('Send comment') }}">
