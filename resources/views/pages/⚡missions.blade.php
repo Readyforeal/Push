@@ -196,8 +196,8 @@ new #[Title('Secret missions')] class extends Component
 
 <div class="home-shell mx-auto flex w-full max-w-3xl flex-col gap-8 pb-6 sm:pt-5">
     <header class="px-1">
-        <div class="mb-3 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-pink-600 dark:text-pink-300">
-            <span class="size-1.5 rounded-full bg-pink-500 shadow-[0_0_0_4px_rgba(236,72,153,0.12)]"></span>
+        <div class="mb-3 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">
+            <span class="size-1.5 rounded-full bg-violet-500 shadow-[0_0_0_4px_rgba(139,92,246,0.12)]"></span>
             <span>{{ __('Just between you') }}</span>
         </div>
         <h1 class="text-[2.15rem] font-semibold leading-none tracking-[-0.04em] text-zinc-950 sm:text-5xl dark:text-white">{{ __('Secret missions') }}</h1>
@@ -217,7 +217,7 @@ new #[Title('Secret missions')] class extends Component
     @else
         <section>
             @if ($this->activeMission)
-                <div class="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-pink-500 via-pink-600 to-fuchsia-800 p-6 text-white shadow-[0_22px_60px_rgba(157,23,77,0.28)] sm:p-8">
+                <div class="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-violet-500 via-violet-600 to-indigo-800 p-6 text-white shadow-[0_22px_60px_rgba(157,23,77,0.28)] sm:p-8">
                     <div class="absolute -right-16 -top-20 size-52 rounded-full bg-white/15 blur-3xl"></div>
                     <div class="relative">
                         <div class="flex items-start justify-between gap-4">
@@ -228,7 +228,7 @@ new #[Title('Secret missions')] class extends Component
                         <p class="mt-4 text-sm text-white/70">{{ __('For :name · accepted :time', ['name' => $this->activeMission->beneficiary->name, 'time' => $this->activeMission->accepted_at->diffForHumans()]) }}</p>
                         <div class="mt-7 rounded-2xl bg-black/10 p-4 ring-1 ring-white/15 backdrop-blur-sm">
                             <p class="text-sm leading-6 text-white/80">{{ __('This mission stays with you until it is done. Your partner cannot see which mission you drew.') }}</p>
-                            <flux:button type="button" variant="filled" class="mt-4 w-full justify-center !bg-white !text-pink-700 hover:!bg-pink-50" icon="check" wire:click="completeMission({{ $this->activeMission->id }})" wire:confirm="{{ __('Mark this secret mission complete?') }}">
+                            <flux:button type="button" variant="filled" class="mt-4 w-full justify-center !bg-white !text-violet-700 hover:!bg-violet-50" icon="check" wire:click="completeMission({{ $this->activeMission->id }})" wire:confirm="{{ __('Mark this secret mission complete?') }}">
                                 {{ __('Mark mission complete') }}
                             </flux:button>
                         </div>
@@ -236,7 +236,7 @@ new #[Title('Secret missions')] class extends Component
                 </div>
             @else
                 <div class="prompt-surface p-6 sm:p-8">
-                    <div class="flex size-12 items-center justify-center rounded-2xl bg-pink-50 text-pink-600 ring-1 ring-pink-100 dark:bg-pink-500/10 dark:text-pink-300 dark:ring-pink-400/15">
+                    <div class="flex size-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-400/15">
                         <flux:icon.gift class="size-5" />
                     </div>
                     <flux:heading size="xl" class="mt-5 tracking-tight">{{ __('Ready for a mission?') }}</flux:heading>
@@ -252,7 +252,7 @@ new #[Title('Secret missions')] class extends Component
         <section class="prompt-surface p-5 sm:p-7">
             <div class="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                    <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-pink-600 dark:text-pink-300">
+                    <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-300">
                         <flux:icon.lock-closed class="size-3.5" />
                         <span>{{ __('Your private list') }}</span>
                     </div>
@@ -274,7 +274,7 @@ new #[Title('Secret missions')] class extends Component
                 <div class="mt-4 space-y-2">
                     @foreach ($this->ownPrompts as $prompt)
                         <div wire:key="secret-mission-prompt-{{ $prompt->id }}" class="flex items-start gap-3 rounded-2xl bg-zinc-50/75 p-4 ring-1 ring-zinc-200/70 dark:bg-white/[0.035] dark:ring-white/8">
-                            <div class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-pink-50 text-pink-600 dark:bg-pink-500/10 dark:text-pink-300">
+                            <div class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-300">
                                 <flux:icon.heart class="size-3.5" />
                             </div>
                             <p class="min-w-0 flex-1 text-sm leading-6 text-zinc-700 dark:text-zinc-200">{{ $prompt->body }}</p>

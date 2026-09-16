@@ -10,9 +10,9 @@
         <a
             href="{{ route('missions') }}"
             wire:navigate.hover
-            class="group flex items-center gap-3.5 px-3.5 py-3 transition duration-200 hover:bg-pink-50/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-pink-500 dark:hover:bg-pink-500/8"
+            class="group flex items-center gap-3.5 px-3.5 py-3 transition duration-200 hover:bg-violet-50/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 dark:hover:bg-violet-500/8"
         >
-            <span class="flex size-11 shrink-0 items-center justify-center rounded-[0.9rem] bg-gradient-to-br from-pink-500 to-fuchsia-600 text-white shadow-sm shadow-pink-900/20">
+            <span class="flex size-11 shrink-0 items-center justify-center rounded-[0.9rem] bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm shadow-violet-900/20">
                 <flux:icon.gift class="size-5" />
             </span>
 
@@ -21,7 +21,7 @@
                 <span class="mt-0.5 block truncate text-xs text-zinc-500 dark:text-zinc-400">{{ __('Choose a thoughtful surprise for your partner.') }}</span>
             </span>
 
-            <flux:icon.chevron-right class="size-4 shrink-0 text-zinc-300 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-pink-500 dark:text-zinc-600 dark:group-hover:text-pink-300" />
+            <flux:icon.chevron-right class="size-4 shrink-0 text-zinc-300 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-violet-500 dark:text-zinc-600 dark:group-hover:text-violet-300" />
         </a>
     </div>
 </section>

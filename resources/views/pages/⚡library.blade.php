@@ -41,8 +41,8 @@ new #[Title('Library')] class extends Component
 <div class="mx-auto flex w-full max-w-5xl flex-col gap-8 pb-6 sm:pt-5">
     <header class="flex items-end justify-between gap-4 px-1">
         <div>
-            <div class="mb-3 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-pink-600 dark:text-pink-300">
-                <span class="size-1.5 rounded-full bg-pink-500 shadow-[0_0_0_4px_rgba(236,72,153,0.12)]"></span>
+            <div class="mb-3 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">
+                <span class="size-1.5 rounded-full bg-violet-500 shadow-[0_0_0_4px_rgba(139,92,246,0.12)]"></span>
                 <span>{{ __('Together') }}</span>
             </div>
             <h1 class="text-[2.15rem] font-semibold leading-none tracking-[-0.04em] text-zinc-950 sm:text-5xl dark:text-white">
@@ -119,7 +119,7 @@ new #[Title('Library')] class extends Component
     @else
         <section class="prompt-surface-muted flex min-h-80 items-center justify-center p-8 text-center">
             <div class="max-w-sm">
-                <span class="mx-auto flex size-14 items-center justify-center rounded-full bg-pink-50 text-pink-500 ring-8 ring-pink-50/60 dark:bg-pink-500/15 dark:text-pink-300 dark:ring-pink-500/5">
+                <span class="mx-auto flex size-14 items-center justify-center rounded-full bg-violet-50 text-violet-500 ring-8 ring-violet-50/60 dark:bg-violet-500/15 dark:text-violet-300 dark:ring-violet-500/5">
                     <flux:icon.photo class="size-6" />
                 </span>
                 <flux:heading size="lg" class="mt-6 tracking-tight">{{ __('Your favorites will live here') }}</flux:heading>

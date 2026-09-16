@@ -226,11 +226,11 @@ new class extends Component
     @if ($this->round && $this->task?->kind === PromptTaskKind::Question)
         @if ($this->task->status === PromptTaskStatus::Active)
             <section class="prompt-surface relative p-6 sm:p-8">
-                <div class="pointer-events-none absolute -right-20 -top-24 size-56 rounded-full bg-pink-400/10 blur-3xl dark:bg-pink-400/8"></div>
+                <div class="pointer-events-none absolute -right-20 -top-24 size-56 rounded-full bg-violet-400/10 blur-3xl dark:bg-violet-400/8"></div>
 
                 <div class="relative flex items-center justify-between gap-4">
                     <div class="flex flex-wrap items-center gap-2">
-                        <flux:badge color="pink" size="sm">
+                        <flux:badge color="violet" size="sm">
                             @if ($this->round->kind === PromptRoundKind::PhotoRequest)
                                 {{ __('Photo request') }}
                             @else
@@ -306,8 +306,8 @@ new class extends Component
 
                 @if ($this->round->kind === PromptRoundKind::PhotoRequest)
                     <flux:text class="mt-8 text-sm">{{ $this->task->prompt }}</flux:text>
-                    <div class="app-glass-card mt-3 rounded-2xl bg-pink-50 p-5 backdrop-blur-xl ring-1 ring-pink-100 dark:bg-pink-500/10 dark:ring-pink-400/15">
-                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-pink-500 dark:text-pink-300">{{ __('They’d like to see') }}</p>
+                    <div class="app-glass-card mt-3 rounded-2xl bg-violet-50 p-5 backdrop-blur-xl ring-1 ring-violet-100 dark:bg-violet-500/10 dark:ring-violet-400/15">
+                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-violet-500 dark:text-violet-300">{{ __('They’d like to see') }}</p>
                         <p class="mt-2 text-lg font-medium leading-7 text-zinc-900 dark:text-white">{{ $this->task->dependency?->questionResponse?->answer }}</p>
                     </div>
                 @else
@@ -336,7 +336,7 @@ new class extends Component
                                     <div class="flex aspect-square w-full flex-col items-center justify-center rounded-2xl bg-zinc-100 p-3 text-center text-zinc-500 shadow-sm ring-1 ring-black/5 dark:bg-white/8 dark:text-zinc-300">
                                         <flux:icon.photo class="size-6" />
                                         <span class="mt-2 line-clamp-2 text-xs">{{ $photo->getClientOriginalName() }}</span>
-                                        <span class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-pink-500">{{ __('Converts to JPEG') }}</span>
+                                        <span class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-violet-500">{{ __('Converts to JPEG') }}</span>
                                     </div>
                                 @endif
                             @endforeach
@@ -394,7 +394,7 @@ new class extends Component
                 </div>
                 <flux:heading size="xl" class="mt-6 leading-snug tracking-tight">{{ $this->task->prompt }}</flux:heading>
                 @if ($this->round->kind === PromptRoundKind::PhotoRequest && $this->task->dependency?->dependency?->questionResponse)
-                    <div class="app-glass-card mt-4 rounded-2xl bg-pink-50 px-4 py-3 text-sm text-pink-800 backdrop-blur-xl dark:bg-pink-500/10 dark:text-pink-200">
+                    <div class="app-glass-card mt-4 rounded-2xl bg-violet-50 px-4 py-3 text-sm text-violet-800 backdrop-blur-xl dark:bg-violet-500/10 dark:text-violet-200">
                         {{ $this->task->dependency->dependency->questionResponse->answer }}
                     </div>
                 @endif
@@ -428,7 +428,7 @@ new class extends Component
     @elseif ($this->round)
         <section class="prompt-surface-muted flex min-h-72 items-center justify-center p-8 text-center">
             <div class="max-w-sm">
-                <span class="mx-auto flex size-14 items-center justify-center rounded-full bg-pink-50 text-pink-500 ring-8 ring-pink-50/60 dark:bg-pink-500/15 dark:text-pink-300 dark:ring-pink-500/5">
+                <span class="mx-auto flex size-14 items-center justify-center rounded-full bg-violet-50 text-violet-500 ring-8 ring-violet-50/60 dark:bg-violet-500/15 dark:text-violet-300 dark:ring-violet-500/5">
                     <flux:icon.sparkles class="size-6" />
                 </span>
                 <flux:heading size="lg" class="mt-6 tracking-tight">{{ __('Your partner is preparing this round') }}</flux:heading>
@@ -464,8 +464,8 @@ new class extends Component
                 @endphp
 
                 @if ($requestTask?->questionResponse)
-                    <div class="app-glass-card mt-6 rounded-2xl bg-pink-50 p-4 text-pink-900 backdrop-blur-xl dark:bg-pink-500/10 dark:text-pink-100">
-                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-pink-500 dark:text-pink-300">{{ __('The request') }}</p>
+                    <div class="app-glass-card mt-6 rounded-2xl bg-violet-50 p-4 text-violet-900 backdrop-blur-xl dark:bg-violet-500/10 dark:text-violet-100">
+                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-violet-500 dark:text-violet-300">{{ __('The request') }}</p>
                         <p class="mt-2">{{ $requestTask->questionResponse->answer }}</p>
                     </div>
                 @endif
@@ -502,7 +502,7 @@ new class extends Component
     @else
         <section class="prompt-surface-muted flex min-h-72 items-center justify-center p-8 text-center">
             <div class="max-w-sm">
-                <span class="mx-auto flex size-14 items-center justify-center rounded-full bg-pink-50 text-pink-500 ring-8 ring-pink-50/60 dark:bg-pink-500/15 dark:text-pink-300 dark:ring-pink-500/5">
+                <span class="mx-auto flex size-14 items-center justify-center rounded-full bg-violet-50 text-violet-500 ring-8 ring-violet-50/60 dark:bg-violet-500/15 dark:text-violet-300 dark:ring-violet-500/5">
                     <flux:icon.heart class="size-6" />
                 </span>
                 <flux:heading size="lg" class="mt-6 tracking-tight">{{ __('Ready for your first prompt') }}</flux:heading>

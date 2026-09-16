@@ -12,8 +12,8 @@
 
     <div class="home-shell mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 pb-6 sm:gap-10 sm:pt-5" data-home-screen>
         <div class="relative px-1">
-            <div class="mb-4 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-pink-600 dark:text-pink-300">
-                <span class="size-1.5 rounded-full bg-pink-500 shadow-[0_0_0_4px_rgba(236,72,153,0.12)]"></span>
+            <div class="mb-4 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">
+                <span class="size-1.5 rounded-full bg-violet-500 shadow-[0_0_0_4px_rgba(139,92,246,0.12)]"></span>
                 <span>{{ $today->isoFormat('dddd, MMMM D') }}</span>
             </div>
 

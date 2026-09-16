@@ -5,12 +5,12 @@
     </head>
     <body class="min-h-[100dvh] bg-zinc-50 text-zinc-950 antialiased dark:bg-zinc-950 dark:text-white">
         <main class="relative isolate flex min-h-[100dvh] flex-col overflow-hidden px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))] sm:px-8" data-page-transition>
-            <div class="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_50%_-12%,rgba(244,114,182,0.2),transparent_40%)] dark:bg-[radial-gradient(circle_at_50%_-12%,rgba(236,72,153,0.17),transparent_42%)]"></div>
-            <div class="pointer-events-none absolute -left-36 top-[55%] -z-10 size-72 rounded-full bg-pink-200/30 blur-3xl dark:bg-pink-800/10"></div>
-            <div class="pointer-events-none absolute -right-40 top-[18%] -z-10 size-80 rounded-full bg-fuchsia-200/30 blur-3xl dark:bg-fuchsia-800/10"></div>
+            <div class="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_50%_-12%,rgba(167,139,250,0.2),transparent_40%)] dark:bg-[radial-gradient(circle_at_50%_-12%,rgba(139,92,246,0.17),transparent_42%)]"></div>
+            <div class="pointer-events-none absolute -left-36 top-[55%] -z-10 size-72 rounded-full bg-violet-200/30 blur-3xl dark:bg-violet-800/10"></div>
+            <div class="pointer-events-none absolute -right-40 top-[18%] -z-10 size-80 rounded-full bg-indigo-200/30 blur-3xl dark:bg-indigo-800/10"></div>
 
-            <a href="{{ route('home') }}" class="mx-auto flex items-center gap-2.5 rounded-full font-semibold tracking-[-0.02em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-500 focus-visible:ring-offset-4 dark:focus-visible:ring-offset-zinc-950" wire:navigate aria-label="{{ __('Push home') }}">
-                <span class="flex size-9 items-center justify-center rounded-xl bg-pink-600 text-white shadow-sm shadow-pink-900/20 dark:bg-pink-500">
+            <a href="{{ route('home') }}" class="mx-auto flex items-center gap-2.5 rounded-full font-semibold tracking-[-0.02em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-4 dark:focus-visible:ring-offset-zinc-950" wire:navigate aria-label="{{ __('Push home') }}">
+                <span class="flex size-9 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm shadow-violet-900/20 dark:bg-violet-500">
                     <flux:icon.heart class="size-4.5" />
                 </span>
                 <span>Push</span>

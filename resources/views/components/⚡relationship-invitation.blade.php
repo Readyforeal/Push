@@ -161,7 +161,7 @@ new class extends Component {
     @elseif ($this->pendingInvitation)
         <section class="prompt-surface p-6 sm:p-8">
             <div class="flex items-start gap-4">
-                <span class="flex size-12 shrink-0 items-center justify-center rounded-full bg-pink-50 text-pink-500 dark:bg-pink-500/15 dark:text-pink-300">
+                <span class="flex size-12 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-500 dark:bg-violet-500/15 dark:text-violet-300">
                     <flux:icon.paper-airplane class="size-5" />
                 </span>
                 <div class="min-w-0 flex-1">
@@ -180,8 +180,8 @@ new class extends Component {
         </section>
     @else
         <section class="prompt-surface relative p-7 sm:p-9">
-            <div class="pointer-events-none absolute -right-16 -top-20 size-52 rounded-full bg-pink-400/10 blur-3xl"></div>
-            <div class="relative flex size-12 items-center justify-center rounded-full bg-pink-50 text-pink-500 dark:bg-pink-500/15 dark:text-pink-300">
+            <div class="pointer-events-none absolute -right-16 -top-20 size-52 rounded-full bg-violet-400/10 blur-3xl"></div>
+            <div class="relative flex size-12 items-center justify-center rounded-full bg-violet-50 text-violet-500 dark:bg-violet-500/15 dark:text-violet-300">
                 <flux:icon.heart class="size-5" />
             </div>
             <flux:heading size="xl" class="relative mt-6 tracking-tight">{{ __('Connect with your partner') }}</flux:heading>

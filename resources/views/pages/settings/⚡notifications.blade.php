@@ -66,7 +66,7 @@ new #[Title('Notifications')] class extends Component {
                     :label="__('Message')"
                     maxlength="200"
                     rows="3"
-                >Your Laravel app sent a real Web Push notification.</flux:textarea>
+                >Push sent a real Web Push notification.</flux:textarea>
 
                 <flux:button data-push-send variant="primary" icon="paper-airplane" disabled>
                     {{ __('Send test notification') }}

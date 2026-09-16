@@ -34,7 +34,7 @@
 >
     <nav
         aria-label="{{ __('Primary navigation') }}"
-        class="mx-auto flex max-w-md items-center gap-1 rounded-full border border-pink-200/55 bg-white/65 p-1.5 shadow-xl shadow-pink-950/10 backdrop-blur-xl dark:border-pink-400/15 dark:bg-zinc-900/65 dark:shadow-black/30"
+        class="mx-auto flex max-w-md items-center gap-1 rounded-full border border-violet-200/55 bg-white/65 p-1.5 shadow-xl shadow-violet-950/10 backdrop-blur-xl dark:border-violet-400/15 dark:bg-zinc-900/65 dark:shadow-black/30"
     >
         @foreach ($items as $item)
             <a
@@ -44,8 +44,8 @@
                 @if ($item['current']) aria-current="page" @endif
                 @class([
                     'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-[0.6875rem] font-medium transition-all duration-200 sm:px-2 sm:text-xs',
-                    'bg-pink-600 text-white shadow-sm shadow-pink-900/20 dark:bg-pink-500 dark:text-white' => $item['current'],
-                    'text-zinc-500 hover:bg-pink-50 hover:text-pink-700 dark:text-zinc-400 dark:hover:bg-pink-500/10 dark:hover:text-pink-300' => ! $item['current'],
+                    'bg-violet-600 text-white shadow-sm shadow-violet-900/20 dark:bg-violet-500 dark:text-white' => $item['current'],
+                    'text-zinc-500 hover:bg-violet-50 hover:text-violet-700 dark:text-zinc-400 dark:hover:bg-violet-500/10 dark:hover:text-violet-300' => ! $item['current'],
                 ])
             >
                 <flux:icon :name="$item['icon']" class="size-5" />

@@ -11,27 +11,27 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
-    --color-zinc-50: #fdfcfd;
-    --color-zinc-100: #faf9fb;
-    --color-zinc-200: #f2eff3;
-    --color-zinc-300: #e3dfe6;
-    --color-zinc-400: #bcbac7;
-    --color-zinc-500: #8e8c99;
-    --color-zinc-600: #65636d;
-    --color-zinc-700: #4a4753;
-    --color-zinc-800: #2a2630;
-    --color-zinc-900: #1d1a22;
-    --color-zinc-950: #131116;
+    --color-zinc-50: #f8fafc;
+    --color-zinc-100: #f1f5f9;
+    --color-zinc-200: #e2e8f0;
+    --color-zinc-300: #cbd5e1;
+    --color-zinc-400: #94a3b8;
+    --color-zinc-500: #64748b;
+    --color-zinc-600: #475569;
+    --color-zinc-700: #334155;
+    --color-zinc-800: #1e293b;
+    --color-zinc-900: #0f172a;
+    --color-zinc-950: #020617;
 
-    --color-accent: var(--color-pink-500);
-    --color-accent-content: var(--color-pink-600);
+    --color-accent: var(--color-violet-500);
+    --color-accent-content: var(--color-violet-600);
     --color-accent-foreground: var(--color-white);
 }
 
 @layer theme {
     .dark {
-        --color-accent: var(--color-pink-500);
-        --color-accent-content: var(--color-pink-400);
+        --color-accent: var(--color-violet-500);
+        --color-accent-content: var(--color-violet-400);
         --color-accent-foreground: var(--color-white);
     }
 }
@@ -61,7 +61,7 @@
         z-index: -1;
         inset: 0;
         background-image:
-            linear-gradient(rgb(253 252 253 / 4%), rgb(253 252 253 / 8%)),
+            linear-gradient(rgb(248 250 252 / 4%), rgb(248 250 252 / 8%)),
             var(--app-background-image);
         background-position: center center;
         background-repeat: no-repeat;
@@ -74,7 +74,7 @@
         position: fixed;
         z-index: -1;
         inset: 0;
-        background: linear-gradient(rgb(253 252 253 / 60.5%), rgb(253 252 253 / 65.2%));
+        background: linear-gradient(rgb(248 250 252 / 60.5%), rgb(248 250 252 / 65.2%));
         opacity: var(--app-background-overlay-strength, 1);
         transition: opacity 160ms ease-out;
         pointer-events: none;
@@ -86,18 +86,18 @@
 
     .dark .app-photo-background::before {
         background-image:
-            linear-gradient(rgb(18 15 21 / 6%), rgb(18 15 21 / 10%)),
+            linear-gradient(rgb(2 6 23 / 6%), rgb(2 6 23 / 10%)),
             var(--app-background-image);
     }
 
     .dark .app-photo-background::after {
-        background: linear-gradient(rgb(18 15 21 / 63.8%), rgb(18 15 21 / 73.3%));
+        background: linear-gradient(rgb(2 6 23 / 63.8%), rgb(2 6 23 / 73.3%));
     }
 
     .app-photo-background :is(.prompt-surface, .prompt-surface-muted, .app-glass-card) {
         position: relative;
         z-index: 0;
-        border-color: rgb(41 38 46 / 10%) !important;
+        border-color: rgb(15 23 42 / 10%) !important;
         background-color: transparent !important;
         -webkit-backdrop-filter: none !important;
         backdrop-filter: none !important;
@@ -116,69 +116,69 @@
     }
 
     .app-photo-background .prompt-surface {
-        --app-card-tint: rgb(253 252 253 / 62%);
+        --app-card-tint: rgb(248 250 252 / 62%);
         --app-card-blur: 24px;
-        box-shadow: 0 1px 2px rgb(41 38 46 / 4%), 0 18px 50px rgb(41 38 46 / 12%);
+        box-shadow: 0 1px 2px rgb(15 23 42 / 4%), 0 18px 50px rgb(15 23 42 / 12%);
     }
 
     .dark .app-photo-background .prompt-surface {
-        --app-card-tint: rgb(24 21 28 / 68%);
+        --app-card-tint: rgb(15 23 42 / 68%);
         border-color: rgb(255 255 255 / 8%) !important;
         box-shadow: 0 24px 60px rgb(0 0 0 / 42%);
     }
 
     .app-photo-background .prompt-surface-muted {
-        --app-card-tint: rgb(253 252 253 / 52%);
+        --app-card-tint: rgb(248 250 252 / 52%);
         --app-card-blur: 20px;
     }
 
     .dark .app-photo-background .prompt-surface-muted {
-        --app-card-tint: rgb(24 21 28 / 56%);
+        --app-card-tint: rgb(15 23 42 / 56%);
         border-color: rgb(255 255 255 / 7%) !important;
     }
 
     .app-photo-background .app-glass-card {
-        --app-card-tint: rgb(253 252 253 / 58%);
+        --app-card-tint: rgb(248 250 252 / 58%);
         --app-card-blur: 22px;
     }
 
     .dark .app-photo-background .app-glass-card {
-        --app-card-tint: rgb(24 21 28 / 62%);
+        --app-card-tint: rgb(15 23 42 / 62%);
         border-color: rgb(255 255 255 / 7%) !important;
     }
 
     .app-photo-background [data-flux-sidebar] {
         border-color: rgb(255 255 255 / 42%) !important;
-        background-color: rgb(253 252 253 / 78%) !important;
+        background-color: rgb(248 250 252 / 78%) !important;
         -webkit-backdrop-filter: blur(28px) saturate(1.2) !important;
         backdrop-filter: blur(28px) saturate(1.2) !important;
     }
 
     .dark .app-photo-background [data-flux-sidebar] {
         border-color: rgb(255 255 255 / 8%) !important;
-        background-color: rgb(20 18 24 / 82%) !important;
+        background-color: rgb(2 6 23 / 82%) !important;
     }
 
     .app-photo-background [data-flux-header] {
         border-color: rgb(255 255 255 / 42%) !important;
-        background-color: rgb(253 252 253 / 72%) !important;
+        background-color: rgb(248 250 252 / 72%) !important;
         -webkit-backdrop-filter: blur(28px) saturate(1.2) !important;
         backdrop-filter: blur(28px) saturate(1.2) !important;
     }
 
     .dark .app-photo-background [data-flux-header] {
         border-color: rgb(255 255 255 / 8%) !important;
-        background-color: rgb(20 18 24 / 78%) !important;
+        background-color: rgb(2 6 23 / 78%) !important;
     }
 
     .app-photo-background [data-mobile-dock] nav {
-        background-color: rgb(253 252 253 / 58%) !important;
+        background-color: rgb(248 250 252 / 58%) !important;
         -webkit-backdrop-filter: blur(28px) saturate(1.25) !important;
         backdrop-filter: blur(28px) saturate(1.25) !important;
     }
 
     .dark .app-photo-background [data-mobile-dock] nav {
-        background-color: rgb(20 18 24 / 62%) !important;
+        background-color: rgb(2 6 23 / 62%) !important;
     }
 
     .app-photo-background [data-home-card-stack] {
@@ -194,7 +194,7 @@
         width: 24rem;
         height: 24rem;
         border-radius: 9999px;
-        background: color-mix(in srgb, var(--color-pink-400) 12%, transparent);
+        background: color-mix(in srgb, var(--color-violet-400) 12%, transparent);
         filter: blur(72px);
         pointer-events: none;
     }
@@ -219,8 +219,8 @@
         outline: none;
         background: linear-gradient(
             to right,
-            var(--color-pink-400) 0%,
-            var(--color-pink-500) var(--temperature-progress),
+            var(--color-violet-400) 0%,
+            var(--color-violet-500) var(--temperature-progress),
             var(--color-zinc-200) var(--temperature-progress),
             var(--color-zinc-200) 100%
         );
@@ -229,8 +229,8 @@
     .dark .temperature-slider {
         background: linear-gradient(
             to right,
-            var(--color-pink-400) 0%,
-            var(--color-pink-500) var(--temperature-progress),
+            var(--color-violet-400) 0%,
+            var(--color-violet-500) var(--temperature-progress),
             var(--color-zinc-700) var(--temperature-progress),
             var(--color-zinc-700) 100%
         );
@@ -240,33 +240,33 @@
         width: 1.625rem;
         height: 1.625rem;
         appearance: none;
-        border: 0.3125rem solid var(--color-pink-500);
+        border: 0.3125rem solid var(--color-violet-500);
         border-radius: 9999px;
         background: white;
-        box-shadow: 0 2px 8px rgb(41 38 46 / 18%);
+        box-shadow: 0 2px 8px rgb(15 23 42 / 18%);
         transition: transform 160ms ease, box-shadow 160ms ease;
     }
 
     .temperature-slider::-moz-range-thumb {
         width: 1rem;
         height: 1rem;
-        border: 0.3125rem solid var(--color-pink-500);
+        border: 0.3125rem solid var(--color-violet-500);
         border-radius: 9999px;
         background: white;
-        box-shadow: 0 2px 8px rgb(41 38 46 / 18%);
+        box-shadow: 0 2px 8px rgb(15 23 42 / 18%);
         transition: transform 160ms ease, box-shadow 160ms ease;
     }
 
     .temperature-slider:focus-visible::-webkit-slider-thumb,
     .temperature-slider:hover::-webkit-slider-thumb {
         transform: scale(1.08);
-        box-shadow: 0 0 0 5px rgb(236 72 153 / 14%), 0 2px 8px rgb(41 38 46 / 18%);
+        box-shadow: 0 0 0 5px rgb(139 92 246 / 14%), 0 2px 8px rgb(15 23 42 / 18%);
     }
 
     .temperature-slider:focus-visible::-moz-range-thumb,
     .temperature-slider:hover::-moz-range-thumb {
         transform: scale(1.08);
-        box-shadow: 0 0 0 5px rgb(236 72 153 / 14%), 0 2px 8px rgb(41 38 46 / 18%);
+        box-shadow: 0 0 0 5px rgb(139 92 246 / 14%), 0 2px 8px rgb(15 23 42 / 18%);
     }
 }
 

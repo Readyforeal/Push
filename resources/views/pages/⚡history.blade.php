@@ -35,8 +35,8 @@ new #[Title('History')] class extends Component
 
 <div class="home-shell mx-auto flex w-full max-w-3xl flex-col gap-8 pb-6 sm:pt-5">
     <header class="px-1">
-        <div class="mb-3 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-pink-600 dark:text-pink-300">
-            <span class="size-1.5 rounded-full bg-pink-500 shadow-[0_0_0_4px_rgba(236,72,153,0.12)]"></span>
+        <div class="mb-3 flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">
+            <span class="size-1.5 rounded-full bg-violet-500 shadow-[0_0_0_4px_rgba(139,92,246,0.12)]"></span>
             <span>{{ __('Looking back') }}</span>
         </div>
         <h1 class="text-[2.15rem] font-semibold leading-none tracking-[-0.04em] text-zinc-950 sm:text-5xl dark:text-white">
@@ -72,14 +72,14 @@ new #[Title('History')] class extends Component
                 <article class="prompt-surface" wire:key="history-round-{{ $round->id }}">
                     <header class="flex items-start justify-between gap-4 border-b border-zinc-200/70 p-5 sm:p-6 dark:border-white/8">
                         <div class="flex min-w-0 items-center gap-3.5">
-                            <div class="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-pink-50 text-pink-600 ring-1 ring-pink-100 dark:bg-pink-500/10 dark:text-pink-300 dark:ring-pink-400/15">
+                            <div class="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-400/15">
                                 <flux:icon :name="$kindIcon" class="size-5" />
                             </div>
                             <div class="min-w-0">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <h2 class="text-base font-semibold tracking-[-0.015em] text-zinc-950 dark:text-white">{{ $kindLabel }}</h2>
                                     @if ($round->prompt_source === 'ai')
-                                        <flux:badge size="sm" color="pink" icon="sparkles">{{ __('Made for you') }}</flux:badge>
+                                        <flux:badge size="sm" color="violet" icon="sparkles">{{ __('Made for you') }}</flux:badge>
                                     @endif
                                 </div>
                                 <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">{{ __('A round you completed together') }}</p>
@@ -101,9 +101,9 @@ new #[Title('History')] class extends Component
 
                         <div class="p-5 sm:p-6">
                             @if ($requestTask?->questionResponse)
-                                <div class="rounded-2xl bg-pink-50/80 p-4 ring-1 ring-pink-100 dark:bg-pink-500/10 dark:ring-pink-400/15">
-                                    <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-pink-600 dark:text-pink-300">{{ __('The request') }}</p>
-                                    <p class="mt-2 text-[0.9375rem] leading-6 text-pink-950 dark:text-pink-50">{{ $requestTask->questionResponse->answer }}</p>
+                                <div class="rounded-2xl bg-violet-50/80 p-4 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:ring-violet-400/15">
+                                    <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-300">{{ __('The request') }}</p>
+                                    <p class="mt-2 text-[0.9375rem] leading-6 text-violet-950 dark:text-violet-50">{{ $requestTask->questionResponse->answer }}</p>
                                 </div>
                             @endif
 
@@ -131,8 +131,8 @@ new #[Title('History')] class extends Component
                     @else
                         <div class="p-5 sm:p-6">
                             @if ($isSharedQuestion)
-                                <div class="rounded-2xl bg-pink-50/75 px-5 py-4 ring-1 ring-pink-100 dark:bg-pink-500/10 dark:ring-pink-400/15">
-                                    <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-pink-600 dark:text-pink-300">{{ __('The question') }}</p>
+                                <div class="rounded-2xl bg-violet-50/75 px-5 py-4 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:ring-violet-400/15">
+                                    <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-300">{{ __('The question') }}</p>
                                     <p class="mt-2 text-base font-medium leading-6 tracking-[-0.01em] text-zinc-900 dark:text-white">{{ $round->tasks->first()?->prompt }}</p>
                                 </div>
                             @endif
@@ -161,7 +161,7 @@ new #[Title('History')] class extends Component
     @else
         <div class="prompt-surface-muted flex min-h-72 items-center justify-center p-8 text-center">
             <div class="max-w-sm">
-                <div class="mx-auto flex size-12 items-center justify-center rounded-2xl bg-pink-50 text-pink-500 ring-1 ring-pink-100 dark:bg-pink-500/10 dark:text-pink-300 dark:ring-pink-400/15">
+                <div class="mx-auto flex size-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-500 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-400/15">
                     <flux:icon.clock class="size-5" />
                 </div>
                 <flux:heading class="mt-4">{{ __('Your story starts here') }}</flux:heading>

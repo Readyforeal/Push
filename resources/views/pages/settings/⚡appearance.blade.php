@@ -233,11 +233,11 @@ new #[Title('Appearance settings')] class extends Component
                         wire:click="chooseMode('auto')"
                         @class([
                             'app-glass-card flex min-h-28 items-start gap-4 rounded-2xl border p-4 text-left transition',
-                            'border-pink-500 bg-pink-50/80 ring-2 ring-pink-500/15 dark:border-pink-400 dark:bg-pink-500/10' => $backgroundMode === AppBackgroundMode::Auto->value,
-                            'border-zinc-200 bg-white hover:border-pink-300 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-pink-500/60' => $backgroundMode !== AppBackgroundMode::Auto->value,
+                            'border-violet-500 bg-violet-50/80 ring-2 ring-violet-500/15 dark:border-violet-400 dark:bg-violet-500/10' => $backgroundMode === AppBackgroundMode::Auto->value,
+                            'border-zinc-200 bg-white hover:border-violet-300 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-violet-500/60' => $backgroundMode !== AppBackgroundMode::Auto->value,
                         ])
                     >
-                        <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-pink-100 text-pink-600 dark:bg-pink-500/15 dark:text-pink-300">
+                        <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300">
                             <flux:icon.sparkles class="size-5" />
                         </span>
                         <span>
@@ -251,8 +251,8 @@ new #[Title('Appearance settings')] class extends Component
                         wire:click="chooseMode('none')"
                         @class([
                             'app-glass-card flex min-h-28 items-start gap-4 rounded-2xl border p-4 text-left transition',
-                            'border-pink-500 bg-pink-50/80 ring-2 ring-pink-500/15 dark:border-pink-400 dark:bg-pink-500/10' => $backgroundMode === AppBackgroundMode::None->value,
-                            'border-zinc-200 bg-white hover:border-pink-300 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-pink-500/60' => $backgroundMode !== AppBackgroundMode::None->value,
+                            'border-violet-500 bg-violet-50/80 ring-2 ring-violet-500/15 dark:border-violet-400 dark:bg-violet-500/10' => $backgroundMode === AppBackgroundMode::None->value,
+                            'border-zinc-200 bg-white hover:border-violet-300 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-violet-500/60' => $backgroundMode !== AppBackgroundMode::None->value,
                         ])
                     >
                         <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 dark:bg-white/8 dark:text-zinc-300">
@@ -268,7 +268,7 @@ new #[Title('Appearance settings')] class extends Component
                 <div
                     @class([
                         'app-glass-card overflow-hidden rounded-2xl border transition',
-                        'border-pink-500 ring-2 ring-pink-500/15 dark:border-pink-400' => $backgroundMode === AppBackgroundMode::Upload->value,
+                        'border-violet-500 ring-2 ring-violet-500/15 dark:border-violet-400' => $backgroundMode === AppBackgroundMode::Upload->value,
                         'border-zinc-200 dark:border-zinc-700' => $backgroundMode !== AppBackgroundMode::Upload->value,
                     ])
                 >
@@ -276,21 +276,21 @@ new #[Title('Appearance settings')] class extends Component
                         @if ($backgroundUpload && ! $errors->has('backgroundUpload') && in_array(strtolower($backgroundUpload->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'gif', 'webp'], true))
                             <img src="{{ $backgroundUpload->temporaryUrl() }}" alt="{{ __('New custom background preview') }}" class="size-full object-cover">
                         @elseif ($backgroundUpload && ! $errors->has('backgroundUpload'))
-                            <div class="flex size-full flex-col items-center justify-center bg-gradient-to-br from-pink-100 via-zinc-100 to-zinc-200 text-zinc-500 dark:from-pink-950/40 dark:via-zinc-900 dark:to-zinc-800 dark:text-zinc-300">
+                            <div class="flex size-full flex-col items-center justify-center bg-gradient-to-br from-violet-100 via-zinc-100 to-zinc-200 text-zinc-500 dark:from-violet-950/40 dark:via-zinc-900 dark:to-zinc-800 dark:text-zinc-300">
                                 <flux:icon.photo class="size-9" />
                                 <span class="mt-2 max-w-xs truncate px-4 text-sm">{{ $backgroundUpload->getClientOriginalName() }}</span>
-                                <span class="mt-1 text-xs font-semibold uppercase tracking-wider text-pink-500">{{ __('Converts to JPEG when saved') }}</span>
+                                <span class="mt-1 text-xs font-semibold uppercase tracking-wider text-violet-500">{{ __('Converts to JPEG when saved') }}</span>
                             </div>
                         @elseif ($this->uploadedBackgroundUrl)
                             <img src="{{ $this->uploadedBackgroundUrl }}" alt="{{ __('Your custom app background') }}" class="size-full object-cover">
                         @else
-                            <div class="flex size-full items-center justify-center bg-gradient-to-br from-pink-100 via-zinc-100 to-zinc-200 text-zinc-400 dark:from-pink-950/40 dark:via-zinc-900 dark:to-zinc-800 dark:text-zinc-500">
+                            <div class="flex size-full items-center justify-center bg-gradient-to-br from-violet-100 via-zinc-100 to-zinc-200 text-zinc-400 dark:from-violet-950/40 dark:via-zinc-900 dark:to-zinc-800 dark:text-zinc-500">
                                 <flux:icon.photo class="size-9" />
                             </div>
                         @endif
 
                         @if ($backgroundMode === AppBackgroundMode::Upload->value)
-                            <span class="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-pink-600 text-white shadow-lg">
+                            <span class="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg">
                                 <flux:icon.check class="size-4" />
                             </span>
                         @endif
@@ -313,7 +313,7 @@ new #[Title('Appearance settings')] class extends Component
                                 </flux:button>
                             @endif
 
-                            <label class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-pink-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-400">
+                            <label class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-400">
                                 <input wire:model="backgroundUpload" type="file" accept="image/*,.dng,.tif,.tiff,.heic,.heif" class="sr-only">
                                 {{ $this->uploadedBackgroundUrl ? __('Replace') : __('Choose image') }}
                             </label>
@@ -338,7 +338,7 @@ new #[Title('Appearance settings')] class extends Component
                                     type="button"
                                     wire:click="choosePhoto({{ $selection->round_photo_id }})"
                                     wire:key="background-photo-{{ $selection->round_photo_id }}"
-                                    class="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-zinc-100 transition dark:bg-zinc-800 {{ $backgroundMode === AppBackgroundMode::Photo->value && $backgroundPhotoId === $selection->round_photo_id ? 'ring-3 ring-pink-500 ring-offset-2 ring-offset-zinc-50 dark:ring-pink-400 dark:ring-offset-zinc-950' : 'ring-1 ring-black/5 hover:ring-pink-300 dark:ring-white/10' }}"
+                                    class="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-zinc-100 transition dark:bg-zinc-800 {{ $backgroundMode === AppBackgroundMode::Photo->value && $backgroundPhotoId === $selection->round_photo_id ? 'ring-3 ring-violet-500 ring-offset-2 ring-offset-zinc-50 dark:ring-violet-400 dark:ring-offset-zinc-950' : 'ring-1 ring-black/5 hover:ring-violet-300 dark:ring-white/10' }}"
                                     aria-label="{{ __('Use this favorite as the app background') }}"
                                 >
                                     <img
@@ -348,7 +348,7 @@ new #[Title('Appearance settings')] class extends Component
                                         loading="lazy"
                                     >
                                     @if ($backgroundMode === AppBackgroundMode::Photo->value && $backgroundPhotoId === $selection->round_photo_id)
-                                        <span class="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-pink-600 text-white shadow-lg">
+                                        <span class="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg">
                                             <flux:icon.check class="size-4" />
                                         </span>
                                     @endif

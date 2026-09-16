@@ -109,7 +109,7 @@ const syncBrowserChromeTheme = () => {
     const themeColor = document.querySelector('#app-theme-color');
 
     if (themeColor) {
-        themeColor.setAttribute('content', document.documentElement.classList.contains('dark') ? '#131116' : '#fdfcfd');
+        themeColor.setAttribute('content', document.documentElement.classList.contains('dark') ? '#020617' : '#f8fafc');
     }
 };
 

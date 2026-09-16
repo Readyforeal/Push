@@ -101,11 +101,11 @@ new class extends Component
 <section class="prompt-surface p-5 sm:p-6" wire:poll.30s>
     <div class="flex items-center justify-between gap-4">
         <div class="flex min-w-0 items-center gap-3">
-            <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-pink-50 text-pink-500 ring-1 ring-pink-100 dark:bg-pink-500/10 dark:text-pink-300 dark:ring-pink-400/15">
+            <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-500 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-400/15">
                 <flux:icon.heart class="size-4" />
             </div>
             <div class="min-w-0">
-                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-pink-600 dark:text-pink-300">{{ __('Temperature') }}</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-300">{{ __('Temperature') }}</p>
                 <p class="mt-0.5 truncate text-sm text-zinc-500 dark:text-zinc-400">{{ __('A quick read on how you both feel.') }}</p>
             </div>
         </div>
@@ -117,10 +117,10 @@ new class extends Component
 
     <div class="mt-5 grid grid-cols-2 gap-3">
         <div
-            class="relative overflow-hidden rounded-2xl border border-pink-100/70 p-4 dark:border-pink-400/10"
+            class="relative overflow-hidden rounded-2xl border border-violet-100/70 p-4 dark:border-violet-400/10"
             aria-label="{{ $myValue ? __('Your temperature: :value out of 10, :label', ['value' => $myValue, 'label' => $this->labelFor($myValue)]) : __('Your temperature has not been shared') }}"
         >
-            <div class="absolute inset-0 bg-pink-500" style="opacity: {{ $myTint }}"></div>
+            <div class="absolute inset-0 bg-violet-500" style="opacity: {{ $myTint }}"></div>
             <div class="relative">
                 <div class="flex items-center gap-2">
                     <flux:avatar size="xs" :name="auth()->user()->name" :initials="auth()->user()->initials()" />
@@ -129,7 +129,7 @@ new class extends Component
                 <div class="mt-4 flex items-end justify-between gap-2">
                     <div class="min-w-0">
                         <p class="text-2xl font-semibold tracking-[-0.04em] text-zinc-950 dark:text-white">{{ $myValue ?? '—' }}</p>
-                        <p class="mt-0.5 truncate text-xs font-medium text-pink-700 dark:text-pink-300">{{ $myValue ? $this->labelFor($myValue) : __('Not shared') }}</p>
+                        <p class="mt-0.5 truncate text-xs font-medium text-violet-700 dark:text-violet-300">{{ $myValue ? $this->labelFor($myValue) : __('Not shared') }}</p>
                     </div>
                     @if ($myValue)
                         <span class="pb-0.5 text-[0.6875rem] text-zinc-400">/ 10</span>
@@ -139,10 +139,10 @@ new class extends Component
         </div>
 
         <div
-            class="relative overflow-hidden rounded-2xl border border-fuchsia-100/70 p-4 dark:border-fuchsia-400/10"
+            class="relative overflow-hidden rounded-2xl border border-indigo-100/70 p-4 dark:border-indigo-400/10"
             aria-label="{{ $partnerValue ? __(':name’s temperature: :value out of 10, :label', ['name' => $this->partner?->name ?? __('Partner'), 'value' => $partnerValue, 'label' => $this->labelFor($partnerValue)]) : __(':name’s temperature has not been shared', ['name' => $this->partner?->name ?? __('Partner')]) }}"
         >
-            <div class="absolute inset-0 bg-fuchsia-500" style="opacity: {{ $partnerTint }}"></div>
+            <div class="absolute inset-0 bg-indigo-500" style="opacity: {{ $partnerTint }}"></div>
             <div class="relative">
                 <div class="flex items-center gap-2">
                     @if ($this->partner)
@@ -153,7 +153,7 @@ new class extends Component
                 <div class="mt-4 flex items-end justify-between gap-2">
                     <div class="min-w-0">
                         <p class="text-2xl font-semibold tracking-[-0.04em] text-zinc-950 dark:text-white">{{ $partnerValue ?? '—' }}</p>
-                        <p class="mt-0.5 truncate text-xs font-medium text-fuchsia-700 dark:text-fuchsia-300">{{ $partnerValue ? $this->labelFor($partnerValue) : __('Not shared') }}</p>
+                        <p class="mt-0.5 truncate text-xs font-medium text-indigo-700 dark:text-indigo-300">{{ $partnerValue ? $this->labelFor($partnerValue) : __('Not shared') }}</p>
                     </div>
                     @if ($partnerValue)
                         <span class="pb-0.5 text-[0.6875rem] text-zinc-400">/ 10</span>
@@ -170,8 +170,8 @@ new class extends Component
                 <flux:subheading>{{ __('Share where you are right now with :name.', ['name' => $this->partner?->name ?? __('your partner')]) }}</flux:subheading>
             </div>
 
-            <div class="rounded-2xl bg-pink-50/70 p-5 text-center ring-1 ring-pink-100 dark:bg-pink-500/10 dark:ring-pink-400/15">
-                <p class="text-5xl font-semibold tracking-[-0.05em] text-pink-600 dark:text-pink-300">{{ $temperature }}</p>
+            <div class="rounded-2xl bg-violet-50/70 p-5 text-center ring-1 ring-violet-100 dark:bg-violet-500/10 dark:ring-violet-400/15">
+                <p class="text-5xl font-semibold tracking-[-0.05em] text-violet-600 dark:text-violet-300">{{ $temperature }}</p>
                 <p class="mt-1 text-sm font-medium text-zinc-700 dark:text-zinc-200">{{ $this->labelFor($temperature) }}</p>
             </div>
 

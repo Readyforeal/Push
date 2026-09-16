@@ -143,7 +143,7 @@ new #[Title('Moment')] class extends Component
 
 <div class="mx-auto w-full max-w-5xl pb-48 max-lg:-mx-6 max-lg:w-[calc(100%+3rem)] lg:pb-32">
     <article class="overflow-hidden rounded-none bg-white/70 shadow-[0_22px_70px_rgba(41,38,46,0.16)] ring-1 ring-black/5 backdrop-blur-xl dark:bg-zinc-950/70 dark:ring-white/10 lg:rounded-[2rem]">
-        <section class="relative min-h-[68svh] overflow-hidden bg-gradient-to-br from-pink-100 via-rose-100 to-zinc-100 dark:from-pink-950 dark:via-zinc-950 dark:to-black">
+        <section class="relative min-h-[68svh] overflow-hidden bg-gradient-to-br from-violet-100 via-rose-100 to-zinc-100 dark:from-violet-950 dark:via-zinc-950 dark:to-black">
             @if ($leadPhoto)
                 <img
                     src="{{ route('moment-photos.show', $leadPhoto) }}"
@@ -211,7 +211,7 @@ new #[Title('Moment')] class extends Component
         <section class="px-5 py-10 sm:px-8 lg:px-10 lg:py-14">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-pink-600 dark:text-pink-300">{{ __('Conversation') }}</p>
+                    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-300">{{ __('Conversation') }}</p>
                     <h2 class="mt-1 text-2xl font-semibold tracking-[-0.03em] text-zinc-950 dark:text-white">{{ trans_choice(':count comment|:count comments', $moment->comments->count(), ['count' => $moment->comments->count()]) }}</h2>
                 </div>
             </div>
@@ -258,10 +258,10 @@ new #[Title('Moment')] class extends Component
     </article>
 
     <form wire:submit="addComment" class="fixed inset-x-4 bottom-[calc(6.75rem+env(safe-area-inset-bottom,0px))] z-40 mx-auto max-w-2xl lg:bottom-6">
-        <div class="flex items-center gap-2 rounded-full border border-pink-200/55 bg-white/65 p-2 ps-5 shadow-[0_18px_55px_rgba(41,38,46,0.18)] backdrop-blur-2xl dark:border-pink-400/15 dark:bg-zinc-900/65">
+        <div class="flex items-center gap-2 rounded-full border border-violet-200/55 bg-white/65 p-2 ps-5 shadow-[0_18px_55px_rgba(41,38,46,0.18)] backdrop-blur-2xl dark:border-violet-400/15 dark:bg-zinc-900/65">
             <label for="moment-comment" class="sr-only">{{ __('Leave a comment') }}</label>
             <input id="moment-comment" wire:model="commentBody" type="text" maxlength="2000" placeholder="{{ __('Leave a comment…') }}" class="min-w-0 flex-1 border-0 bg-transparent py-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:ring-0 dark:text-white">
-            <button type="submit" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-pink-600 text-white shadow-sm transition hover:bg-pink-700 disabled:opacity-50 dark:bg-pink-500 dark:hover:bg-pink-400" wire:loading.attr="disabled" wire:target="addComment" aria-label="{{ __('Send comment') }}">
+            <button type="submit" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50 dark:bg-violet-500 dark:hover:bg-violet-400" wire:loading.attr="disabled" wire:target="addComment" aria-label="{{ __('Send comment') }}">
                 <flux:icon.paper-airplane class="size-5" />
             </button>
         </div>

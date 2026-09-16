@@ -317,7 +317,7 @@ new class extends Component
 <section class="space-y-4">
     @if ($showComposer)
         <div class="prompt-surface p-6 sm:p-7">
-            <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-pink-600 dark:text-pink-300">
+            <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-300">
                 <flux:icon.sparkles class="size-3.5" />
                 <span>{{ __('Moments') }}</span>
             </div>
@@ -345,7 +345,7 @@ new class extends Component
         <a
             href="{{ route('moments') }}"
             wire:navigate.hover
-            class="group relative block min-h-80 overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-pink-500 via-pink-600 to-pink-900 shadow-[0_18px_50px_rgba(41,38,46,0.16)] ring-1 ring-black/5"
+            class="group relative block min-h-80 overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-violet-500 via-violet-600 to-violet-900 shadow-[0_18px_50px_rgba(41,38,46,0.16)] ring-1 ring-black/5"
         >
             @if ($coverPhoto)
                 <img
@@ -411,7 +411,7 @@ new class extends Component
                         href="{{ route('moments.show', $moment) }}"
                         wire:navigate.hover
                         wire:key="moment-{{ $moment->id }}"
-                        class="group relative flex min-h-[24rem] overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-pink-500 via-pink-600 to-pink-950 shadow-[0_18px_50px_rgba(41,38,46,0.14)] ring-1 ring-black/5 transition duration-500 hover:-translate-y-1 hover:shadow-[0_24px_65px_rgba(41,38,46,0.2)] sm:min-h-[28rem]"
+                        class="group relative flex min-h-[24rem] overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-violet-500 via-violet-600 to-violet-950 shadow-[0_18px_50px_rgba(41,38,46,0.14)] ring-1 ring-black/5 transition duration-500 hover:-translate-y-1 hover:shadow-[0_24px_65px_rgba(41,38,46,0.2)] sm:min-h-[28rem]"
                     >
                         @if ($coverPhoto)
                             <img
@@ -495,7 +495,7 @@ new class extends Component
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ __('Intensity') }}</p>
                         <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">{{ $this->intensityLabel($intensity) }}</p>
                     </div>
-                    <p class="text-lg font-semibold text-pink-600 dark:text-pink-300">{{ $intensity }} / 10</p>
+                    <p class="text-lg font-semibold text-violet-600 dark:text-violet-300">{{ $intensity }} / 10</p>
                 </div>
                 <input
                     type="range"
@@ -519,8 +519,8 @@ new class extends Component
             />
 
             <div>
-                <label class="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/70 px-5 py-7 text-center transition hover:border-pink-300 hover:bg-pink-50/50 dark:border-white/15 dark:bg-black/10 dark:hover:border-pink-400/50 dark:hover:bg-pink-500/5">
-                    <flux:icon.photo class="size-6 text-zinc-400 transition group-hover:text-pink-500" />
+                <label class="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/70 px-5 py-7 text-center transition hover:border-violet-300 hover:bg-violet-50/50 dark:border-white/15 dark:bg-black/10 dark:hover:border-violet-400/50 dark:hover:bg-violet-500/5">
+                    <flux:icon.photo class="size-6 text-zinc-400 transition group-hover:text-violet-500" />
                     <span class="mt-2 text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ __('Add photos') }}</span>
                     <span class="mt-1 text-xs text-zinc-400">{{ __('Up to six photos, 500 MB each') }}</span>
                     <input wire:model="photos" type="file" accept="image/*,.dng,.tif,.tiff,.heic,.heif" multiple class="sr-only">
@@ -537,7 +537,7 @@ new class extends Component
                                 <div class="flex aspect-square w-full flex-col items-center justify-center rounded-xl bg-zinc-100 p-2 text-center text-zinc-500 dark:bg-white/8 dark:text-zinc-300">
                                     <flux:icon.photo class="size-5" />
                                     <span class="mt-1 line-clamp-2 text-[11px]">{{ $photo->getClientOriginalName() }}</span>
-                                    <span class="mt-1 text-[9px] font-semibold uppercase tracking-wider text-pink-500">{{ __('Converts to JPEG') }}</span>
+                                    <span class="mt-1 text-[9px] font-semibold uppercase tracking-wider text-violet-500">{{ __('Converts to JPEG') }}</span>
                                 </div>
                             @endif
                         @endforeach
@@ -582,7 +582,7 @@ new class extends Component
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ __('Intensity') }}</p>
                         <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">{{ $this->intensityLabel($editIntensity) }}</p>
                     </div>
-                    <p class="text-lg font-semibold text-pink-600 dark:text-pink-300">{{ $editIntensity }} / 10</p>
+                    <p class="text-lg font-semibold text-violet-600 dark:text-violet-300">{{ $editIntensity }} / 10</p>
                 </div>
                 <input
                     type="range"
