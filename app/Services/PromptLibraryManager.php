@@ -41,13 +41,16 @@ class PromptLibraryManager
         string $primaryPrompt,
         ?string $secondaryPrompt = null,
         array $topics = [],
+        ?int $primaryUserId = null,
     ): PromptTemplate {
         $this->authorizeLibrary($actor, $relationship, $library);
         $this->validatePromptPair($library, $primaryPrompt, $secondaryPrompt);
+        $primaryUserId = $this->primaryUserIdFor($relationship, $library->kind, $primaryUserId);
         $position = (int) $library->prompts()->max('position') + 1;
 
         return $library->prompts()->create([
             'relationship_id' => $relationship->id,
+            'primary_user_id' => $primaryUserId,
             'slug' => 'custom-'.Str::uuid(),
             'kind' => $library->kind,
             'primary_prompt' => trim($primaryPrompt),
@@ -63,8 +66,10 @@ class PromptLibraryManager
         Relationship $relationship,
         PromptLibrary $library,
         string $contents,
+        ?int $primaryUserId = null,
     ): int {
         $this->authorizeLibrary($actor, $relationship, $library);
+        $primaryUserId = $this->primaryUserIdFor($relationship, $library->kind, $primaryUserId);
         $rows = preg_split('/\R/u', $contents) ?: [];
         $parsed = [];
 
@@ -95,7 +100,7 @@ class PromptLibraryManager
             throw new DomainException('Add at least one prompt to import.');
         }
 
-        DB::transaction(function () use ($relationship, $library, $parsed): void {
+        DB::transaction(function () use ($relationship, $library, $parsed, $primaryUserId): void {
             $position = (int) $library->prompts()->max('position');
             $now = now();
             $inserts = [];
@@ -104,6 +109,7 @@ class PromptLibraryManager
                 $inserts[] = [
                     'prompt_library_id' => $library->id,
                     'relationship_id' => $relationship->id,
+                    'primary_user_id' => $primaryUserId,
                     'slug' => 'custom-'.Str::uuid(),
                     'kind' => $library->kind->value,
                     'primary_prompt' => trim($primary),
@@ -122,6 +128,37 @@ class PromptLibraryManager
         });
 
         return count($parsed);
+    }
+
+    public function swapPromptAssignment(
+        User $actor,
+        Relationship $relationship,
+        PromptTemplate $prompt,
+    ): PromptTemplate {
+        $this->authorizeRelationship($actor, $relationship);
+
+        if ($prompt->relationship_id !== $relationship->id) {
+            throw new DomainException('Built-in prompts cannot be changed.');
+        }
+
+        if (! $this->usesNamedAssignments($prompt->kind)) {
+            throw new DomainException('This prompt is shared equally by both partners.');
+        }
+
+        $memberIds = $this->orderedMemberIds($relationship);
+
+        if (count($memberIds) !== 2) {
+            throw new DomainException('Prompt roles require exactly two partners.');
+        }
+
+        $currentUserId = in_array($prompt->primary_user_id, $memberIds, true)
+            ? $prompt->primary_user_id
+            : $memberIds[0];
+        $prompt->update([
+            'primary_user_id' => $memberIds[0] === $currentUserId ? $memberIds[1] : $memberIds[0],
+        ]);
+
+        return $prompt->refresh();
     }
 
     public function removePrompt(
@@ -184,6 +221,45 @@ class PromptLibraryManager
         if ($library->kind !== PromptRoundKind::SharedQuestion && blank($secondaryPrompt)) {
             throw new DomainException('This library type requires both prompt fields.');
         }
+    }
+
+    private function primaryUserIdFor(
+        Relationship $relationship,
+        PromptRoundKind $kind,
+        ?int $primaryUserId,
+    ): ?int {
+        if (! $this->usesNamedAssignments($kind)) {
+            return null;
+        }
+
+        $memberIds = $this->orderedMemberIds($relationship);
+
+        if (count($memberIds) !== 2) {
+            throw new DomainException('Prompt roles require exactly two partners.');
+        }
+
+        $primaryUserId ??= $memberIds[0];
+
+        if (! in_array($primaryUserId, $memberIds, true)) {
+            throw new DomainException('The selected prompt recipient is not part of this relationship.');
+        }
+
+        return $primaryUserId;
+    }
+
+    private function usesNamedAssignments(PromptRoundKind $kind): bool
+    {
+        return in_array($kind, [PromptRoundKind::UniqueQuestions, PromptRoundKind::PhotoRequest], true);
+    }
+
+    /** @return list<int> */
+    private function orderedMemberIds(Relationship $relationship): array
+    {
+        return $relationship->members()
+            ->orderBy('relationship_members.id')
+            ->pluck('users.id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
     }
 
     /**

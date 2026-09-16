@@ -38,15 +38,19 @@ new #[Title('Prompt libraries')] class extends Component
 
     public string $bulkPrompts = '';
 
+    public ?int $primaryAssigneeId = null;
+
     public function mount(): void
     {
         $this->selectedLibraryId = $this->libraries->first()?->id;
+        $this->resetDraftAssignment();
     }
 
     public function updatedSelectedLibraryId(): void
     {
         $this->resetPage();
         $this->reset('search');
+        $this->resetDraftAssignment();
     }
 
     public function updatedSearch(): void
@@ -103,6 +107,7 @@ new #[Title('Prompt libraries')] class extends Component
                 $this->primaryPrompt,
                 $this->secondaryPrompt,
                 $this->parseTopics($this->topics),
+                $this->primaryAssigneeId,
             );
         } catch (DomainException $exception) {
             $this->addError('secondaryPrompt', $exception->getMessage());
@@ -130,6 +135,7 @@ new #[Title('Prompt libraries')] class extends Component
                 $this->relationship,
                 $this->selectedLibrary,
                 $this->bulkPrompts,
+                $this->primaryAssigneeId,
             );
         } catch (DomainException $exception) {
             $this->addError('bulkPrompts', $exception->getMessage());
@@ -141,6 +147,32 @@ new #[Title('Prompt libraries')] class extends Component
         unset($this->libraries, $this->prompts);
         Flux::modal('bulk-import-prompts')->close();
         Flux::toast(variant: 'success', text: trans_choice(':count prompt imported|:count prompts imported', $count, ['count' => $count]));
+    }
+
+    public function swapDraftAssignments(): void
+    {
+        $primary = $this->primaryPerson();
+        $secondary = $this->secondaryPerson();
+
+        if ($primary && $secondary) {
+            $this->primaryAssigneeId = $secondary->id;
+        }
+    }
+
+    public function swapPromptAssignment(int $promptId, PromptLibraryManager $manager): void
+    {
+        if (! $this->relationship) {
+            return;
+        }
+
+        $manager->swapPromptAssignment(
+            $this->user(),
+            $this->relationship,
+            PromptTemplate::query()->findOrFail($promptId),
+        );
+
+        unset($this->prompts);
+        Flux::toast(variant: 'success', text: __('Prompt roles swapped.'));
     }
 
     public function removePrompt(int $promptId, PromptLibraryManager $manager): void
@@ -176,6 +208,19 @@ new #[Title('Prompt libraries')] class extends Component
     public function relationship(): ?Relationship
     {
         return $this->user()->relationships()->first();
+    }
+
+    /** @return Collection<int, User> */
+    #[Computed]
+    public function partners(): Collection
+    {
+        if (! $this->relationship) {
+            return new Collection;
+        }
+
+        return $this->relationship->members()
+            ->orderBy('relationship_members.id')
+            ->get();
     }
 
     /** @return Collection<int, PromptLibrary> */
@@ -243,24 +288,85 @@ new #[Title('Prompt libraries')] class extends Component
         };
     }
 
-    public function primaryLabel(PromptRoundKind $kind): string
+    public function primaryLabel(PromptRoundKind $kind, ?int $primaryUserId = null): string
     {
+        $primaryName = $this->primaryPerson($primaryUserId)?->firstName() ?? __('Partner one');
+        $bothNames = $this->partnerNames();
+
         return match ($kind) {
-            PromptRoundKind::SharedQuestion => __('Question for both partners'),
-            PromptRoundKind::UniqueQuestions => __('Question for partner one'),
-            PromptRoundKind::PhotoPicker => __('Photo upload prompt for both partners'),
-            PromptRoundKind::PhotoRequest => __('Question for the requester'),
+            PromptRoundKind::SharedQuestion => __('Question for :names', ['names' => $bothNames]),
+            PromptRoundKind::UniqueQuestions => __('Question for :name', ['name' => $primaryName]),
+            PromptRoundKind::PhotoPicker => __('Photo upload prompt for :names', ['names' => $bothNames]),
+            PromptRoundKind::PhotoRequest => __('Request question for :name', ['name' => $primaryName]),
         };
     }
 
-    public function secondaryLabel(PromptRoundKind $kind): string
+    public function secondaryLabel(PromptRoundKind $kind, ?int $primaryUserId = null): string
     {
+        $secondaryName = $this->secondaryPerson($primaryUserId)?->firstName() ?? __('Partner two');
+        $bothNames = $this->partnerNames();
+
         return match ($kind) {
             PromptRoundKind::SharedQuestion => __('No second prompt needed'),
-            PromptRoundKind::UniqueQuestions => __('Question for partner two'),
-            PromptRoundKind::PhotoPicker => __('Favorite-picking prompt'),
-            PromptRoundKind::PhotoRequest => __('Instruction for the photographer'),
+            PromptRoundKind::UniqueQuestions => __('Question for :name', ['name' => $secondaryName]),
+            PromptRoundKind::PhotoPicker => __('Favorite-picking prompt for :names', ['names' => $bothNames]),
+            PromptRoundKind::PhotoRequest => __('Photo instructions for :name', ['name' => $secondaryName]),
         };
+    }
+
+    public function usesNamedAssignments(PromptRoundKind $kind): bool
+    {
+        return in_array($kind, [PromptRoundKind::UniqueQuestions, PromptRoundKind::PhotoRequest], true);
+    }
+
+    public function primaryRoleDescription(PromptRoundKind $kind, ?int $primaryUserId = null): string
+    {
+        $name = $this->primaryPerson($primaryUserId)?->firstName() ?? __('Partner one');
+
+        return match ($kind) {
+            PromptRoundKind::UniqueQuestions => __(':name receives the first question', ['name' => $name]),
+            PromptRoundKind::PhotoRequest => __(':name makes the request and picks the favorite', ['name' => $name]),
+            default => $name,
+        };
+    }
+
+    public function secondaryRoleDescription(PromptRoundKind $kind, ?int $primaryUserId = null): string
+    {
+        $name = $this->secondaryPerson($primaryUserId)?->firstName() ?? __('Partner two');
+
+        return match ($kind) {
+            PromptRoundKind::UniqueQuestions => __(':name receives the second question', ['name' => $name]),
+            PromptRoundKind::PhotoRequest => __(':name takes and uploads the photos', ['name' => $name]),
+            default => $name,
+        };
+    }
+
+    private function primaryPerson(?int $primaryUserId = null): ?User
+    {
+        $primaryUserId ??= $this->primaryAssigneeId;
+
+        return $this->partners->firstWhere('id', $primaryUserId) ?? $this->partners->first();
+    }
+
+    private function secondaryPerson(?int $primaryUserId = null): ?User
+    {
+        $primary = $this->primaryPerson($primaryUserId);
+
+        return $primary
+            ? $this->partners->first(fn (User $partner): bool => $partner->id !== $primary->id)
+            : null;
+    }
+
+    private function partnerNames(): string
+    {
+        return $this->partners
+            ->map(fn (User $partner): string => $partner->firstName())
+            ->join(' '.__('and').' ');
+    }
+
+    private function resetDraftAssignment(): void
+    {
+        $this->primaryAssigneeId = $this->partners->first()?->id;
     }
 
     /** @return list<string> */
@@ -344,12 +450,17 @@ new #[Title('Prompt libraries')] class extends Component
 
                     <div class="mt-4 space-y-3" data-page-stagger>
                         @forelse ($this->prompts as $prompt)
+                            @php($assignedPrimaryUserId = $prompt->primary_user_id ?? $this->partners->first()?->id)
                             <article wire:key="prompt-{{ $prompt->id }}" class="app-glass-card rounded-xl bg-zinc-50 p-4 backdrop-blur-xl dark:bg-zinc-800">
                                 <div class="flex items-start gap-3">
                                     <div class="min-w-0 flex-1">
+                                        <p class="prompt-kicker mb-1">{{ $this->primaryLabel($prompt->kind, $assignedPrimaryUserId) }}</p>
                                         <p class="text-sm font-medium text-zinc-900 dark:text-white">{{ $prompt->primary_prompt }}</p>
                                         @if ($prompt->secondary_prompt)
-                                            <p class="mt-2 border-s-2 border-zinc-300 ps-3 text-sm text-zinc-600 dark:border-zinc-600 dark:text-zinc-300">{{ $prompt->secondary_prompt }}</p>
+                                            <div class="mt-3 border-s-2 border-zinc-300 ps-3 dark:border-zinc-600">
+                                                <p class="prompt-kicker mb-1">{{ $this->secondaryLabel($prompt->kind, $assignedPrimaryUserId) }}</p>
+                                                <p class="text-sm text-zinc-600 dark:text-zinc-300">{{ $prompt->secondary_prompt }}</p>
+                                            </div>
                                         @endif
                                         @if ($prompt->topics)
                                             <div class="mt-3 flex flex-wrap gap-1.5">
@@ -360,15 +471,28 @@ new #[Title('Prompt libraries')] class extends Component
                                         @endif
                                     </div>
                                     @if ($prompt->relationship_id === $this->relationship->id)
-                                        <flux:button
-                                            type="button"
-                                            size="sm"
-                                            variant="ghost"
-                                            icon="trash"
-                                            aria-label="{{ __('Remove prompt') }}"
-                                            wire:click="removePrompt({{ $prompt->id }})"
-                                            wire:confirm="{{ __('Remove this prompt from the library?') }}"
-                                        />
+                                        <div class="flex shrink-0 items-center gap-1">
+                                            @if ($this->usesNamedAssignments($prompt->kind))
+                                                <flux:button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    icon="arrows-right-left"
+                                                    aria-label="{{ __('Swap prompt roles') }}"
+                                                    title="{{ __('Swap prompt roles') }}"
+                                                    wire:click="swapPromptAssignment({{ $prompt->id }})"
+                                                />
+                                            @endif
+                                            <flux:button
+                                                type="button"
+                                                size="sm"
+                                                variant="ghost"
+                                                icon="trash"
+                                                aria-label="{{ __('Remove prompt') }}"
+                                                wire:click="removePrompt({{ $prompt->id }})"
+                                                wire:confirm="{{ __('Remove this prompt from the library?') }}"
+                                            />
+                                        </div>
                                     @endif
                                 </div>
                             </article>
@@ -428,6 +552,20 @@ new #[Title('Prompt libraries')] class extends Component
                             <flux:heading size="lg">{{ __('Add to :library', ['library' => $this->selectedLibrary->name]) }}</flux:heading>
                             <flux:subheading>{{ __('This prompt will remain private to your relationship.') }}</flux:subheading>
                         </div>
+                        @if ($this->usesNamedAssignments($this->selectedLibrary->kind))
+                            <div class="app-glass-card rounded-2xl border border-zinc-200/80 bg-zinc-50/70 p-4 dark:border-white/8 dark:bg-zinc-800/55">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div>
+                                        <p class="text-sm font-semibold text-zinc-900 dark:text-white">{{ __('Who gets what') }}</p>
+                                        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ $this->primaryRoleDescription($this->selectedLibrary->kind) }}</p>
+                                        <p class="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">{{ $this->secondaryRoleDescription($this->selectedLibrary->kind) }}</p>
+                                    </div>
+                                    <flux:button type="button" size="sm" variant="ghost" icon="arrows-right-left" wire:click="swapDraftAssignments">
+                                        {{ __('Swap') }}
+                                    </flux:button>
+                                </div>
+                            </div>
+                        @endif
                         <flux:textarea wire:model="primaryPrompt" :label="$this->primaryLabel($this->selectedLibrary->kind)" rows="3" />
                         @if ($this->selectedLibrary->kind !== PromptRoundKind::SharedQuestion)
                             <flux:textarea wire:model="secondaryPrompt" :label="$this->secondaryLabel($this->selectedLibrary->kind)" rows="3" />
@@ -448,6 +586,21 @@ new #[Title('Prompt libraries')] class extends Component
                             <flux:heading size="lg">{{ __('Bulk import into :library', ['library' => $this->selectedLibrary->name]) }}</flux:heading>
                             <flux:subheading>{{ __('Paste one prompt per line. Thousands of lines are supported.') }}</flux:subheading>
                         </div>
+                        @if ($this->usesNamedAssignments($this->selectedLibrary->kind))
+                            <div class="app-glass-card rounded-2xl border border-zinc-200/80 bg-zinc-50/70 p-4 dark:border-white/8 dark:bg-zinc-800/55">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div>
+                                        <p class="text-sm font-semibold text-zinc-900 dark:text-white">{{ __('Who gets what') }}</p>
+                                        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ $this->primaryRoleDescription($this->selectedLibrary->kind) }}</p>
+                                        <p class="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">{{ $this->secondaryRoleDescription($this->selectedLibrary->kind) }}</p>
+                                        <p class="mt-2 text-xs text-zinc-400 dark:text-zinc-500">{{ __('This assignment applies to every row in this import.') }}</p>
+                                    </div>
+                                    <flux:button type="button" size="sm" variant="ghost" icon="arrows-right-left" wire:click="swapDraftAssignments">
+                                        {{ __('Swap') }}
+                                    </flux:button>
+                                </div>
+                            </div>
+                        @endif
                         <div class="app-glass-card rounded-xl bg-zinc-100 p-4 text-sm text-zinc-600 backdrop-blur-xl dark:bg-zinc-800 dark:text-zinc-300">
                             @if ($this->selectedLibrary->kind === PromptRoundKind::SharedQuestion)
                                 <code>{{ __('Question text ||| ||| topic one, topic two') }}</code>

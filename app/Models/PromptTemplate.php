@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property int|null $prompt_library_id
  * @property int|null $relationship_id
+ * @property int|null $primary_user_id
  * @property string $slug
  * @property PromptRoundKind $kind
  * @property string $primary_prompt
@@ -25,6 +26,7 @@ class PromptTemplate extends Model
         'slug',
         'prompt_library_id',
         'relationship_id',
+        'primary_user_id',
         'kind',
         'primary_prompt',
         'secondary_prompt',
@@ -37,6 +39,7 @@ class PromptTemplate extends Model
     {
         return [
             'kind' => PromptRoundKind::class,
+            'primary_user_id' => 'integer',
             'topics' => 'array',
             'active' => 'boolean',
             'position' => 'integer',
@@ -53,6 +56,12 @@ class PromptTemplate extends Model
     public function relationship(): BelongsTo
     {
         return $this->belongsTo(Relationship::class);
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function primaryUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'primary_user_id');
     }
 
     /** @return HasMany<PromptRound, $this> */

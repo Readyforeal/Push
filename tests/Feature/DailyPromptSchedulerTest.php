@@ -81,19 +81,19 @@ test('photo favorite rounds give both partners an upload and a pick', function (
 
 test('photo request rounds move from requester to photographer and back', function () {
     [$relationship, $firstUser, $secondUser] = dailyRelationship();
-    dailyTemplate('photo-request', PromptRoundKind::PhotoRequest, 1, 'Take three photos for me.');
+    dailyTemplate('photo-request', PromptRoundKind::PhotoRequest, 1, 'Take three photos for me.', primaryUser: $secondUser);
     $scheduler = app(DailyPromptScheduler::class);
     $date = CarbonImmutable::parse('2026-09-15 10:00:00', 'America/Chicago');
     $round = $scheduler->scheduleFor($relationship, $date);
 
     expect($round?->tasks)->toHaveCount(3)
         ->and($round?->tasks[0]->kind)->toBe(PromptTaskKind::Question)
-        ->and($round?->tasks[0]->user_id)->toBe($firstUser->id)
+        ->and($round?->tasks[0]->user_id)->toBe($secondUser->id)
         ->and($round?->tasks[1]->kind)->toBe(PromptTaskKind::PhotoUpload)
-        ->and($round?->tasks[1]->user_id)->toBe($secondUser->id)
+        ->and($round?->tasks[1]->user_id)->toBe($firstUser->id)
         ->and($round?->tasks[1]->depends_on_task_id)->toBe($round?->tasks[0]->id)
         ->and($round?->tasks[2]->kind)->toBe(PromptTaskKind::PhotoPick)
-        ->and($round?->tasks[2]->user_id)->toBe($firstUser->id)
+        ->and($round?->tasks[2]->user_id)->toBe($secondUser->id)
         ->and($round?->tasks[2]->depends_on_task_id)->toBe($round?->tasks[1]->id);
 });
 
@@ -178,9 +178,11 @@ function dailyTemplate(
     int $position,
     ?string $secondaryPrompt = null,
     ?PromptLibrary $library = null,
+    ?User $primaryUser = null,
 ): PromptTemplate {
     return PromptTemplate::query()->create([
         'prompt_library_id' => $library?->id,
+        'primary_user_id' => $primaryUser?->id,
         'slug' => $slug,
         'kind' => $kind,
         'primary_prompt' => 'What would you like to share today?',

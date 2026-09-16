@@ -67,6 +67,11 @@ class User extends Authenticatable implements PasskeyUser
             : $initials;
     }
 
+    public function firstName(): string
+    {
+        return Str::before(trim($this->name), ' ');
+    }
+
     /** @return BelongsToMany<Relationship, $this> */
     public function relationships(): BelongsToMany
     {

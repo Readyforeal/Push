@@ -32,7 +32,7 @@ test('the default database seed does not create demo prompt history', function (
 });
 
 test('partners can create a library and add prompts individually or in bulk', function () {
-    [$user, $relationship] = promptLibraryRelationship();
+    [$user, $relationship, $partner] = promptLibraryRelationship();
 
     $this->actingAs($user);
     $component = Livewire::test('pages::settings.prompt-libraries')
@@ -46,6 +46,7 @@ test('partners can create a library and add prompts individually or in bulk', fu
     $library = $relationship->promptLibraries()->sole();
 
     $component
+        ->set('primaryAssigneeId', $partner->id)
         ->set('primaryPrompt', 'When do you feel closest to me?')
         ->set('secondaryPrompt', 'What helps you feel safe opening up?')
         ->set('topics', 'Trust, Intimacy, trust')
@@ -61,7 +62,37 @@ test('partners can create a library and add prompts individually or in bulk', fu
         ->assertSee('trust');
 
     expect($library->prompts()->count())->toBe(3)
-        ->and($library->prompts()->oldest('id')->firstOrFail()->topics)->toBe(['trust', 'intimacy']);
+        ->and($library->prompts()->oldest('id')->firstOrFail()->topics)->toBe(['trust', 'intimacy'])
+        ->and($library->prompts()->pluck('primary_user_id')->unique()->all())->toBe([$partner->id]);
+});
+
+test('named prompt assignments can be swapped between partners', function () {
+    [$user, $relationship, $partner] = promptLibraryRelationship();
+    $library = $relationship->promptLibraries()->create([
+        'name' => 'Questions just for you',
+        'slug' => 'named-assignment-test',
+        'kind' => PromptRoundKind::UniqueQuestions,
+        'active' => true,
+    ]);
+
+    $this->actingAs($user);
+    $component = Livewire::test('pages::settings.prompt-libraries')
+        ->set('selectedLibraryId', $library->id)
+        ->assertSee($user->firstName())
+        ->assertSee($partner->firstName())
+        ->set('primaryAssigneeId', $partner->id)
+        ->set('primaryPrompt', 'A question selected for Taylor?')
+        ->set('secondaryPrompt', 'A question selected for Jamie?')
+        ->call('addPrompt')
+        ->assertHasNoErrors();
+
+    $prompt = $library->prompts()->sole();
+
+    expect($prompt->primary_user_id)->toBe($partner->id);
+
+    $component->call('swapPromptAssignment', $prompt->id)->assertHasNoErrors();
+
+    expect($prompt->refresh()->primary_user_id)->toBe($user->id);
 });
 
 test('bulk import reports the failing line and does not partially import', function () {
@@ -127,13 +158,13 @@ test('relationship-owned libraries stay private to that couple', function () {
         ->assertDontSee('Our private topics');
 });
 
-/** @return array{User, Relationship} */
+/** @return array{User, Relationship, User} */
 function promptLibraryRelationship(): array
 {
-    $user = User::factory()->create();
-    $partner = User::factory()->create();
+    $user = User::factory()->create(['name' => 'Jamie Rivera']);
+    $partner = User::factory()->create(['name' => 'Taylor Morgan']);
     $relationship = Relationship::query()->create(['timezone' => 'America/Chicago']);
     $relationship->members()->attach([$user->id, $partner->id], ['joined_at' => now()]);
 
-    return [$user, $relationship];
+    return [$user, $relationship, $partner];
 }

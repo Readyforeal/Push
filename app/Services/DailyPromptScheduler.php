@@ -185,11 +185,11 @@ class DailyPromptScheduler
     private function tasksFor(Relationship $relationship, PromptTemplate $template, array $members): array
     {
         return $this->tasksForPrompts(
-            $relationship,
             $template->kind,
             $template->primary_prompt,
             $template->secondary_prompt,
             $members,
+            $template->primary_user_id,
         );
     }
 
@@ -198,11 +198,11 @@ class DailyPromptScheduler
      * @return list<array{user: User, kind: PromptTaskKind, prompt: string, depends_on?: int}>
      */
     private function tasksForPrompts(
-        Relationship $relationship,
         PromptRoundKind $kind,
         string $primaryPrompt,
         ?string $secondaryPrompt,
         array $members,
+        ?int $primaryUserId = null,
     ): array {
         if ($kind === PromptRoundKind::SharedQuestion) {
             return [
@@ -212,14 +212,16 @@ class DailyPromptScheduler
         }
 
         if ($kind === PromptRoundKind::UniqueQuestions) {
+            [$primaryUser, $secondaryUser] = $this->assignedMembers($members, $primaryUserId);
+
             return [
-                ['user' => $members[0], 'kind' => PromptTaskKind::Question, 'prompt' => $primaryPrompt],
-                ['user' => $members[1], 'kind' => PromptTaskKind::Question, 'prompt' => $secondaryPrompt ?? $primaryPrompt],
+                ['user' => $primaryUser, 'kind' => PromptTaskKind::Question, 'prompt' => $primaryPrompt],
+                ['user' => $secondaryUser, 'kind' => PromptTaskKind::Question, 'prompt' => $secondaryPrompt ?? $primaryPrompt],
             ];
         }
 
         if ($kind === PromptRoundKind::PhotoRequest) {
-            [$requester, $sender] = $this->photoRequestRolesFor($relationship, $members);
+            [$requester, $sender] = $this->assignedMembers($members, $primaryUserId);
 
             return [
                 ['user' => $requester, 'kind' => PromptTaskKind::Question, 'prompt' => $primaryPrompt],
@@ -260,21 +262,12 @@ class DailyPromptScheduler
      * @param  list<User>  $members
      * @return array{User, User}
      */
-    private function photoRequestRolesFor(Relationship $relationship, array $members): array
+    private function assignedMembers(array $members, ?int $primaryUserId): array
     {
-        $lastRequesterId = $relationship->rounds()
-            ->where('kind', PromptRoundKind::PhotoRequest)
-            ->latest('id')
-            ->first()
-            ?->tasks()
-            ->where('kind', PromptTaskKind::Question)
-            ->value('user_id');
+        $primary = collect($members)->firstWhere('id', $primaryUserId) ?? $members[0];
+        $secondary = collect($members)->first(fn (User $member): bool => $member->id !== $primary->id);
 
-        if ($lastRequesterId === $members[0]->id) {
-            return [$members[1], $members[0]];
-        }
-
-        return [$members[0], $members[1]];
+        return [$primary, $secondary];
     }
 
     /** @return list<User> */
