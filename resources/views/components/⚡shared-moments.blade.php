@@ -26,6 +26,8 @@ new class extends Component
 
     public bool $showFeed = false;
 
+    public bool $showComposer = true;
+
     /** @var array<int, TemporaryUploadedFile> */
     public array $photos = [];
 
@@ -313,24 +315,26 @@ new class extends Component
 @endphp
 
 <section class="space-y-4">
-    <div class="prompt-surface p-6 sm:p-7">
-        <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-pink-600 dark:text-pink-300">
-            <flux:icon.sparkles class="size-3.5" />
-            <span>{{ __('Moments') }}</span>
-        </div>
-        <flux:heading size="lg" class="mt-2 tracking-tight">{{ __('Keep something from your day') }}</flux:heading>
-        <flux:text class="mt-1 max-w-xl">
-            {{ $this->relationship
-                ? __('A private, shared log for whatever feels worth remembering.')
-                : __('Keep moments for yourself now. Your full history will be shared once you pair with your partner.') }}
-        </flux:text>
+    @if ($showComposer)
+        <div class="prompt-surface p-6 sm:p-7">
+            <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-pink-600 dark:text-pink-300">
+                <flux:icon.sparkles class="size-3.5" />
+                <span>{{ __('Moments') }}</span>
+            </div>
+            <flux:heading size="lg" class="mt-2 tracking-tight">{{ __('Keep something from your day') }}</flux:heading>
+            <flux:text class="mt-1 max-w-xl">
+                {{ $this->relationship
+                    ? __('A private, shared log for whatever feels worth remembering.')
+                    : __('Keep moments for yourself now. Your full history will be shared once you pair with your partner.') }}
+            </flux:text>
 
-        <flux:modal.trigger name="log-shared-moment">
-            <flux:button variant="primary" icon="plus" class="mt-5 w-full justify-center">
-                {{ __('Log a moment') }}
-            </flux:button>
-        </flux:modal.trigger>
-    </div>
+            <flux:modal.trigger name="log-shared-moment">
+                <flux:button variant="primary" icon="plus" class="mt-5 w-full justify-center">
+                    {{ __('Log a moment') }}
+                </flux:button>
+            </flux:modal.trigger>
+        </div>
+    @endif
 
     @if (! $showFeed && $this->moments->isNotEmpty())
         @php

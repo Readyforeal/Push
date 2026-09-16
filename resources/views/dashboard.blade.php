@@ -30,6 +30,7 @@
                 <livewire:temperature-gauge />
                 <livewire:current-prompt />
                 <x-extracurriculars-card />
+                <livewire:shared-moments :show-composer="false" />
             @else
                 <livewire:relationship-invitation />
             @endif
