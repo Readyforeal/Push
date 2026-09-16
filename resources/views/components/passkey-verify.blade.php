@@ -66,7 +66,7 @@
                     <div class="w-full border-t border-zinc-200 dark:border-zinc-700"></div>
                 </div>
                 <div class="relative flex justify-center text-xs uppercase">
-                    <span class="px-2 text-zinc-500 dark:text-zinc-400 bg-white dark:bg-zinc-900">
+                    <span class="bg-white/80 px-2 text-zinc-500 backdrop-blur-sm dark:bg-zinc-900/80 dark:text-zinc-400">
                         {{ $separator }}
                     </span>
                 </div>

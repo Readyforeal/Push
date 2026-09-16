@@ -9,7 +9,11 @@ beforeEach(function () {
 test('registration screen can be rendered', function () {
     $response = $this->get(route('register'));
 
-    $response->assertOk();
+    $response
+        ->assertOk()
+        ->assertSee('Create your shared space')
+        ->assertSee('Create my space')
+        ->assertSee('viewport-fit=cover', false);
 });
 
 test('new users can register', function () {

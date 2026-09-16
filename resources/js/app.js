@@ -105,11 +105,23 @@ const queueHomeBackgroundSync = () => {
     });
 };
 
+const syncBrowserChromeTheme = () => {
+    const themeColor = document.querySelector('#app-theme-color');
+
+    if (themeColor) {
+        themeColor.setAttribute('content', document.documentElement.classList.contains('dark') ? '#131116' : '#fdfcfd');
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     animatePageEntry();
     hydrateImageFades();
     syncHomeBackgroundState();
+    syncBrowserChromeTheme();
     window.addEventListener('scroll', queueHomeBackgroundSync, { passive: true });
+
+    const appearanceObserver = new MutationObserver(syncBrowserChromeTheme);
+    appearanceObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
     const imageFadeObserver = new MutationObserver((records) => {
         records.forEach((record) => {

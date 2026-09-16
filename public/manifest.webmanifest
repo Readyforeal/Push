@@ -1,12 +1,12 @@
 {
     "id": "/",
-    "name": "Push Lab",
-    "short_name": "Push Lab",
-    "description": "Local Web Push notification test app",
+    "name": "Push",
+    "short_name": "Push",
+    "description": "A private shared space for two.",
     "start_url": "/dashboard",
     "scope": "/",
     "display": "standalone",
-    "background_color": "#211f26",
+    "background_color": "#131116",
     "theme_color": "#db2777",
     "icons": [
         {
