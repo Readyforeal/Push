@@ -16,6 +16,10 @@ test('authenticated users can visit the dashboard', function () {
     $response
         ->assertOk()
         ->assertSee('data-mobile-dock', false)
+        ->assertSee('bottom: calc(0.75rem + 4pt);', false)
+        ->assertSee('data-mobile-header', false)
+        ->assertSee('data-app-brand', false)
+        ->assertSee('Push')
         ->assertSee('data-home-screen', false)
         ->assertSee('data-home-card-stack', false)
         ->assertSee('data-dock-item="dashboard"', false)

@@ -30,7 +30,7 @@
 <div
     data-mobile-dock
     class="fixed inset-x-4 z-50 lg:hidden"
-    style="bottom: calc(0.75rem + 4pt + env(safe-area-inset-bottom, 0px));"
+    style="bottom: calc(0.75rem + 4pt);"
 >
     <nav
         aria-label="{{ __('Primary navigation') }}"
