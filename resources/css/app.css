@@ -61,12 +61,27 @@
         z-index: -1;
         inset: 0;
         background-image:
-            linear-gradient(rgb(253 252 253 / 62%), rgb(253 252 253 / 68%)),
+            linear-gradient(rgb(253 252 253 / 30%), rgb(253 252 253 / 38%)),
             var(--app-background-image);
         background-position: center center;
         background-repeat: no-repeat;
         background-size: cover;
         pointer-events: none;
+    }
+
+    .app-photo-background::after {
+        content: '';
+        position: fixed;
+        z-index: -1;
+        inset: 0;
+        background: linear-gradient(rgb(253 252 253 / 46%), rgb(253 252 253 / 48%));
+        opacity: 1;
+        transition: opacity 360ms cubic-bezier(0.22, 1, 0.36, 1);
+        pointer-events: none;
+    }
+
+    .app-photo-background.home-background-at-top::after {
+        opacity: 0;
     }
 
     .dark .app-photo-background {
@@ -75,8 +90,12 @@
 
     .dark .app-photo-background::before {
         background-image:
-            linear-gradient(rgb(18 15 21 / 66%), rgb(18 15 21 / 76%)),
+            linear-gradient(rgb(18 15 21 / 38%), rgb(18 15 21 / 48%)),
             var(--app-background-image);
+    }
+
+    .dark .app-photo-background::after {
+        background: linear-gradient(rgb(18 15 21 / 45%), rgb(18 15 21 / 54%));
     }
 
     .app-photo-background :is(.prompt-surface, .prompt-surface-muted, .app-glass-card) {
@@ -167,7 +186,7 @@
     }
 
     .app-photo-background [data-home-card-stack] {
-        margin-top: clamp(3rem, 10dvh, 7rem);
+        margin-top: clamp(8rem, 28dvh, 19rem);
     }
 
     .home-shell::before {

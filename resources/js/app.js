@@ -76,9 +76,31 @@ const hydrateImageFades = (root = document) => {
     root.querySelectorAll?.('img').forEach(prepareImageFade);
 };
 
+let homeScrollFrame;
+
+const syncHomeBackgroundState = () => {
+    const isHomeScreen = document.querySelector('[data-home-screen]') !== null;
+    const isAtTop = (document.scrollingElement?.scrollTop ?? window.scrollY) < 24;
+
+    document.body.classList.toggle('home-background-at-top', isHomeScreen && isAtTop);
+};
+
+const queueHomeBackgroundSync = () => {
+    if (homeScrollFrame) {
+        return;
+    }
+
+    homeScrollFrame = requestAnimationFrame(() => {
+        syncHomeBackgroundState();
+        homeScrollFrame = undefined;
+    });
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     animatePageEntry();
     hydrateImageFades();
+    syncHomeBackgroundState();
+    window.addEventListener('scroll', queueHomeBackgroundSync, { passive: true });
 
     const imageFadeObserver = new MutationObserver((records) => {
         records.forEach((record) => {
@@ -105,6 +127,7 @@ document.addEventListener('livewire:navigated', () => {
     requestAnimationFrame(() => {
         animatePageEntry();
         hydrateImageFades();
+        syncHomeBackgroundState();
     });
     navigationInProgress = false;
 });
@@ -113,10 +136,12 @@ document.addEventListener('app-background-updated', (event) => {
     if (!event.detail?.url) {
         document.body.style.removeProperty('--app-background-image');
         document.body.classList.remove('app-photo-background');
+        document.body.classList.remove('home-background-at-top');
 
         return;
     }
 
     document.body.style.setProperty('--app-background-image', `url("${event.detail.url}")`);
     document.body.classList.add('app-photo-background');
+    syncHomeBackgroundState();
 });

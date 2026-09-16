@@ -16,6 +16,7 @@ test('authenticated users can visit the dashboard', function () {
     $response
         ->assertOk()
         ->assertSee('data-mobile-dock', false)
+        ->assertSee('data-home-screen', false)
         ->assertSee('data-home-card-stack', false)
         ->assertSee('data-dock-item="dashboard"', false)
         ->assertSeeInOrder([
