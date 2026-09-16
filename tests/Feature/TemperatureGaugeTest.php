@@ -15,6 +15,7 @@ test('a user can log temperature check-ins and their partner sees the latest one
     Livewire::test('temperature-gauge')
         ->assertSee('How are you feeling?')
         ->assertSeeHtml('data-temperature-card')
+        ->assertSeeHtml('data-temperature-sticky-sentinel')
         ->assertSeeHtml('data-temperature-shell')
         ->assertSeeHtml('data-temperature-progress')
         ->assertSee('Sam’s temperature has not been shared')

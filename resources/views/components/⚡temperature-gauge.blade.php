@@ -103,6 +103,8 @@ new class extends Component
 @endphp
 
 <section class="sticky z-30" data-temperature-card wire:poll.30s>
+    <span class="pointer-events-none absolute -top-px left-0 size-px" data-temperature-sticky-sentinel aria-hidden="true"></span>
+
     <flux:modal.trigger name="temperature-check-in">
         <button
             type="button"
