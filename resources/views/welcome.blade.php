@@ -5,7 +5,7 @@
         @include('partials.head')
     </head>
     <body class="min-h-svh overflow-x-hidden bg-zinc-50 text-zinc-950 antialiased dark:bg-zinc-950 dark:text-white">
-        <main class="relative isolate flex min-h-svh flex-col overflow-hidden px-6 py-7 sm:px-10 sm:py-9" data-page-transition>
+        <main class="relative isolate flex min-h-[100dvh] flex-col overflow-hidden px-6 pb-[calc(env(safe-area-inset-bottom,0px)+1.75rem)] pt-[calc(env(safe-area-inset-top,0px)+2rem)] sm:px-10 sm:pb-[calc(env(safe-area-inset-bottom,0px)+2.25rem)] sm:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)]" data-page-transition>
             <div class="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_50%_-10%,rgba(167,139,250,0.2),transparent_42%)] dark:bg-[radial-gradient(circle_at_50%_-10%,rgba(139,92,246,0.18),transparent_44%)]"></div>
             <div class="pointer-events-none absolute -left-32 top-[48%] -z-10 size-72 rounded-full bg-violet-200/35 blur-3xl dark:bg-violet-700/10"></div>
             <div class="pointer-events-none absolute -right-36 top-[18%] -z-10 size-80 rounded-full bg-indigo-200/35 blur-3xl dark:bg-indigo-700/10"></div>

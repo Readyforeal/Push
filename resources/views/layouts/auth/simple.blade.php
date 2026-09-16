@@ -4,7 +4,7 @@
         @include('partials.head')
     </head>
     <body class="min-h-[100dvh] bg-zinc-50 text-zinc-950 antialiased dark:bg-zinc-950 dark:text-white">
-        <main class="relative isolate flex min-h-[100dvh] flex-col overflow-hidden px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))] sm:px-8" data-page-transition>
+        <main class="relative isolate flex min-h-[100dvh] flex-col overflow-hidden px-5 pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)] pt-[calc(env(safe-area-inset-top,0px)+2rem)] sm:px-8 sm:pt-[calc(env(safe-area-inset-top,0px)+2.5rem)]" data-page-transition>
             <div class="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_50%_-12%,rgba(167,139,250,0.2),transparent_40%)] dark:bg-[radial-gradient(circle_at_50%_-12%,rgba(139,92,246,0.17),transparent_42%)]"></div>
             <div class="pointer-events-none absolute -left-36 top-[55%] -z-10 size-72 rounded-full bg-violet-200/30 blur-3xl dark:bg-violet-800/10"></div>
             <div class="pointer-events-none absolute -right-40 top-[18%] -z-10 size-80 rounded-full bg-indigo-200/30 blur-3xl dark:bg-indigo-800/10"></div>
