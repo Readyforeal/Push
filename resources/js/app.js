@@ -79,10 +79,19 @@ const hydrateImageFades = (root = document) => {
 let homeScrollFrame;
 
 const syncHomeBackgroundState = () => {
-    const isHomeScreen = document.querySelector('[data-home-screen]') !== null;
-    const isAtTop = (document.scrollingElement?.scrollTop ?? window.scrollY) < 24;
+    const homeScreen = document.querySelector('[data-home-screen]');
 
-    document.body.classList.toggle('home-background-at-top', isHomeScreen && isAtTop);
+    if (!homeScreen) {
+        document.body.style.removeProperty('--app-background-overlay-strength');
+
+        return;
+    }
+
+    const scrollTop = document.scrollingElement?.scrollTop ?? window.scrollY;
+    const fadeDistance = Math.max(160, Math.min(280, window.innerHeight * 0.24));
+    const overlayStrength = Math.min(1, Math.max(0, scrollTop / fadeDistance));
+
+    document.body.style.setProperty('--app-background-overlay-strength', overlayStrength.toFixed(3));
 };
 
 const queueHomeBackgroundSync = () => {
@@ -135,8 +144,8 @@ document.addEventListener('livewire:navigated', () => {
 document.addEventListener('app-background-updated', (event) => {
     if (!event.detail?.url) {
         document.body.style.removeProperty('--app-background-image');
+        document.body.style.removeProperty('--app-background-overlay-strength');
         document.body.classList.remove('app-photo-background');
-        document.body.classList.remove('home-background-at-top');
 
         return;
     }
