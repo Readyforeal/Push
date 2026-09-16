@@ -32,7 +32,7 @@ test('a user can upload replace and remove a private app background', function (
     expect($user->background_mode)->toBe(AppBackgroundMode::Upload)
         ->and($user->background_image_disk)->toBe('homelab_cloud')
         ->and($firstPath)->not->toBeNull()
-        ->and(config('livewire.temporary_file_upload.rules'))->toContain('max:51200');
+        ->and(config('livewire.temporary_file_upload.rules'))->toContain('max:512000');
     Storage::disk('homelab_cloud')->assertExists($firstPath);
 
     $this->get(route('background.show'))

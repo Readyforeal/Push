@@ -94,11 +94,24 @@ npm ci
 npm run build
 ```
 
-Because a moment can contain six 50 MB images, align the web-server and PHP
-limits with the application rules. A practical production baseline is
-`client_max_body_size 310M` in Nginx, `upload_max_filesize=50M`, and
-`post_max_size=310M` in the PHP-FPM configuration. Restart Nginx and PHP-FPM
-after changing them.
+Because a moment can contain six 500 MB images, align the web-server and PHP
+limits with the application rules. Use `client_max_body_size 3100M` in Nginx,
+`upload_max_filesize=500M`, and `post_max_size=3100M` in PHP-FPM. Large mobile
+uploads may also need a longer `client_body_timeout` and `max_input_time`.
+Restart Nginx and PHP-FPM after changing them.
+
+TIFF, Apple ProRAW/DNG, HEIC, and HEIF uploads are converted to high-quality
+JPEGs for reliable browser display. Install ImageMagick, its PHP extension, and
+the RAW delegate on the Droplet:
+
+```bash
+sudo apt install -y imagemagick php8.4-imagick libraw-bin
+sudo systemctl restart php8.4-fpm
+php -r 'foreach (["DNG", "TIFF", "HEIC", "JPEG"] as $f) echo $f.": ".(Imagick::queryFormats($f) ? "yes" : "no").PHP_EOL;'
+```
+
+Use the PHP package and service version installed on the server if it is not
+PHP 8.4. All four formats should report `yes` before testing a RAW upload.
 
 Existing database records retain the disk on which they were created, so local
 development photos remain readable and are not silently moved or deleted. For

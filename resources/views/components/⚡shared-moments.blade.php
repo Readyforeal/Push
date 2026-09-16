@@ -4,6 +4,7 @@ use App\Models\Relationship;
 use App\Models\SharedMoment;
 use App\Models\SharedMomentComment;
 use App\Models\User;
+use App\Services\PhotoStorage;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -40,17 +41,17 @@ new class extends Component
 
     public string $editingCommentBody = '';
 
-    public function logMoment(): void
+    public function logMoment(PhotoStorage $photoStorage): void
     {
         $validated = $this->validate([
             'intensity' => ['required', 'integer', 'between:1,10'],
             'body' => ['nullable', 'string', 'max:5000'],
             'photos' => ['nullable', 'array', 'max:6'],
-            'photos.*' => ['image', 'max:51200'],
+            'photos.*' => ['file', 'mimes:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
         ], [
             'photos.max' => __('Choose up to six photos.'),
-            'photos.*.image' => __('Each file must be a photo.'),
-            'photos.*.max' => __('Each photo must be 50 MB or smaller.'),
+            'photos.*.mimes' => __('Use a JPG, PNG, GIF, WebP, TIFF, Apple ProRAW (DNG), or HEIC photo.'),
+            'photos.*.max' => __('Each photo must be 500 MB or smaller.'),
         ]);
 
         $relationship = $this->relationship;
@@ -63,7 +64,7 @@ new class extends Component
         $mediaDisk = (string) config('filesystems.media_disk', 'homelab_cloud');
 
         try {
-            DB::transaction(function () use ($relationship, $validated, $mediaDisk, &$storedPaths): void {
+            DB::transaction(function () use ($relationship, $validated, $mediaDisk, $photoStorage, &$storedPaths): void {
                 $moment = $relationship->sharedMoments()->create([
                     'user_id' => $this->user()->id,
                     'intensity' => $validated['intensity'],
@@ -71,19 +72,15 @@ new class extends Component
                 ]);
 
                 foreach ($this->photos as $position => $photo) {
-                    $path = $photo->store("moments/{$relationship->id}/{$moment->id}", $mediaDisk);
+                    $stored = $photoStorage->store($photo, "moments/{$relationship->id}/{$moment->id}", $mediaDisk);
 
-                    if (! is_string($path)) {
-                        throw new RuntimeException('The photo could not be stored.');
-                    }
-
-                    $storedPaths[] = $path;
+                    $storedPaths[] = $stored['path'];
                     $moment->photos()->create([
                         'disk' => $mediaDisk,
-                        'path' => $path,
+                        'path' => $stored['path'],
                         'original_name' => $photo->getClientOriginalName(),
-                        'mime_type' => $photo->getMimeType(),
-                        'size' => $photo->getSize(),
+                        'mime_type' => $stored['mime_type'],
+                        'size' => $stored['size'],
                         'position' => $position + 1,
                     ]);
                 }
@@ -542,8 +539,8 @@ new class extends Component
                 <label class="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/70 px-5 py-7 text-center transition hover:border-pink-300 hover:bg-pink-50/50 dark:border-white/15 dark:bg-black/10 dark:hover:border-pink-400/50 dark:hover:bg-pink-500/5">
                     <flux:icon.photo class="size-6 text-zinc-400 transition group-hover:text-pink-500" />
                     <span class="mt-2 text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ __('Add photos') }}</span>
-                    <span class="mt-1 text-xs text-zinc-400">{{ __('Up to six photos, 50 MB each') }}</span>
-                    <input wire:model="photos" type="file" accept="image/*" multiple class="sr-only">
+                    <span class="mt-1 text-xs text-zinc-400">{{ __('Up to six photos, 500 MB each') }}</span>
+                    <input wire:model="photos" type="file" accept="image/*,.dng,.tif,.tiff,.heic,.heif" multiple class="sr-only">
                 </label>
 
                 <div wire:loading wire:target="photos" class="mt-2 text-xs text-zinc-400">{{ __('Preparing photos…') }}</div>
@@ -551,7 +548,15 @@ new class extends Component
                 @if (count($photos) > 0)
                     <div class="mt-3 grid grid-cols-3 gap-2">
                         @foreach ($photos as $photo)
-                            <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-xl object-cover">
+                            @if (in_array(strtolower($photo->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'gif', 'webp'], true))
+                                <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-xl object-cover">
+                            @else
+                                <div class="flex aspect-square w-full flex-col items-center justify-center rounded-xl bg-zinc-100 p-2 text-center text-zinc-500 dark:bg-white/8 dark:text-zinc-300">
+                                    <flux:icon.photo class="size-5" />
+                                    <span class="mt-1 line-clamp-2 text-[11px]">{{ $photo->getClientOriginalName() }}</span>
+                                    <span class="mt-1 text-[9px] font-semibold uppercase tracking-wider text-pink-500">{{ __('Converts to JPEG') }}</span>
+                                </div>
+                            @endif
                         @endforeach
                     </div>
                 @endif

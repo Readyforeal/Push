@@ -9,6 +9,7 @@ use App\Models\PromptRoundTask;
 use App\Models\Relationship;
 use App\Models\RoundPhoto;
 use App\Models\User;
+use App\Services\PhotoStorage;
 use App\Services\PromptRoundWorkflow;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
@@ -77,15 +78,15 @@ new class extends Component
         Flux::toast(variant: 'success', text: __('Answer submitted.'));
     }
 
-    public function submitPhotos(PromptRoundWorkflow $workflow): void
+    public function submitPhotos(PromptRoundWorkflow $workflow, PhotoStorage $photoStorage): void
     {
         $this->validate([
             'photos' => ['required', 'array', 'size:3'],
-            'photos.*' => ['required', 'image', 'max:51200'],
+            'photos.*' => ['required', 'file', 'mimes:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
         ], [
             'photos.size' => __('Please choose exactly three photos.'),
-            'photos.*.image' => __('Each file must be a photo.'),
-            'photos.*.max' => __('Each photo must be 50 MB or smaller.'),
+            'photos.*.mimes' => __('Use a JPG, PNG, GIF, WebP, TIFF, Apple ProRAW (DNG), or HEIC photo.'),
+            'photos.*.max' => __('Each photo must be 500 MB or smaller.'),
         ]);
 
         $task = $this->task;
@@ -99,18 +100,14 @@ new class extends Component
 
         try {
             foreach ($this->photos as $position => $photo) {
-                $path = $photo->store("rounds/{$task->prompt_round_id}/{$task->id}", $mediaDisk);
-
-                if (! is_string($path)) {
-                    throw new RuntimeException('The photo could not be stored.');
-                }
+                $stored = $photoStorage->store($photo, "rounds/{$task->prompt_round_id}/{$task->id}", $mediaDisk);
 
                 $storedPhotos[] = $task->photos()->create([
                     'disk' => $mediaDisk,
-                    'path' => $path,
+                    'path' => $stored['path'],
                     'original_name' => $photo->getClientOriginalName(),
-                    'mime_type' => $photo->getMimeType(),
-                    'size' => $photo->getSize(),
+                    'mime_type' => $stored['mime_type'],
+                    'size' => $stored['size'],
                     'position' => $position + 1,
                 ]);
             }
@@ -320,8 +317,8 @@ new class extends Component
                             <flux:icon.photo class="size-6" />
                         </span>
                         <span class="mt-3 font-medium text-zinc-900 dark:text-white">{{ __('Choose three photos') }}</span>
-                        <span class="mt-1 text-sm text-zinc-500">{{ __('JPG, PNG, or another supported image up to 50 MB each') }}</span>
-                        <input wire:model="photos" type="file" accept="image/*" multiple class="sr-only">
+                        <span class="mt-1 text-sm text-zinc-500">{{ __('JPG, PNG, or another supported image up to 500 MB each') }}</span>
+                        <input wire:model="photos" type="file" accept="image/*,.dng,.tif,.tiff,.heic,.heif" multiple class="sr-only">
                     </label>
 
                     <div wire:loading wire:target="photos" class="text-sm text-zinc-500">{{ __('Preparing your photos…') }}</div>
@@ -329,7 +326,15 @@ new class extends Component
                     @if (count($photos) > 0)
                         <div class="grid grid-cols-3 gap-3">
                             @foreach ($photos as $photo)
-                                <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
+                                @if (in_array(strtolower($photo->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'gif', 'webp'], true))
+                                    <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
+                                @else
+                                    <div class="flex aspect-square w-full flex-col items-center justify-center rounded-2xl bg-zinc-100 p-3 text-center text-zinc-500 shadow-sm ring-1 ring-black/5 dark:bg-white/8 dark:text-zinc-300">
+                                        <flux:icon.photo class="size-6" />
+                                        <span class="mt-2 line-clamp-2 text-xs">{{ $photo->getClientOriginalName() }}</span>
+                                        <span class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-pink-500">{{ __('Converts to JPEG') }}</span>
+                                    </div>
+                                @endif
                             @endforeach
                         </div>
                     @endif

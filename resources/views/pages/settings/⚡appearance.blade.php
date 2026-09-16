@@ -3,6 +3,7 @@
 use App\Enums\AppBackgroundMode;
 use App\Models\PhotoSelection;
 use App\Models\User;
+use App\Services\PhotoStorage;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -84,18 +85,18 @@ new #[Title('Appearance settings')] class extends Component
     public function updatedBackgroundUpload(): void
     {
         $this->validateOnly('backgroundUpload', [
-            'backgroundUpload' => ['required', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:51200'],
+            'backgroundUpload' => ['required', 'file', 'mimes:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
         ]);
 
         $this->chooseUpload();
     }
 
-    public function saveBackground(): void
+    public function saveBackground(PhotoStorage $photoStorage): void
     {
         $this->validate([
             'backgroundMode' => ['required', Rule::enum(AppBackgroundMode::class)],
             'backgroundPhotoId' => ['nullable', 'integer'],
-            'backgroundUpload' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:51200'],
+            'backgroundUpload' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
         ]);
 
         $mode = AppBackgroundMode::from($this->backgroundMode);
@@ -129,21 +130,15 @@ new #[Title('Appearance settings')] class extends Component
                 $attributes['background_image_disk'] = $mediaDisk;
 
                 try {
-                    $storedPath = $this->backgroundUpload->store("backgrounds/{$user->id}", $mediaDisk);
+                    $stored = $photoStorage->store($this->backgroundUpload, "backgrounds/{$user->id}", $mediaDisk);
                 } catch (Throwable) {
                     throw ValidationException::withMessages([
                         'backgroundUpload' => __('The background could not be saved. Please try again.'),
                     ]);
                 }
 
-                if (! is_string($storedPath)) {
-                    throw ValidationException::withMessages([
-                        'backgroundUpload' => __('The background could not be saved. Please try again.'),
-                    ]);
-                }
-
-                $attributes['background_image_path'] = $storedPath;
-                $attributes['background_image_mime_type'] = $this->backgroundUpload->getMimeType();
+                $attributes['background_image_path'] = $stored['path'];
+                $attributes['background_image_mime_type'] = $stored['mime_type'];
             } elseif (! $user->background_image_path) {
                 throw ValidationException::withMessages([
                     'backgroundUpload' => __('Choose an image to use as your background.'),
@@ -276,8 +271,14 @@ new #[Title('Appearance settings')] class extends Component
                     ])
                 >
                     <div class="relative aspect-[16/7] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                        @if ($backgroundUpload && ! $errors->has('backgroundUpload'))
+                        @if ($backgroundUpload && ! $errors->has('backgroundUpload') && in_array(strtolower($backgroundUpload->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'gif', 'webp'], true))
                             <img src="{{ $backgroundUpload->temporaryUrl() }}" alt="{{ __('New custom background preview') }}" class="size-full object-cover">
+                        @elseif ($backgroundUpload && ! $errors->has('backgroundUpload'))
+                            <div class="flex size-full flex-col items-center justify-center bg-gradient-to-br from-pink-100 via-zinc-100 to-zinc-200 text-zinc-500 dark:from-pink-950/40 dark:via-zinc-900 dark:to-zinc-800 dark:text-zinc-300">
+                                <flux:icon.photo class="size-9" />
+                                <span class="mt-2 max-w-xs truncate px-4 text-sm">{{ $backgroundUpload->getClientOriginalName() }}</span>
+                                <span class="mt-1 text-xs font-semibold uppercase tracking-wider text-pink-500">{{ __('Converts to JPEG when saved') }}</span>
+                            </div>
                         @elseif ($this->uploadedBackgroundUrl)
                             <img src="{{ $this->uploadedBackgroundUrl }}" alt="{{ __('Your custom app background') }}" class="size-full object-cover">
                         @else
@@ -300,7 +301,7 @@ new #[Title('Appearance settings')] class extends Component
                     <div class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p class="font-medium text-zinc-900 dark:text-white">{{ __('Your own photo') }}</p>
-                            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ __('JPG, PNG, GIF, or WebP up to 50 MB.') }}</p>
+                            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ __('JPG, PNG, GIF, WebP, TIFF, Apple ProRAW, or HEIC up to 500 MB.') }}</p>
                         </div>
 
                         <div class="flex flex-wrap items-center gap-2">
@@ -311,7 +312,7 @@ new #[Title('Appearance settings')] class extends Component
                             @endif
 
                             <label class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-pink-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-400">
-                                <input wire:model="backgroundUpload" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="sr-only">
+                                <input wire:model="backgroundUpload" type="file" accept="image/*,.dng,.tif,.tiff,.heic,.heif" class="sr-only">
                                 {{ $this->uploadedBackgroundUrl ? __('Replace') : __('Choose image') }}
                             </label>
 

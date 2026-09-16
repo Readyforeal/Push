@@ -60,6 +60,45 @@ test('partners can log and view shared moments with an intensity note and photos
         ->assertSee('Strong · 8');
 });
 
+test('tiff photos are converted to browser friendly jpegs', function () {
+    if (! extension_loaded('imagick') || Imagick::queryFormats('TIFF') === []) {
+        $this->markTestSkipped('ImageMagick with TIFF support is required.');
+    }
+
+    Storage::fake('homelab_cloud');
+    $author = User::factory()->create();
+    $partner = User::factory()->create();
+    $relationship = Relationship::query()->create(['timezone' => 'America/Chicago']);
+    $relationship->members()->attach([$author->id, $partner->id], ['joined_at' => now()]);
+    $sourcePath = tempnam(sys_get_temp_dir(), 'push-tiff-test-');
+    $image = new Imagick;
+    $image->newImage(32, 24, 'pink');
+    $image->setImageFormat('tiff');
+    $image->writeImage($sourcePath);
+    $image->clear();
+    $image->destroy();
+
+    try {
+        $upload = UploadedFile::fake()->createWithContent('apple-raw.tif', file_get_contents($sourcePath));
+
+        $this->actingAs($author);
+        Livewire::test('shared-moments')
+            ->set('body', 'A TIFF moment.')
+            ->set('photos', [$upload])
+            ->call('logMoment')
+            ->assertHasNoErrors();
+
+        $photo = SharedMoment::query()->sole()->photos()->sole();
+
+        expect($photo->original_name)->toBe('apple-raw.tif')
+            ->and($photo->mime_type)->toBe('image/jpeg')
+            ->and($photo->path)->toEndWith('.jpg')
+            ->and(Storage::disk('homelab_cloud')->get($photo->path))->toStartWith("\xFF\xD8\xFF");
+    } finally {
+        @unlink($sourcePath);
+    }
+});
+
 test('guests cannot visit the moments page', function () {
     $this->get(route('moments'))->assertRedirect(route('login'));
 });
