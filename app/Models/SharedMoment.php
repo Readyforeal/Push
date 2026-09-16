@@ -38,4 +38,19 @@ class SharedMoment extends Model
     {
         return $this->hasMany(SharedMomentComment::class)->oldest();
     }
+
+    public function isVisibleTo(User $user): bool
+    {
+        if ($this->relationship_id !== null) {
+            return $this->relationship?->hasMember($user) ?? false;
+        }
+
+        if ($this->user_id === $user->id) {
+            return true;
+        }
+
+        return $user->relationships()
+            ->whereHas('members', fn ($members) => $members->whereKey($this->user_id))
+            ->exists();
+    }
 }

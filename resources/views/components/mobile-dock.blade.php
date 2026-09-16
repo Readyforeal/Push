@@ -16,7 +16,7 @@
             'label' => __('Moments'),
             'route' => 'moments',
             'icon' => 'sparkles',
-            'current' => request()->routeIs('moments'),
+            'current' => request()->routeIs('moments*'),
         ],
         [
             'label' => __('Missions'),

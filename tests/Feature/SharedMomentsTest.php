@@ -50,8 +50,13 @@ test('partners can log and view shared moments with an intensity note and photos
 
     $this->get(route('moments'))
         ->assertOk()
-        ->assertSee('Recent moments')
+        ->assertSee('All moments')
         ->assertSee('A small moment worth remembering.');
+
+    $this->get(route('moments.show', $moment))
+        ->assertOk()
+        ->assertSee('A small moment worth remembering.')
+        ->assertSee(route('moment-photos.show', $moment->photos->first()), false);
 
     $this->actingAs($partner);
     Livewire::test('shared-moments')
@@ -147,6 +152,9 @@ test('shared moment photos stay private to relationship members', function () {
     $this->actingAs($author)->get(route('moment-photos.show', $photo))->assertOk();
     $this->actingAs($partner)->get(route('moment-photos.show', $photo))->assertOk();
     $this->actingAs($outsider)->get(route('moment-photos.show', $photo))->assertForbidden();
+    $this->actingAs($author)->get(route('moments.show', $moment))->assertOk();
+    $this->actingAs($partner)->get(route('moments.show', $moment))->assertOk();
+    $this->actingAs($outsider)->get(route('moments.show', $moment))->assertForbidden();
 });
 
 test('personal moment history becomes visible to both partners after pairing', function () {
@@ -206,6 +214,28 @@ test('shared moment fields stay within their supported limits', function () {
     expect(SharedMoment::query()->count())->toBe(0);
 });
 
+test('the moments archive includes the complete history', function () {
+    $user = User::factory()->create();
+    $partner = User::factory()->create();
+    $relationship = Relationship::query()->create();
+    $relationship->members()->attach([$user->id, $partner->id], ['joined_at' => now()]);
+
+    foreach (range(1, 25) as $position) {
+        $relationship->sharedMoments()->create([
+            'user_id' => $user->id,
+            'intensity' => 5,
+            'body' => "Archive moment {$position}",
+            'created_at' => now()->subDays(25 - $position),
+        ]);
+    }
+
+    $this->actingAs($user);
+    Livewire::test('shared-moments', ['showFeed' => true])
+        ->assertSee('25 posts')
+        ->assertSee('Archive moment 1')
+        ->assertSee('Archive moment 25');
+});
+
 test('moment authors can edit their posts while partners cannot', function () {
     $author = User::factory()->create(['name' => 'Alex']);
     $partner = User::factory()->create(['name' => 'Sam']);
@@ -218,8 +248,7 @@ test('moment authors can edit their posts while partners cannot', function () {
     ]);
 
     $this->actingAs($author);
-    Livewire::test('shared-moments', ['showFeed' => true])
-        ->call('startEditingMoment', $moment->id)
+    Livewire::test('pages::moments.show', ['moment' => $moment])
         ->assertSet('editIntensity', 4)
         ->assertSet('editBody', 'The original note.')
         ->set('editIntensity', 9)
@@ -233,12 +262,13 @@ test('moment authors can edit their posts while partners cannot', function () {
         ->and($moment->fresh()->intensity)->toBe(9);
 
     $this->actingAs($partner);
-    Livewire::test('shared-moments', ['showFeed' => true])
-        ->call('startEditingMoment', $moment->id)
+    Livewire::test('pages::moments.show', ['moment' => $moment])
+        ->set('editBody', 'A change from the partner.')
+        ->call('updateMoment')
         ->assertForbidden();
 
-    Livewire::test('shared-moments', ['showFeed' => true])
-        ->call('deleteMoment', $moment->id)
+    Livewire::test('pages::moments.show', ['moment' => $moment])
+        ->call('deleteMoment')
         ->assertForbidden();
 
     expect($moment->fresh())->not->toBeNull();
@@ -256,15 +286,15 @@ test('partners can comment and comment authors can edit or delete their own comm
     ]);
 
     $this->actingAs($partner);
-    Livewire::test('shared-moments', ['showFeed' => true])
-        ->set("commentBodies.{$moment->id}", 'I loved this part of our day.')
-        ->call('addComment', $moment->id)
+    Livewire::test('pages::moments.show', ['moment' => $moment])
+        ->set('commentBody', 'I loved this part of our day.')
+        ->call('addComment')
         ->assertHasNoErrors()
         ->assertSee('I loved this part of our day.');
 
     $comment = SharedMomentComment::query()->sole();
 
-    Livewire::test('shared-moments', ['showFeed' => true])
+    Livewire::test('pages::moments.show', ['moment' => $moment])
         ->call('startEditingComment', $comment->id)
         ->assertSet('editingCommentBody', 'I loved this part of our day.')
         ->set('editingCommentBody', 'I really loved this part of our day.')
@@ -273,13 +303,13 @@ test('partners can comment and comment authors can edit or delete their own comm
         ->assertSee('I really loved this part of our day.');
 
     $this->actingAs($author);
-    Livewire::test('shared-moments', ['showFeed' => true])
+    Livewire::test('pages::moments.show', ['moment' => $moment])
         ->assertSee('I really loved this part of our day.')
         ->call('deleteComment', $comment->id)
         ->assertForbidden();
 
     $this->actingAs($partner);
-    Livewire::test('shared-moments', ['showFeed' => true])
+    Livewire::test('pages::moments.show', ['moment' => $moment])
         ->call('deleteComment', $comment->id)
         ->assertHasNoErrors();
 
