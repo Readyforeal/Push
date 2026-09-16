@@ -23,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        config()->set('livewire.temporary_file_upload.rules', ['required', 'file', 'max:51200']);
+
         $this->configureDefaults();
     }
 

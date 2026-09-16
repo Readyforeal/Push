@@ -15,11 +15,24 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        User::query()->firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'email_verified_at' => now(),
+                'password' => 'password',
+            ],
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::query()->firstOrCreate(
+            ['email' => 'partner@example.com'],
+            [
+                'name' => 'Taylor Partner',
+                'email_verified_at' => now(),
+                'password' => 'password',
+            ],
+        );
+
+        $this->call(PromptTemplateSeeder::class);
     }
 }

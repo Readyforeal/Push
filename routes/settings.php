@@ -10,6 +10,10 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('settings/appearance', 'pages::settings.appearance')->name('appearance.edit');
+    Route::livewire('settings/relationship', 'pages::settings.relationship')->name('relationship.edit');
+    Route::livewire('settings/prompt-schedule', 'pages::settings.prompt-schedule')->name('prompt-schedule.edit');
+    Route::livewire('settings/prompt-libraries', 'pages::settings.prompt-libraries')->name('prompt-libraries.edit');
+    Route::livewire('settings/notifications', 'pages::settings.notifications')->name('notifications.edit');
 
     Route::livewire('settings/security', 'pages::settings.security')
         ->middleware([

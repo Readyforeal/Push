@@ -1,0 +1,18 @@
+{
+    "id": "/",
+    "name": "Push Lab",
+    "short_name": "Push Lab",
+    "description": "Local Web Push notification test app",
+    "start_url": "/dashboard",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#211f26",
+    "theme_color": "#db2777",
+    "icons": [
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "166x166",
+            "type": "image/png"
+        }
+    ]
+}
