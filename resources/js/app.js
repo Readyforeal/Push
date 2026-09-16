@@ -77,8 +77,6 @@ const hydrateImageFades = (root = document) => {
 };
 
 let homeScrollFrame;
-let temperatureStickyFrame;
-let temperatureStickyObserver;
 
 const syncHomeBackgroundState = () => {
     const homeScreen = document.querySelector('[data-home-screen]');
@@ -107,52 +105,6 @@ const queueHomeBackgroundSync = () => {
     });
 };
 
-const syncTemperatureStickyState = () => {
-    document.querySelectorAll('[data-temperature-card]').forEach((card) => {
-        const stickyTop = Number.parseFloat(window.getComputedStyle(card).top) || 0;
-        const sentinel = card.querySelector('[data-temperature-sticky-sentinel]');
-        const sentinelTop = sentinel?.getBoundingClientRect().top ?? card.getBoundingClientRect().top;
-        const isStuck = card.getBoundingClientRect().top <= stickyTop + 1 && sentinelTop < stickyTop;
-
-        card.toggleAttribute('data-temperature-stuck', isStuck);
-    });
-};
-
-const setupTemperatureStickyObserver = () => {
-    temperatureStickyObserver?.disconnect();
-    temperatureStickyObserver = undefined;
-
-    const card = document.querySelector('[data-temperature-card]');
-    const sentinel = card?.querySelector('[data-temperature-sticky-sentinel]');
-
-    if (!card || !sentinel) {
-        return;
-    }
-
-    const stickyTop = Math.ceil(Number.parseFloat(window.getComputedStyle(card).top) || 0);
-
-    temperatureStickyObserver = new IntersectionObserver(([entry]) => {
-        const isStuck = !entry.isIntersecting && entry.boundingClientRect.top < stickyTop;
-
-        card.toggleAttribute('data-temperature-stuck', isStuck);
-    }, {
-        rootMargin: `-${stickyTop}px 0px 0px 0px`,
-        threshold: 0,
-    });
-    temperatureStickyObserver.observe(sentinel);
-};
-
-const queueTemperatureStickySync = () => {
-    if (temperatureStickyFrame) {
-        return;
-    }
-
-    temperatureStickyFrame = requestAnimationFrame(() => {
-        syncTemperatureStickyState();
-        temperatureStickyFrame = undefined;
-    });
-};
-
 const syncBrowserChromeTheme = () => {
     const themeColor = document.querySelector('#app-theme-color');
 
@@ -165,11 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
     animatePageEntry();
     hydrateImageFades();
     syncHomeBackgroundState();
-    setupTemperatureStickyObserver();
     syncBrowserChromeTheme();
     window.addEventListener('scroll', queueHomeBackgroundSync, { passive: true });
-    window.addEventListener('scroll', queueTemperatureStickySync, { passive: true });
-    window.addEventListener('resize', setupTemperatureStickyObserver, { passive: true });
 
     const appearanceObserver = new MutationObserver(syncBrowserChromeTheme);
     appearanceObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
@@ -182,7 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
-        setupTemperatureStickyObserver();
     });
     imageFadeObserver.observe(document.body, { childList: true, subtree: true });
 });
@@ -201,7 +149,6 @@ document.addEventListener('livewire:navigated', () => {
         animatePageEntry();
         hydrateImageFades();
         syncHomeBackgroundState();
-        setupTemperatureStickyObserver();
     });
     navigationInProgress = false;
 });
