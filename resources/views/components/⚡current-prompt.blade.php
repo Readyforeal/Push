@@ -347,8 +347,9 @@ new class extends Component
                     <flux:error name="photos.*" />
 
                     <div class="flex justify-end">
-                        <flux:button type="submit" variant="primary" icon="paper-airplane" wire:loading.attr="disabled" wire:target="photos,submitPhotos">
-                            {{ __('Send these photos') }}
+                        <flux:button type="submit" variant="primary" icon="paper-airplane" wire:loading.attr="disabled" wire:target="submitPhotos">
+                            <span wire:loading.remove wire:target="submitPhotos">{{ __('Send these photos') }}</span>
+                            <span wire:loading wire:target="submitPhotos">{{ __('Sending…') }}</span>
                         </flux:button>
                     </div>
                 </form>

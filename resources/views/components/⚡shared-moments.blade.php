@@ -571,8 +571,9 @@ new class extends Component
                 <flux:modal.close>
                     <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
                 </flux:modal.close>
-                <flux:button type="submit" variant="primary" icon="plus" wire:loading.attr="disabled" wire:target="photos,logMoment">
-                    {{ __('Save moment') }}
+                <flux:button type="submit" variant="primary" icon="plus" wire:loading.attr="disabled" wire:target="logMoment">
+                    <span wire:loading.remove wire:target="logMoment">{{ __('Save moment') }}</span>
+                    <span wire:loading wire:target="logMoment">{{ __('Saving…') }}</span>
                 </flux:button>
             </div>
         </form>
