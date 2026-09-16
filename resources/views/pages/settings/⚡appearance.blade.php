@@ -131,7 +131,9 @@ new #[Title('Appearance settings')] class extends Component
 
                 try {
                     $stored = $photoStorage->store($this->backgroundUpload, "backgrounds/{$user->id}", $mediaDisk);
-                } catch (Throwable) {
+                } catch (Throwable $exception) {
+                    report($exception);
+
                     throw ValidationException::withMessages([
                         'backgroundUpload' => __('The background could not be saved. Please try again.'),
                     ]);

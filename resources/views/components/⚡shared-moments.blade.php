@@ -85,7 +85,9 @@ new class extends Component
                     ]);
                 }
             });
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            report($exception);
+
             foreach ($storedPaths as $storedPath) {
                 Storage::disk($mediaDisk)->delete($storedPath);
             }

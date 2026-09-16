@@ -114,6 +114,10 @@ new class extends Component
 
             $workflow->submitPhotos($task, $this->user());
         } catch (Throwable $exception) {
+            if (! $exception instanceof DomainException) {
+                report($exception);
+            }
+
             foreach ($storedPhotos as $storedPhoto) {
                 Storage::disk($storedPhoto->disk)->delete($storedPhoto->path);
                 $storedPhoto->delete();
