@@ -44,8 +44,52 @@ const animatePageEntry = () => {
     container.setAttribute('data-page-ready', '');
 };
 
+const prepareImageFade = (image) => {
+    if (
+        !(image instanceof HTMLImageElement)
+        || image.dataset.imageFadeReady === 'true'
+        || image.hasAttribute('data-no-image-fade')
+    ) {
+        return;
+    }
+
+    image.dataset.imageFadeReady = 'true';
+    image.classList.add('image-load-fade');
+
+    const reveal = () => requestAnimationFrame(() => image.classList.add('image-load-complete'));
+
+    if (image.complete) {
+        reveal();
+
+        return;
+    }
+
+    image.addEventListener('load', reveal, { once: true });
+    image.addEventListener('error', reveal, { once: true });
+};
+
+const hydrateImageFades = (root = document) => {
+    if (root instanceof HTMLImageElement) {
+        prepareImageFade(root);
+    }
+
+    root.querySelectorAll?.('img').forEach(prepareImageFade);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     animatePageEntry();
+    hydrateImageFades();
+
+    const imageFadeObserver = new MutationObserver((records) => {
+        records.forEach((record) => {
+            record.addedNodes.forEach((node) => {
+                if (node instanceof Element) {
+                    hydrateImageFades(node);
+                }
+            });
+        });
+    });
+    imageFadeObserver.observe(document.body, { childList: true, subtree: true });
 });
 document.addEventListener('livewire:navigating', () => {
     navigationInProgress = true;
@@ -58,7 +102,10 @@ document.addEventListener('livewire:navigated', () => {
         container.removeAttribute('data-page-ready');
     }
 
-    requestAnimationFrame(animatePageEntry);
+    requestAnimationFrame(() => {
+        animatePageEntry();
+        hydrateImageFades();
+    });
     navigationInProgress = false;
 });
 

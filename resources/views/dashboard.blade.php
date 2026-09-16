@@ -29,7 +29,7 @@
             @if ($relationship)
                 <livewire:temperature-gauge />
                 <livewire:current-prompt />
-                <livewire:shared-moments />
+                <x-extracurriculars-card />
             @else
                 <livewire:relationship-invitation />
             @endif

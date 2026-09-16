@@ -44,9 +44,8 @@ test('partners can log and view shared moments with an intensity note and photos
 
     $this->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('Latest moment')
-        ->assertSee(route('moment-photos.show', $moment->photos->first()), false)
-        ->assertSee(route('moments'), false);
+        ->assertSee('Extracurriculars')
+        ->assertDontSee(route('moment-photos.show', $moment->photos->first()), false);
 
     $this->get(route('moments'))
         ->assertOk()

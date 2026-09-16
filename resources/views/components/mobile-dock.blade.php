@@ -19,12 +19,6 @@
             'current' => request()->routeIs('moments*'),
         ],
         [
-            'label' => __('Missions'),
-            'route' => 'missions',
-            'icon' => 'gift',
-            'current' => request()->routeIs('missions'),
-        ],
-        [
             'label' => __('Library'),
             'route' => 'library',
             'icon' => 'photo',
