@@ -85,7 +85,7 @@ new #[Title('Appearance settings')] class extends Component
     public function updatedBackgroundUpload(): void
     {
         $this->validateOnly('backgroundUpload', [
-            'backgroundUpload' => ['required', 'file', 'mimes:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
+            'backgroundUpload' => ['required', 'file', 'extensions:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
         ]);
 
         $this->chooseUpload();
@@ -96,7 +96,7 @@ new #[Title('Appearance settings')] class extends Component
         $this->validate([
             'backgroundMode' => ['required', Rule::enum(AppBackgroundMode::class)],
             'backgroundPhotoId' => ['nullable', 'integer'],
-            'backgroundUpload' => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
+            'backgroundUpload' => ['nullable', 'file', 'extensions:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
         ]);
 
         $mode = AppBackgroundMode::from($this->backgroundMode);

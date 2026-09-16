@@ -82,10 +82,10 @@ new class extends Component
     {
         $this->validate([
             'photos' => ['required', 'array', 'size:3'],
-            'photos.*' => ['required', 'file', 'mimes:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
+            'photos.*' => ['required', 'file', 'extensions:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
         ], [
             'photos.size' => __('Please choose exactly three photos.'),
-            'photos.*.mimes' => __('Use a JPG, PNG, GIF, WebP, TIFF, Apple ProRAW (DNG), or HEIC photo.'),
+            'photos.*.extensions' => __('Use a JPG, PNG, GIF, WebP, TIFF, Apple ProRAW (DNG), or HEIC photo.'),
             'photos.*.max' => __('Each photo must be 500 MB or smaller.'),
         ]);
 
@@ -344,7 +344,11 @@ new class extends Component
                     @endif
 
                     <flux:error name="photos" />
-                    <flux:error name="photos.*" />
+                    @foreach ($errors->get('photos.*') as $photoErrors)
+                        @foreach ($photoErrors as $photoError)
+                            <p class="text-sm text-red-600 dark:text-red-400">{{ $photoError }}</p>
+                        @endforeach
+                    @endforeach
 
                     <div class="flex justify-end">
                         <flux:button type="submit" variant="primary" icon="paper-airplane" wire:loading.attr="disabled" wire:target="submitPhotos">

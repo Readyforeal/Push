@@ -16,6 +16,10 @@ class PhotoStorage
     public function store(UploadedFile $upload, string $directory, string $disk): array
     {
         if (! $this->requiresConversion($upload)) {
+            if (@getimagesize($upload->getRealPath()) === false) {
+                throw new RuntimeException('This file could not be read as an image.');
+            }
+
             $path = $upload->store($directory, $disk);
 
             if (! is_string($path)) {

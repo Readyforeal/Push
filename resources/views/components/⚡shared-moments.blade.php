@@ -47,10 +47,10 @@ new class extends Component
             'intensity' => ['required', 'integer', 'between:1,10'],
             'body' => ['nullable', 'string', 'max:5000'],
             'photos' => ['nullable', 'array', 'max:6'],
-            'photos.*' => ['file', 'mimes:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
+            'photos.*' => ['file', 'extensions:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
         ], [
             'photos.max' => __('Choose up to six photos.'),
-            'photos.*.mimes' => __('Use a JPG, PNG, GIF, WebP, TIFF, Apple ProRAW (DNG), or HEIC photo.'),
+            'photos.*.extensions' => __('Use a JPG, PNG, GIF, WebP, TIFF, Apple ProRAW (DNG), or HEIC photo.'),
             'photos.*.max' => __('Each photo must be 500 MB or smaller.'),
         ]);
 
@@ -564,7 +564,11 @@ new class extends Component
                 @endif
 
                 <flux:error name="photos" class="mt-2" />
-                <flux:error name="photos.*" class="mt-2" />
+                @foreach ($errors->get('photos.*') as $photoErrors)
+                    @foreach ($photoErrors as $photoError)
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ $photoError }}</p>
+                    @endforeach
+                @endforeach
             </div>
 
             <div class="flex justify-end gap-2">
