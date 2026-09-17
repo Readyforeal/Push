@@ -2,7 +2,6 @@
     $relationship = auth()->user()?->relationships()->first();
     $promptLibraries = $relationship?->extracurricularLibraries()
         ->where('active', true)
-        ->withCount(['prompts' => fn ($query) => $query->where('active', true)])
         ->orderBy('name')
         ->get() ?? collect();
 @endphp
@@ -13,6 +12,9 @@
         <h2 class="mt-1.5 text-xl font-semibold tracking-[-0.025em] text-zinc-950 dark:text-white">
             {{ __('Extracurriculars') }}
         </h2>
+        <p class="mt-1 text-sm leading-5 text-zinc-500 dark:text-zinc-400">
+            {{ __('Choose something extra and draw one prompt on demand.') }}
+        </p>
     </div>
 
     <div class="mt-4 overflow-hidden rounded-2xl border border-zinc-200/70 bg-white/45 dark:border-white/8 dark:bg-white/[0.025]">
@@ -46,7 +48,7 @@
                 <span class="min-w-0 flex-1">
                     <span class="block truncate text-sm font-semibold text-zinc-950 dark:text-white">{{ $library->name }}</span>
                     <span class="mt-0.5 block truncate text-xs text-zinc-500 dark:text-zinc-400">
-                        {{ trans_choice(':count prompt|:count prompts', $library->prompts_count, ['count' => $library->prompts_count]) }} · {{ __('Draw one on demand') }}
+                        {{ $library->description ?: __('A little something for the two of you.') }}
                     </span>
                 </span>
 

@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\PromptRoundKind;
+use App\Models\PromptLibrary;
 use App\Models\Relationship;
 use App\Models\User;
 
@@ -49,4 +51,29 @@ test('paired users see secret missions in extracurriculars instead of the moment
         ->assertSee('Secret Missions')
         ->assertSee(route('missions'))
         ->assertDontSee('Latest post');
+});
+
+test('extracurricular libraries show their description without prompt counts', function () {
+    $user = User::factory()->create();
+    $partner = User::factory()->create();
+    $relationship = Relationship::query()->create();
+    $relationship->members()->attach([$user->id, $partner->id], ['joined_at' => now()]);
+    $library = PromptLibrary::query()->create([
+        'relationship_id' => $relationship->id,
+        'name' => 'Play together',
+        'slug' => 'play-together-dashboard-test',
+        'description' => 'Small invitations to be silly together.',
+        'kind' => PromptRoundKind::SharedQuestion,
+        'active' => true,
+    ]);
+    $relationship->extracurricularLibraries()->attach($library);
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertSee('Choose something extra and draw one prompt on demand.')
+        ->assertSee('Play together')
+        ->assertSee('Small invitations to be silly together.')
+        ->assertDontSee('0 prompts')
+        ->assertDontSee('Draw one on demand');
 });

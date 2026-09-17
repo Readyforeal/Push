@@ -23,6 +23,11 @@ new #[Title('Prompt schedule')] class extends Component
 
     public string $deliveryTime = '09:00';
 
+    public function mount(): void
+    {
+        abort_unless($this->user()->is_admin, 403);
+    }
+
     public function openAddPrompt(int $dayOfWeek): void
     {
         abort_unless(array_key_exists($dayOfWeek, $this->dayNames()), 422);

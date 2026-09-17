@@ -31,6 +31,10 @@ new #[Title('Prompt libraries')] class extends Component
 
     public string $libraryKind = 'shared_question';
 
+    public string $editLibraryName = '';
+
+    public string $editLibraryDescription = '';
+
     public string $primaryPrompt = '';
 
     public string $secondaryPrompt = '';
@@ -45,6 +49,7 @@ new #[Title('Prompt libraries')] class extends Component
 
     public function mount(): void
     {
+        abort_unless($this->user()->is_admin, 403);
         $this->selectedLibraryId = $this->libraries->first()?->id;
         $this->resetDraftAssignment();
     }
@@ -59,6 +64,42 @@ new #[Title('Prompt libraries')] class extends Component
     public function updatedSearch(): void
     {
         $this->resetPage();
+    }
+
+    public function openEditLibrary(): void
+    {
+        if (! $this->selectedLibrary) {
+            return;
+        }
+
+        $this->resetValidation();
+        $this->editLibraryName = $this->selectedLibrary->name;
+        $this->editLibraryDescription = $this->selectedLibrary->description ?? '';
+        Flux::modal('edit-prompt-library')->show();
+    }
+
+    public function updateLibrary(PromptLibraryManager $manager): void
+    {
+        $validated = $this->validate([
+            'editLibraryName' => ['required', 'string', 'max:100'],
+            'editLibraryDescription' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        if (! $this->relationship || ! $this->selectedLibrary) {
+            return;
+        }
+
+        $manager->updateLibrary(
+            $this->user(),
+            $this->relationship,
+            $this->selectedLibrary,
+            $validated['editLibraryName'],
+            $validated['editLibraryDescription'],
+        );
+
+        unset($this->libraries, $this->selectedLibrary);
+        Flux::modal('edit-prompt-library')->close();
+        Flux::toast(variant: 'success', text: __('Library updated.'));
     }
 
     public function createLibrary(PromptLibraryManager $manager): void
@@ -511,6 +552,9 @@ new #[Title('Prompt libraries')] class extends Component
                             @endif
                         </div>
                         <div class="flex flex-wrap gap-2">
+                            <flux:button type="button" size="sm" variant="ghost" icon="pencil-square" wire:click="openEditLibrary">
+                                {{ __('Edit details') }}
+                            </flux:button>
                             <flux:button
                                 type="button"
                                 size="sm"
@@ -633,6 +677,21 @@ new #[Title('Prompt libraries')] class extends Component
                     <div class="flex justify-end gap-2">
                         <flux:modal.close><flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button></flux:modal.close>
                         <flux:button type="submit" variant="primary">{{ __('Create library') }}</flux:button>
+                    </div>
+                </form>
+            </flux:modal>
+
+            <flux:modal name="edit-prompt-library" :show="$errors->has('editLibraryName') || $errors->has('editLibraryDescription')" focusable class="max-w-lg">
+                <form wire:submit="updateLibrary" class="space-y-5">
+                    <div>
+                        <flux:heading size="lg">{{ __('Edit library details') }}</flux:heading>
+                        <flux:subheading>{{ __('These details appear anywhere this category is offered.') }}</flux:subheading>
+                    </div>
+                    <flux:input wire:model="editLibraryName" :label="__('Library title')" />
+                    <flux:textarea wire:model="editLibraryDescription" :label="__('Description')" rows="3" />
+                    <div class="flex justify-end gap-2">
+                        <flux:modal.close><flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button></flux:modal.close>
+                        <flux:button type="submit" variant="primary">{{ __('Save changes') }}</flux:button>
                     </div>
                 </form>
             </flux:modal>

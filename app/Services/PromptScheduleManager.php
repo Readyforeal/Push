@@ -54,6 +54,10 @@ class PromptScheduleManager
 
     private function authorize(User $actor, Relationship $relationship): void
     {
+        if (! $actor->is_admin) {
+            throw new DomainException('Only an administrator can manage the prompt schedule.');
+        }
+
         if (! $relationship->hasMember($actor)) {
             throw new DomainException('You cannot manage this relationship schedule.');
         }

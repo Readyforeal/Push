@@ -31,20 +31,6 @@ new #[Title('Settings')] class extends Component {
             'color' => 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
         ],
         [
-            'title' => __('Prompt schedule'),
-            'description' => __('Choose what runs each day and when.'),
-            'route' => 'prompt-schedule.edit',
-            'icon' => 'calendar',
-            'color' => 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
-        ],
-        [
-            'title' => __('Prompt libraries'),
-            'description' => __('Curate and import questions by category.'),
-            'route' => 'prompt-libraries.edit',
-            'icon' => 'book-open',
-            'color' => 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
-        ],
-        [
             'title' => __('Notifications'),
             'description' => __('Manage push notifications on this device.'),
             'route' => 'notifications.edit',
@@ -59,6 +45,22 @@ new #[Title('Settings')] class extends Component {
             'color' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300',
         ],
     ];
+
+    if (auth()->user()?->is_admin) {
+        array_splice($settings, 3, 0, [[
+            'title' => __('Prompt schedule'),
+            'description' => __('Choose what runs each day and when.'),
+            'route' => 'prompt-schedule.edit',
+            'icon' => 'calendar',
+            'color' => 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+        ], [
+            'title' => __('Prompt libraries'),
+            'description' => __('Curate and import questions by category.'),
+            'route' => 'prompt-libraries.edit',
+            'icon' => 'book-open',
+            'color' => 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
+        ]]);
+    }
 @endphp
 
 <section class="mx-auto w-full max-w-3xl">

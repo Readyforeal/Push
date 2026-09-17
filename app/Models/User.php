@@ -24,6 +24,7 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
  * @property int $id
  * @property string $name
  * @property string $email
+ * @property bool $is_admin
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -33,7 +34,7 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password', 'background_mode', 'background_photo_id', 'background_image_disk', 'background_image_path', 'background_image_mime_type'])]
+#[Fillable(['name', 'email', 'password', 'is_admin', 'background_mode', 'background_photo_id', 'background_image_disk', 'background_image_path', 'background_image_mime_type'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -51,6 +52,7 @@ class User extends Authenticatable implements PasskeyUser
             'background_mode' => AppBackgroundMode::class,
             'background_photo_id' => 'integer',
             'email_verified_at' => 'datetime',
+            'is_admin' => 'boolean',
             'password' => 'hashed',
         ];
     }

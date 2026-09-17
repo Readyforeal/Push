@@ -52,7 +52,7 @@ test('a paired user can build and edit the shared weekly prompt schedule', funct
 
 test('a user cannot change another relationships schedule', function () {
     [$member, $relationship] = scheduleSettingsRelationship();
-    $outsider = User::factory()->create();
+    $outsider = User::factory()->admin()->create();
     $library = PromptLibrary::query()->create([
         'name' => 'Private schedule',
         'slug' => 'private-schedule-library',
@@ -70,13 +70,25 @@ test('a user cannot change another relationships schedule', function () {
     app(PromptScheduleManager::class)->remove($outsider, $relationship, $schedule);
 })->throws(DomainException::class, 'You cannot manage this relationship schedule.');
 
-/** @return array{User, Relationship} */
+test('a non administrator cannot change their relationship schedule', function () {
+    [, $relationship, $member] = scheduleSettingsRelationship();
+    $library = PromptLibrary::query()->create([
+        'name' => 'Admin only schedule',
+        'slug' => 'admin-only-schedule-library',
+        'kind' => PromptRoundKind::SharedQuestion,
+        'active' => true,
+    ]);
+
+    app(PromptScheduleManager::class)->add($member, $relationship, $library, 1, '09:00');
+})->throws(DomainException::class, 'Only an administrator can manage the prompt schedule.');
+
+/** @return array{User, Relationship, User} */
 function scheduleSettingsRelationship(): array
 {
-    $user = User::factory()->create();
+    $user = User::factory()->admin()->create();
     $partner = User::factory()->create();
     $relationship = Relationship::query()->create(['timezone' => 'America/Chicago']);
     $relationship->members()->attach([$user->id, $partner->id], ['joined_at' => now()]);
 
-    return [$user, $relationship];
+    return [$user, $relationship, $partner];
 }

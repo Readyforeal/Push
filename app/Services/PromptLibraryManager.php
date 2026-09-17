@@ -32,6 +32,23 @@ class PromptLibraryManager
         ]);
     }
 
+    public function updateLibrary(
+        User $actor,
+        Relationship $relationship,
+        PromptLibrary $library,
+        string $name,
+        ?string $description = null,
+    ): PromptLibrary {
+        $this->authorizeLibrary($actor, $relationship, $library);
+
+        $library->update([
+            'name' => trim($name),
+            'description' => filled($description) ? trim((string) $description) : null,
+        ]);
+
+        return $library->refresh();
+    }
+
     /**
      * @param  list<string>  $topics
      */
@@ -226,6 +243,10 @@ class PromptLibraryManager
 
     private function authorizeRelationship(User $actor, Relationship $relationship): void
     {
+        if (! $actor->is_admin) {
+            throw new DomainException('Only an administrator can manage prompt libraries.');
+        }
+
         if (! $relationship->hasMember($actor)) {
             throw new DomainException('You cannot manage this relationship’s prompt libraries.');
         }

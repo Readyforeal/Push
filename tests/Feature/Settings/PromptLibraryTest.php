@@ -5,6 +5,7 @@ use App\Models\PromptLibrary;
 use App\Models\PromptTemplate;
 use App\Models\Relationship;
 use App\Models\User;
+use App\Services\PromptLibraryManager;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\PromptTemplateSeeder;
 use Livewire\Livewire;
@@ -65,6 +66,43 @@ test('partners can create a library and add prompts individually or in bulk', fu
         ->and($library->prompts()->oldest('id')->firstOrFail()->topics)->toBe(['trust', 'intimacy'])
         ->and($library->prompts()->pluck('primary_user_id')->unique()->all())->toBe([$partner->id]);
 });
+
+test('an administrator can edit a library title and description', function () {
+    [$user, $relationship] = promptLibraryRelationship();
+    $library = $relationship->promptLibraries()->create([
+        'name' => 'Old title',
+        'slug' => 'editable-library-test',
+        'description' => 'Old description.',
+        'kind' => PromptRoundKind::SharedQuestion,
+        'active' => true,
+    ]);
+
+    $this->actingAs($user);
+    Livewire::test('pages::settings.prompt-libraries')
+        ->set('selectedLibraryId', $library->id)
+        ->call('openEditLibrary')
+        ->set('editLibraryName', 'Playful connection')
+        ->set('editLibraryDescription', 'Lighthearted prompts for having fun together.')
+        ->call('updateLibrary')
+        ->assertHasNoErrors()
+        ->assertSee('Playful connection')
+        ->assertSee('Lighthearted prompts for having fun together.');
+
+    expect($library->refresh())
+        ->name->toBe('Playful connection')
+        ->description->toBe('Lighthearted prompts for having fun together.');
+});
+
+test('a non administrator cannot change prompt libraries', function () {
+    [, $relationship, $member] = promptLibraryRelationship();
+
+    app(PromptLibraryManager::class)->createLibrary(
+        $member,
+        $relationship,
+        'Not allowed',
+        PromptRoundKind::SharedQuestion,
+    );
+})->throws(DomainException::class, 'Only an administrator can manage prompt libraries.');
 
 test('named prompt assignments can be swapped between partners', function () {
     [$user, $relationship, $partner] = promptLibraryRelationship();
@@ -161,7 +199,7 @@ test('relationship-owned libraries stay private to that couple', function () {
 /** @return array{User, Relationship, User} */
 function promptLibraryRelationship(): array
 {
-    $user = User::factory()->create(['name' => 'Jamie Rivera']);
+    $user = User::factory()->admin()->create(['name' => 'Jamie Rivera']);
     $partner = User::factory()->create(['name' => 'Taylor Morgan']);
     $relationship = Relationship::query()->create(['timezone' => 'America/Chicago']);
     $relationship->members()->attach([$user->id, $partner->id], ['joined_at' => now()]);
