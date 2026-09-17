@@ -421,6 +421,11 @@ select:focus[data-flux-control] {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+    .page-motion-enabled.page-navigation-pending [data-page-transition] {
+        opacity: 0;
+        transition: opacity 90ms ease-out;
+    }
+
     .page-motion-enabled [data-page-transition] img:not([data-no-image-fade]):not(.image-load-complete),
     .page-motion-enabled img.image-load-fade:not(.image-load-complete) {
         opacity: 0;
@@ -439,6 +444,10 @@ select:focus[data-flux-control] {
         animation: page-enter 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
         animation-delay: var(--page-enter-delay, 0ms);
         will-change: opacity, transform;
+    }
+
+    .page-enter-title {
+        animation-duration: 220ms;
     }
 }
 

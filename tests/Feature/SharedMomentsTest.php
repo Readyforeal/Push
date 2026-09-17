@@ -151,7 +151,10 @@ test('shared moment photos stay private to relationship members', function () {
         'position' => 1,
     ]);
 
-    $this->actingAs($author)->get(route('moment-photos.show', $photo))->assertOk();
+    $this->actingAs($author)
+        ->get(route('moment-photos.show', $photo))
+        ->assertOk()
+        ->assertHeader('Cache-Control', 'immutable, max-age=604800, private');
     $this->actingAs($partner)->get(route('moment-photos.show', $photo))->assertOk();
     $this->actingAs($outsider)->get(route('moment-photos.show', $photo))->assertForbidden();
     $this->actingAs($author)->get(route('moments.show', $moment))->assertOk();

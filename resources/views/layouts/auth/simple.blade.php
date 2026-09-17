@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark bg-zinc-50 dark:bg-zinc-950">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="page-motion-enabled dark bg-zinc-50 dark:bg-zinc-950">
     <head>
         @include('partials.head')
     </head>

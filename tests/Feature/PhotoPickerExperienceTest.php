@@ -146,7 +146,10 @@ test('round photos are private to the couple and unavailable while the picker is
         'position' => 1,
     ]);
 
-    $this->actingAs($uploader)->get(route('round-photos.show', $photo))->assertOk();
+    $this->actingAs($uploader)
+        ->get(route('round-photos.show', $photo))
+        ->assertOk()
+        ->assertHeader('Cache-Control', 'immutable, max-age=604800, private');
     $this->actingAs($picker)->get(route('round-photos.show', $photo))->assertForbidden();
     $this->actingAs($outsider)->get(route('round-photos.show', $photo))->assertForbidden();
 

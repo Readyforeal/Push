@@ -18,7 +18,10 @@ class RoundPhotoController
         return Storage::disk($roundPhoto->disk)->response(
             $roundPhoto->path,
             $roundPhoto->original_name,
-            ['Content-Type' => $roundPhoto->mime_type ?? 'application/octet-stream'],
+            [
+                'Cache-Control' => 'private, max-age=604800, immutable',
+                'Content-Type' => $roundPhoto->mime_type ?? 'application/octet-stream',
+            ],
         );
     }
 }

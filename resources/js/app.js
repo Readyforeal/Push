@@ -1,7 +1,5 @@
 import './push-notifications';
 
-document.documentElement.classList.add('page-motion-enabled');
-
 let navigationInProgress = false;
 
 const animatePageEntry = () => {
@@ -17,21 +15,35 @@ const animatePageEntry = () => {
     ];
     const uniqueCandidates = [...new Set(candidates)]
         .filter((element) => !element.closest('[data-page-no-enter]'));
+    const primaryHeading = container.querySelector('h1:not(.sr-only)');
+    const titleCandidate = primaryHeading
+        ? uniqueCandidates.find((element) => element === primaryHeading || element.contains(primaryHeading))
+        : null;
+    const orderedCandidates = titleCandidate
+        ? [titleCandidate, ...uniqueCandidates.filter((element) => element !== titleCandidate)]
+        : uniqueCandidates;
 
-    uniqueCandidates.forEach((element) => element.classList.remove('page-enter-item'));
+    orderedCandidates.forEach((element) => element.classList.remove('page-enter-item', 'page-enter-title'));
     void container.offsetWidth;
 
-    uniqueCandidates.forEach((element, index) => {
+    orderedCandidates.forEach((element, index) => {
+        const isTitle = element === titleCandidate;
+        const contentIndex = titleCandidate ? Math.max(0, index - 1) : index;
+
         element.style.setProperty('--page-enter-index', index);
-        element.style.setProperty('--page-enter-delay', `${Math.min(index, 8) * 24}ms`);
+        element.style.setProperty('--page-enter-delay', isTitle ? '0ms' : `${80 + (Math.min(contentIndex, 8) * 24)}ms`);
         element.classList.add('page-enter-item');
+
+        if (isTitle) {
+            element.classList.add('page-enter-title');
+        }
 
         const clearPageEntryStyles = (event) => {
             if (event.target !== element || event.animationName !== 'page-enter') {
                 return;
             }
 
-            element.classList.remove('page-enter-item');
+            element.classList.remove('page-enter-item', 'page-enter-title');
             element.style.removeProperty('--page-enter-index');
             element.style.removeProperty('--page-enter-delay');
             element.removeEventListener('animationend', clearPageEntryStyles);
@@ -105,7 +117,7 @@ const warmPrimaryNavigation = () => {
         links.forEach((link, index) => {
             window.setTimeout(() => {
                 link.dispatchEvent(new MouseEvent('mouseenter'));
-            }, index * 75);
+            }, index * 650);
         });
     };
 
@@ -207,6 +219,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     imageFadeObserver.observe(document.body, { childList: true, subtree: true });
 });
+document.addEventListener('livewire:navigate', () => {
+    navigationInProgress = true;
+    document.documentElement.classList.add('page-navigation-pending');
+});
 document.addEventListener('livewire:navigating', () => {
     navigationInProgress = true;
 });
@@ -219,6 +235,7 @@ document.addEventListener('livewire:navigated', () => {
     }
 
     requestAnimationFrame(() => {
+        document.documentElement.classList.remove('page-navigation-pending');
         animatePageEntry();
         hydrateImageFades();
         syncHomeBackgroundState();

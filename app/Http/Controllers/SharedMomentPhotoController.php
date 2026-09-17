@@ -18,7 +18,10 @@ class SharedMomentPhotoController
         return Storage::disk($sharedMomentPhoto->disk)->response(
             $sharedMomentPhoto->path,
             $sharedMomentPhoto->original_name,
-            ['Content-Type' => $sharedMomentPhoto->mime_type ?? 'application/octet-stream'],
+            [
+                'Cache-Control' => 'private, max-age=604800, immutable',
+                'Content-Type' => $sharedMomentPhoto->mime_type ?? 'application/octet-stream',
+            ],
         );
     }
 }
