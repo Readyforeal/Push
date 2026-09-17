@@ -65,7 +65,7 @@ new class extends Component
             'photos.*' => ['file', 'extensions:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
         ], [
             'photos.max' => __('Choose up to six photos.'),
-            'photos.*.extensions' => __('Use a JPG, PNG, GIF, WebP, TIFF, Apple ProRAW (DNG), or HEIC photo.'),
+            'photos.*.extensions' => __('Choose the photo from Photo Library so your device can prepare a JPEG.'),
             'photos.*.max' => __('Each photo must be 500 MB or smaller.'),
         ]);
 
@@ -535,10 +535,10 @@ new class extends Component
                     <flux:icon.photo class="size-6 text-zinc-400 transition group-hover:text-violet-500" />
                     <span class="mt-2 text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ __('Add photos') }}</span>
                     <span class="mt-1 text-xs text-zinc-400">{{ __('Up to six photos, 500 MB each') }}</span>
-                    <input wire:model="photos" type="file" accept="image/*,.dng,.tif,.tiff,.heic,.heif" multiple class="sr-only">
+                    <input wire:model="photos" type="file" accept="image/jpeg" multiple class="sr-only">
                 </label>
 
-                <div wire:loading wire:target="photos" class="mt-2 text-xs text-zinc-400">{{ __('Uploading and converting to JPEG…') }}</div>
+                <div wire:loading wire:target="photos" class="mt-2 text-xs text-zinc-400">{{ __('Preparing JPEG previews…') }}</div>
 
                 @if (count($photos) > 0)
                     <div class="mt-3 grid grid-cols-3 gap-2">

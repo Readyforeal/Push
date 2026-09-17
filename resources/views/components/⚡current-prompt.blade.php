@@ -158,7 +158,7 @@ new class extends Component
             'photos.*' => ['required', 'file', 'extensions:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
         ], [
             'photos.size' => __('Please choose exactly three photos.'),
-            'photos.*.extensions' => __('Use a JPG, PNG, GIF, WebP, TIFF, Apple ProRAW (DNG), or HEIC photo.'),
+            'photos.*.extensions' => __('Choose the photo from Photo Library so your device can prepare a JPEG.'),
             'photos.*.max' => __('Each photo must be 500 MB or smaller.'),
         ]);
 
@@ -379,10 +379,10 @@ new class extends Component
                                     <span class="block text-sm font-semibold text-zinc-900 dark:text-white">{{ __('Add photos') }}</span>
                                     <span class="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">{{ __('This prompt requires 1–3 photos with your answer.') }}</span>
                                 </span>
-                                <input wire:model="answerPhotos" type="file" accept="image/*,.dng,.tif,.tiff,.heic,.heif" multiple class="sr-only">
+                                <input wire:model="answerPhotos" type="file" accept="image/jpeg" multiple class="sr-only">
                             </label>
 
-                            <div wire:loading wire:target="answerPhotos" class="text-sm text-zinc-500">{{ __('Uploading and converting to JPEG…') }}</div>
+                            <div wire:loading wire:target="answerPhotos" class="text-sm text-zinc-500">{{ __('Preparing JPEG previews…') }}</div>
 
                             @if (count($answerPhotos) > 0)
                                 <div class="grid grid-cols-3 gap-3">
@@ -460,11 +460,11 @@ new class extends Component
                             <flux:icon.photo class="size-6" />
                         </span>
                         <span class="mt-3 font-medium text-zinc-900 dark:text-white">{{ __('Choose three photos') }}</span>
-                        <span class="mt-1 text-sm text-zinc-500">{{ __('JPG, PNG, or another supported image up to 500 MB each') }}</span>
-                        <input wire:model="photos" type="file" accept="image/*,.dng,.tif,.tiff,.heic,.heif" multiple class="sr-only">
+                        <span class="mt-1 text-sm text-zinc-500">{{ __('Your device prepares each selection as a compatible JPEG') }}</span>
+                        <input wire:model="photos" type="file" accept="image/jpeg" multiple class="sr-only">
                     </label>
 
-                    <div wire:loading wire:target="photos" class="text-sm text-zinc-500">{{ __('Uploading and converting to JPEG…') }}</div>
+                    <div wire:loading wire:target="photos" class="text-sm text-zinc-500">{{ __('Preparing JPEG previews…') }}</div>
 
                     @if (count($photos) > 0)
                         <div class="grid grid-cols-3 gap-3">

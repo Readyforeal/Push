@@ -25,6 +25,8 @@ class PhotoStorage
             return $upload;
         }
 
+        $this->assertFastConversionFormat($upload);
+
         $temporaryJpeg = $this->makeJpeg($upload);
         $disk = FileUploadConfiguration::disk();
         $storage = Storage::disk($disk);
@@ -89,6 +91,8 @@ class PhotoStorage
             ];
         }
 
+        $this->assertFastConversionFormat($upload);
+
         return $this->convertAndStore($upload, $directory, $disk);
     }
 
@@ -101,6 +105,17 @@ class PhotoStorage
     {
         if (@getimagesize($upload->getRealPath()) === false) {
             throw new RuntimeException('This file could not be read as an image.');
+        }
+    }
+
+    private function assertFastConversionFormat(UploadedFile $upload): void
+    {
+        if (! in_array(strtolower((string) $upload->getMimeType()), [
+            'image/png',
+            'image/gif',
+            'image/webp',
+        ], true)) {
+            throw new RuntimeException('Choose this image from Photo Library so your device can prepare a compatible JPEG.');
         }
     }
 

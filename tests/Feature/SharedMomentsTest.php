@@ -68,45 +68,6 @@ test('partners can log and view shared moments with an intensity note and photos
         ->assertSee('Strong · 8');
 });
 
-test('tiff photos are converted to browser friendly jpegs', function () {
-    if (! extension_loaded('imagick') || Imagick::queryFormats('TIFF') === []) {
-        $this->markTestSkipped('ImageMagick with TIFF support is required.');
-    }
-
-    Storage::fake('homelab_cloud');
-    $author = User::factory()->create();
-    $partner = User::factory()->create();
-    $relationship = Relationship::query()->create(['timezone' => 'America/Chicago']);
-    $relationship->members()->attach([$author->id, $partner->id], ['joined_at' => now()]);
-    $sourcePath = tempnam(sys_get_temp_dir(), 'push-tiff-test-');
-    $image = new Imagick;
-    $image->newImage(32, 24, 'pink');
-    $image->setImageFormat('tiff');
-    $image->writeImage($sourcePath);
-    $image->clear();
-    $image->destroy();
-
-    try {
-        $upload = UploadedFile::fake()->createWithContent('apple-raw.tif', file_get_contents($sourcePath));
-
-        $this->actingAs($author);
-        Livewire::test('shared-moments')
-            ->set('body', 'A TIFF moment.')
-            ->set('photos', [$upload])
-            ->call('logMoment')
-            ->assertHasNoErrors();
-
-        $photo = SharedMoment::query()->sole()->photos()->sole();
-
-        expect($photo->original_name)->toBe('apple-raw.tif')
-            ->and($photo->mime_type)->toBe('image/jpeg')
-            ->and($photo->path)->toEndWith('.jpg')
-            ->and(Storage::disk('homelab_cloud')->get($photo->path))->toStartWith("\xFF\xD8\xFF");
-    } finally {
-        @unlink($sourcePath);
-    }
-});
-
 test('non jpeg photos are converted in temporary storage before a post is submitted', function () {
     if (! extension_loaded('imagick') || Imagick::queryFormats('PNG') === []) {
         $this->markTestSkipped('ImageMagick with PNG support is required.');
@@ -136,7 +97,7 @@ test('non jpeg photos are converted in temporary storage before a post is submit
         ->and($photo->path)->toEndWith('.jpg');
 });
 
-test('a tiff payload retaining a dng filename uses the content decoder fallback', function () {
+test('a raw payload is rejected quickly and cannot create a zero photo post', function () {
     if (! extension_loaded('imagick') || Imagick::queryFormats('TIFF') === []) {
         $this->markTestSkipped('ImageMagick with TIFF support is required.');
     }
@@ -155,21 +116,14 @@ test('a tiff payload retaining a dng filename uses the content decoder fallback'
         $upload = UploadedFile::fake()->createWithContent('apple-raw.dng', file_get_contents($sourcePath));
 
         $this->actingAs($author);
-        $component = Livewire::test('shared-moments')
+        Livewire::test('shared-moments')
             ->set('body', 'An iPhone export with its original filename.')
             ->set('photos', [$upload])
-            ->assertHasNoErrors();
+            ->assertHasErrors('photos')
+            ->call('logMoment')
+            ->assertHasErrors('photos');
 
-        $prepared = $component->get('photos')[0];
-
-        expect($prepared->getMimeType())->toBe('image/jpeg')
-            ->and($prepared->getClientOriginalName())->toBe('apple-raw.dng');
-
-        $component->call('logMoment')->assertHasNoErrors();
-
-        expect(SharedMoment::query()->sole()->photos()->sole())
-            ->mime_type->toBe('image/jpeg')
-            ->path->toEndWith('.jpg');
+        expect(SharedMoment::query()->count())->toBe(0);
     } finally {
         @unlink($sourcePath);
     }

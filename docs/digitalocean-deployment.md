@@ -100,18 +100,19 @@ limits with the application rules. Use `client_max_body_size 3100M` in Nginx,
 uploads may also need a longer `client_body_timeout` and `max_input_time`.
 Restart Nginx and PHP-FPM after changing them.
 
-TIFF, Apple ProRAW/DNG, HEIC, and HEIF uploads are converted to high-quality
-JPEGs for reliable browser display. Install ImageMagick, its PHP extension, and
-the RAW delegate on the Droplet:
+Photo inputs explicitly request JPEG so iOS uses its native Photo Library export
+pipeline for HEIC and ProRAW assets. The server only performs lightweight
+normalization for ordinary browser-readable formats that bypass that picker.
+Install ImageMagick and its PHP extension on the Droplet:
 
 ```bash
-sudo apt install -y imagemagick php8.4-imagick libraw-bin
+sudo apt install -y imagemagick php8.4-imagick
 sudo systemctl restart php8.4-fpm
-php -r 'foreach (["DNG", "TIFF", "HEIC", "JPEG"] as $f) echo $f.": ".(Imagick::queryFormats($f) ? "yes" : "no").PHP_EOL;'
+php -r 'foreach (["PNG", "GIF", "WEBP", "JPEG"] as $f) echo $f.": ".(Imagick::queryFormats($f) ? "yes" : "no").PHP_EOL;'
 ```
 
 Use the PHP package and service version installed on the server if it is not
-PHP 8.4. All four formats should report `yes` before testing a RAW upload.
+PHP 8.4. All four formats should report `yes`.
 
 Existing database records retain the disk on which they were created, so local
 development photos remain readable and are not silently moved or deleted. For

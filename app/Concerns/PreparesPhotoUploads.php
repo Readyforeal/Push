@@ -30,7 +30,7 @@ trait PreparesPhotoUploads
                 $this->photoPreparationFailures[$property] = true;
                 $this->addError(
                     $property,
-                    __('“:name” could not be converted. Try exporting it as Most Compatible and upload it again.', [
+                    __('“:name” could not be prepared. Choose it from Photo Library so your device can create a compatible JPEG.', [
                         'name' => $upload->getClientOriginalName(),
                     ]),
                 );
