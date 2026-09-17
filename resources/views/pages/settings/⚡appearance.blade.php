@@ -279,6 +279,11 @@ new #[Title('Appearance settings')] class extends Component
                 </div>
 
                 <div
+                    x-data="{ uploading: false, progress: 0 }"
+                    x-on:livewire-upload-start="uploading = true; progress = 0"
+                    x-on:livewire-upload-progress="progress = $event.detail.progress"
+                    x-on:livewire-upload-finish="uploading = false"
+                    x-on:livewire-upload-error="uploading = false"
                     @class([
                         'app-glass-card overflow-hidden rounded-2xl border transition',
                         'border-violet-500 ring-2 ring-violet-500/15 dark:border-violet-400' => $backgroundMode === AppBackgroundMode::Upload->value,
@@ -302,15 +307,18 @@ new #[Title('Appearance settings')] class extends Component
                             </span>
                         @endif
 
-                        <div wire:loading.flex wire:target="backgroundUpload" class="absolute inset-0 items-center justify-center bg-black/35 text-white backdrop-blur-sm">
-                            <flux:icon.arrow-path class="size-6 animate-spin" />
+                        <div x-show="uploading" x-cloak class="absolute inset-0 flex flex-col items-center justify-center bg-black/35 px-8 text-white backdrop-blur-sm">
+                            <p class="text-sm font-medium" x-text="progress < 100 ? `Uploading ${progress}%` : 'Creating large JPEG preview…'"></p>
+                            <div class="mt-3 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-white/20">
+                                <div class="h-full rounded-full bg-white transition-[width] duration-200" :style="`width: ${progress}%`"></div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                             <p class="font-medium text-zinc-900 dark:text-white">{{ __('Your own photo') }}</p>
-                            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ __('Choose from Photo Library and your device will prepare a compatible JPEG.') }}</p>
+                            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ __('RAW, HEIC, and everyday photos are prepared as a large JPEG.') }}</p>
                         </div>
 
                         <div class="flex flex-wrap items-center gap-2">
@@ -321,7 +329,7 @@ new #[Title('Appearance settings')] class extends Component
                             @endif
 
                             <label class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-400">
-                                <input wire:model="backgroundUpload" type="file" accept="image/jpeg" class="sr-only">
+                                <input wire:model="backgroundUpload" type="file" accept="image/*,.dng,.heic,.heif,.tif,.tiff" class="sr-only">
                                 {{ $this->uploadedBackgroundUrl ? __('Replace') : __('Choose image') }}
                             </label>
 

@@ -65,7 +65,7 @@ new class extends Component
             'photos.*' => ['file', 'extensions:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
         ], [
             'photos.max' => __('Choose up to six photos.'),
-            'photos.*.extensions' => __('Choose the photo from Photo Library so your device can prepare a JPEG.'),
+            'photos.*.extensions' => __('Choose a JPEG, PNG, HEIC, TIFF, WebP, GIF, or DNG photo.'),
             'photos.*.max' => __('Each photo must be 500 MB or smaller.'),
         ]);
 
@@ -495,7 +495,15 @@ new class extends Component
         focusable
         class="max-w-xl"
     >
-        <form wire:submit="logMoment" class="space-y-6">
+        <form
+            wire:submit="logMoment"
+            class="space-y-6"
+            x-data="{ uploading: false, progress: 0 }"
+            x-on:livewire-upload-start="uploading = true; progress = 0"
+            x-on:livewire-upload-progress="progress = $event.detail.progress"
+            x-on:livewire-upload-finish="uploading = false"
+            x-on:livewire-upload-error="uploading = false"
+        >
             <div>
                 <flux:heading size="xl" class="tracking-tight">{{ __('Create post') }}</flux:heading>
                 <flux:subheading>{{ __('Add as much or as little context as you want.') }}</flux:subheading>
@@ -535,10 +543,18 @@ new class extends Component
                     <flux:icon.photo class="size-6 text-zinc-400 transition group-hover:text-violet-500" />
                     <span class="mt-2 text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ __('Add photos') }}</span>
                     <span class="mt-1 text-xs text-zinc-400">{{ __('Up to six photos, 500 MB each') }}</span>
-                    <input wire:model="photos" type="file" accept="image/jpeg" multiple class="sr-only">
+                    <input wire:model="photos" type="file" accept="image/*,.dng,.heic,.heif,.tif,.tiff" multiple class="sr-only">
                 </label>
 
-                <div wire:loading wire:target="photos" class="mt-2 text-xs text-zinc-400">{{ __('Preparing JPEG previews…') }}</div>
+                <div x-show="uploading" x-cloak class="mt-3">
+                    <div class="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                        <span x-text="progress < 100 ? `Uploading ${progress}%` : 'Creating large JPEG previews…'"></span>
+                        <span x-show="progress < 100" x-text="`${progress}%`"></span>
+                    </div>
+                    <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-white/10">
+                        <div class="h-full rounded-full bg-violet-500 transition-[width] duration-200" :style="`width: ${progress}%`"></div>
+                    </div>
+                </div>
 
                 @if (count($photos) > 0)
                     <div class="mt-3 grid grid-cols-3 gap-2">

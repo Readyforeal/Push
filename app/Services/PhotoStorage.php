@@ -10,6 +10,8 @@ use Imagick;
 use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use RuntimeException;
+use Symfony\Component\Process\ExecutableFinder;
+use Symfony\Component\Process\Process;
 
 class PhotoStorage
 {
@@ -110,13 +112,23 @@ class PhotoStorage
 
     private function assertFastConversionFormat(UploadedFile $upload): void
     {
-        if (! in_array(strtolower((string) $upload->getMimeType()), [
+        if (! $this->isRawUpload($upload) && ! in_array(strtolower((string) $upload->getMimeType()), [
             'image/png',
             'image/gif',
             'image/webp',
+            'image/heic',
+            'image/heif',
+            'image/tiff',
+            'image/x-tiff',
         ], true)) {
-            throw new RuntimeException('Choose this image from Photo Library so your device can prepare a compatible JPEG.');
+            throw new RuntimeException('This image format could not be prepared as a JPEG.');
         }
+    }
+
+    private function isRawUpload(UploadedFile $upload): bool
+    {
+        return in_array(strtolower($upload->getClientOriginalExtension()), ['dng', 'raw'], true)
+            || in_array(strtolower((string) $upload->getMimeType()), ['image/x-adobe-dng', 'image/dng'], true);
     }
 
     /**
@@ -166,10 +178,16 @@ class PhotoStorage
 
         $source = new Imagick;
         $photo = null;
+        $embeddedRawPreview = null;
 
         try {
-            $source->setOption('dng:use-camera-wb', 'true');
-            $this->readFirstImage($source, $upload);
+            if ($this->isRawUpload($upload)) {
+                $embeddedRawPreview = $this->extractRawPreview($upload, $temporaryDirectory);
+                $source->readImage("JPEG:{$embeddedRawPreview}[0]");
+            } else {
+                $this->readFirstImage($source, $upload);
+            }
+
             $source->setIteratorIndex(0);
             $photo = clone $source->getImage();
 
@@ -195,8 +213,12 @@ class PhotoStorage
             $photo->writeImage($temporaryPath);
 
             return $temporaryPath;
-        } catch (\ImagickException $exception) {
+        } catch (\Throwable $exception) {
             @unlink($temporaryPath);
+
+            if ($exception instanceof RuntimeException) {
+                throw $exception;
+            }
 
             throw new RuntimeException('This photo could not be converted to JPEG.', previous: $exception);
         } finally {
@@ -204,6 +226,71 @@ class PhotoStorage
             $photo?->destroy();
             $source->clear();
             $source->destroy();
+            if ($embeddedRawPreview) {
+                @unlink($embeddedRawPreview);
+            }
+        }
+    }
+
+    private function extractRawPreview(UploadedFile $upload, string $temporaryDirectory): string
+    {
+        $configuredBinary = (string) config('services.photo.exiftool_binary', 'exiftool');
+        $binary = str_contains($configuredBinary, DIRECTORY_SEPARATOR)
+            ? $configuredBinary
+            : (new ExecutableFinder)->find($configuredBinary);
+
+        if (! $binary || ! is_executable($binary)) {
+            throw new RuntimeException('RAW preview extraction is not installed on this server.');
+        }
+
+        $previewPath = tempnam($temporaryDirectory, 'push-raw-preview-');
+
+        if (! is_string($previewPath)) {
+            throw new RuntimeException('A temporary RAW preview could not be created.');
+        }
+
+        $bestPixels = 0;
+
+        try {
+            foreach (['-PreviewImage', '-JpgFromRaw', '-OtherImage', '-ThumbnailImage'] as $tag) {
+                $process = new Process([$binary, '-b', $tag, $upload->getRealPath()]);
+                $process->setTimeout(30);
+                $process->run();
+                $contents = $process->isSuccessful() ? $process->getOutput() : '';
+                $dimensions = $contents !== '' ? @getimagesizefromstring($contents) : false;
+
+                if ($dimensions === false) {
+                    continue;
+                }
+
+                $pixels = $dimensions[0] * $dimensions[1];
+
+                if ($pixels > $bestPixels) {
+                    if (file_put_contents($previewPath, $contents, LOCK_EX) === false) {
+                        throw new RuntimeException('The extracted RAW preview could not be written.');
+                    }
+
+                    $bestPixels = $pixels;
+                }
+
+                if ($dimensions[0] >= 3000 || $dimensions[1] >= 3000) {
+                    break;
+                }
+            }
+
+            if ($bestPixels === 0 || filesize($previewPath) === 0) {
+                throw new RuntimeException('This RAW photo does not contain a usable JPEG preview.');
+            }
+
+            return $previewPath;
+        } catch (\Throwable $exception) {
+            @unlink($previewPath);
+
+            if ($exception instanceof RuntimeException) {
+                throw $exception;
+            }
+
+            throw new RuntimeException('The RAW photo preview could not be extracted.', previous: $exception);
         }
     }
 

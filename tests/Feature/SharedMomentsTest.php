@@ -97,36 +97,76 @@ test('non jpeg photos are converted in temporary storage before a post is submit
         ->and($photo->path)->toEndWith('.jpg');
 });
 
-test('a raw payload is rejected quickly and cannot create a zero photo post', function () {
-    if (! extension_loaded('imagick') || Imagick::queryFormats('TIFF') === []) {
-        $this->markTestSkipped('ImageMagick with TIFF support is required.');
+test('a raw photo uses its embedded jpeg preview before a post is submitted', function () {
+    if (! extension_loaded('imagick') || Imagick::queryFormats('JPEG') === []) {
+        $this->markTestSkipped('ImageMagick with JPEG support is required.');
     }
 
     Storage::fake('homelab_cloud');
     $author = User::factory()->create();
-    $sourcePath = tempnam(sys_get_temp_dir(), 'push-disguised-dng-test-');
+    $sourcePath = tempnam(sys_get_temp_dir(), 'push-dng-test-');
+    $previewPath = tempnam(sys_get_temp_dir(), 'push-dng-preview-test-');
+    $exiftoolPath = tempnam(sys_get_temp_dir(), 'push-exiftool-test-');
     $image = new Imagick;
-    $image->newImage(48, 32, 'violet');
-    $image->setImageFormat('tiff');
-    $image->writeImage($sourcePath);
+    $image->newImage(1200, 900, 'violet');
+    $image->setImageFormat('jpeg');
+    $image->setImageCompressionQuality(90);
+    $image->writeImage($previewPath);
     $image->clear();
     $image->destroy();
+    file_put_contents($sourcePath, 'simulated Apple ProRAW payload');
+    file_put_contents($exiftoolPath, "#!/bin/sh\nexec cat ".escapeshellarg($previewPath)."\n");
+    chmod($exiftoolPath, 0755);
+    config(['services.photo.exiftool_binary' => $exiftoolPath]);
 
     try {
         $upload = UploadedFile::fake()->createWithContent('apple-raw.dng', file_get_contents($sourcePath));
 
         $this->actingAs($author);
-        Livewire::test('shared-moments')
+        $component = Livewire::test('shared-moments')
             ->set('body', 'An iPhone export with its original filename.')
             ->set('photos', [$upload])
-            ->assertHasErrors('photos')
-            ->call('logMoment')
-            ->assertHasErrors('photos');
+            ->assertHasNoErrors();
 
-        expect(SharedMoment::query()->count())->toBe(0);
+        $prepared = $component->get('photos')[0];
+
+        expect($prepared)
+            ->toBeInstanceOf(TemporaryUploadedFile::class)
+            ->and($prepared->getMimeType())->toBe('image/jpeg')
+            ->and($prepared->getClientOriginalName())->toBe('apple-raw.dng');
+
+        $component->call('logMoment')->assertHasNoErrors();
+
+        $photo = SharedMoment::query()->sole()->photos()->sole();
+
+        expect($photo->mime_type)->toBe('image/jpeg')
+            ->and($photo->path)->toEndWith('.jpg');
     } finally {
         @unlink($sourcePath);
+        @unlink($previewPath);
+        @unlink($exiftoolPath);
     }
+});
+
+test('a raw photo cannot create a zero photo post when preview extraction is unavailable', function () {
+    if (! extension_loaded('imagick')) {
+        $this->markTestSkipped('ImageMagick is required.');
+    }
+
+    Storage::fake('homelab_cloud');
+    config(['services.photo.exiftool_binary' => '/missing/push-exiftool']);
+    $author = User::factory()->create();
+    $upload = UploadedFile::fake()->createWithContent('apple-raw.dng', 'simulated Apple ProRAW payload');
+
+    $this->actingAs($author);
+    Livewire::test('shared-moments')
+        ->set('body', 'A post that must retain its selected photo.')
+        ->set('photos', [$upload])
+        ->assertHasErrors('photos')
+        ->call('logMoment')
+        ->assertHasErrors('photos');
+
+    expect(SharedMoment::query()->count())->toBe(0);
 });
 
 test('guests cannot visit the moments page', function () {

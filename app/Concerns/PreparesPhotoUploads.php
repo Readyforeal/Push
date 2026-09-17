@@ -30,7 +30,7 @@ trait PreparesPhotoUploads
                 $this->photoPreparationFailures[$property] = true;
                 $this->addError(
                     $property,
-                    __('“:name” could not be prepared. Choose it from Photo Library so your device can create a compatible JPEG.', [
+                    __('“:name” could not be prepared as a JPEG. Choose it again or try another copy.', [
                         'name' => $upload->getClientOriginalName(),
                     ]),
                 );

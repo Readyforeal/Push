@@ -100,19 +100,24 @@ limits with the application rules. Use `client_max_body_size 3100M` in Nginx,
 uploads may also need a longer `client_body_timeout` and `max_input_time`.
 Restart Nginx and PHP-FPM after changing them.
 
-Photo inputs explicitly request JPEG so iOS uses its native Photo Library export
-pipeline for HEIC and ProRAW assets. The server only performs lightweight
-normalization for ordinary browser-readable formats that bypass that picker.
-Install ImageMagick and its PHP extension on the Droplet:
+Photo inputs accept JPEG, HEIC, TIFF, and Apple ProRAW/DNG assets. For RAW
+photos, the app uses ExifTool to extract the large JPEG preview already embedded
+by the camera rather than developing the sensor data. ImageMagick then applies
+orientation, constrains the longest edge to 4096 pixels, and writes a quality-90
+JPEG. This keeps conversion practical on a small Droplet. Install both tools:
 
 ```bash
-sudo apt install -y imagemagick php8.4-imagick
+sudo apt install -y imagemagick php8.4-imagick libimage-exiftool-perl
 sudo systemctl restart php8.4-fpm
+exiftool -ver
 php -r 'foreach (["PNG", "GIF", "WEBP", "JPEG"] as $f) echo $f.": ".(Imagick::queryFormats($f) ? "yes" : "no").PHP_EOL;'
 ```
 
 Use the PHP package and service version installed on the server if it is not
-PHP 8.4. All four formats should report `yes`.
+PHP 8.4. ExifTool should print a version number and all four ImageMagick formats
+should report `yes`. If ExifTool lives outside the service user's `PATH`, set
+`PHOTO_EXIFTOOL_BINARY` to its absolute path in `.env`, then run
+`php artisan optimize:clear` followed by `php artisan optimize`.
 
 Existing database records retain the disk on which they were created, so local
 development photos remain readable and are not silently moved or deleted. For
