@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PromptPhotoRequirement;
 use App\Enums\PromptRoundKind;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $prompt_library_id
  * @property int|null $relationship_id
  * @property int|null $primary_user_id
+ * @property PromptPhotoRequirement $photo_requirement
  * @property string $slug
  * @property PromptRoundKind $kind
  * @property string $primary_prompt
@@ -27,6 +29,7 @@ class PromptTemplate extends Model
         'prompt_library_id',
         'relationship_id',
         'primary_user_id',
+        'photo_requirement',
         'kind',
         'primary_prompt',
         'secondary_prompt',
@@ -39,6 +42,7 @@ class PromptTemplate extends Model
     {
         return [
             'kind' => PromptRoundKind::class,
+            'photo_requirement' => PromptPhotoRequirement::class,
             'primary_user_id' => 'integer',
             'topics' => 'array',
             'active' => 'boolean',

@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property PromptTaskKind $kind
  * @property PromptTaskStatus $status
  * @property string|null $prompt
+ * @property array<string, mixed>|null $payload
  * @property CarbonImmutable|null $activated_at
  * @property CarbonImmutable|null $submitted_at
  * @property-read PromptRound $round

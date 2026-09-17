@@ -45,6 +45,13 @@ class Relationship extends Model
         return $this->hasMany(PromptLibrary::class);
     }
 
+    /** @return BelongsToMany<PromptLibrary, $this> */
+    public function extracurricularLibraries(): BelongsToMany
+    {
+        return $this->belongsToMany(PromptLibrary::class, 'relationship_extracurricular_libraries')
+            ->withTimestamps();
+    }
+
     /** @return HasMany<RelationshipInvitation, $this> */
     public function invitations(): HasMany
     {

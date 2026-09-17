@@ -104,6 +104,13 @@ new #[Title('History')] class extends Component
                                 <div class="rounded-2xl bg-violet-50/80 p-4 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:ring-violet-400/15">
                                     <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-300">{{ __('The request') }}</p>
                                     <p class="mt-2 text-[0.9375rem] leading-6 text-violet-950 dark:text-violet-50">{{ $requestTask->questionResponse->answer }}</p>
+                                    @if ($requestTask->photos->isNotEmpty())
+                                        <div class="mt-4 grid grid-cols-3 gap-2">
+                                            @foreach ($requestTask->photos as $photo)
+                                                <img src="{{ route('round-photos.show', $photo) }}" alt="{{ __('Photo shared with the request') }}" class="aspect-square w-full rounded-xl object-cover">
+                                            @endforeach
+                                        </div>
+                                    @endif
                                 </div>
                             @endif
 
@@ -150,6 +157,13 @@ new #[Title('History')] class extends Component
                                         @endif
 
                                         <p class="mt-3 whitespace-pre-line text-[0.9375rem] leading-6 text-zinc-800 dark:text-zinc-100">{{ $task->questionResponse?->answer }}</p>
+                                        @if ($task->photos->isNotEmpty())
+                                            <div class="mt-4 grid grid-cols-3 gap-2">
+                                                @foreach ($task->photos as $photo)
+                                                    <img src="{{ route('round-photos.show', $photo) }}" alt="{{ __('Photo shared by :name', ['name' => $task->assignee->name]) }}" class="aspect-square w-full rounded-xl object-cover">
+                                                @endforeach
+                                            </div>
+                                        @endif
                                     </section>
                                 @endforeach
                             </div>

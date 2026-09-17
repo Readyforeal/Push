@@ -12,6 +12,7 @@ class PromptReadyNotification extends Notification
         public string $title = 'A new prompt is ready',
         public string $body = 'Take a moment to answer when you’re ready.',
         public string $tag = 'prompt-ready',
+        public ?string $url = null,
     ) {}
 
     /** @return array<int, class-string> */
@@ -28,6 +29,6 @@ class PromptReadyNotification extends Notification
             ->icon('/apple-touch-icon.png')
             ->badge('/apple-touch-icon.png')
             ->tag($this->tag)
-            ->data(['url' => route('dashboard')]);
+            ->data(['url' => $this->url ?? route('dashboard')]);
     }
 }

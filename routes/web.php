@@ -15,6 +15,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('missions', 'pages::missions')->name('missions');
     Route::livewire('moments', 'pages::moments')->name('moments');
     Route::livewire('moments/{moment}', 'pages::moments.show')->name('moments.show');
+    Route::livewire('prompts/{round}', 'pages::prompts.show')->name('prompts.show');
+    Route::livewire('extracurriculars/{library}', 'pages::extracurriculars.show')->name('extracurriculars.show');
     Route::livewire('invitations/{token}', 'pages::invitations.accept')->name('invitations.accept');
     Route::get('round-photos/{roundPhoto}', RoundPhotoController::class)->name('round-photos.show');
     Route::get('moment-photos/{sharedMomentPhoto}', SharedMomentPhotoController::class)->name('moment-photos.show');

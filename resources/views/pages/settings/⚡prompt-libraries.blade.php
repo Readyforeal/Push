@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PromptPhotoRequirement;
 use App\Enums\PromptRoundKind;
 use App\Models\PromptLibrary;
 use App\Models\PromptTemplate;
@@ -39,6 +40,8 @@ new #[Title('Prompt libraries')] class extends Component
     public string $bulkPrompts = '';
 
     public ?int $primaryAssigneeId = null;
+
+    public string $photoRequirement = 'none';
 
     public function mount(): void
     {
@@ -93,6 +96,7 @@ new #[Title('Prompt libraries')] class extends Component
             'primaryPrompt' => ['required', 'string', 'max:5000'],
             'secondaryPrompt' => ['nullable', 'string', 'max:5000'],
             'topics' => ['nullable', 'string', 'max:1000'],
+            'photoRequirement' => ['required', Rule::enum(PromptPhotoRequirement::class)],
         ]);
 
         if (! $this->relationship || ! $this->selectedLibrary) {
@@ -108,6 +112,7 @@ new #[Title('Prompt libraries')] class extends Component
                 $this->secondaryPrompt,
                 $this->parseTopics($this->topics),
                 $this->primaryAssigneeId,
+                PromptPhotoRequirement::from($this->photoRequirement),
             );
         } catch (DomainException $exception) {
             $this->addError('secondaryPrompt', $exception->getMessage());
@@ -115,7 +120,7 @@ new #[Title('Prompt libraries')] class extends Component
             return;
         }
 
-        $this->reset('primaryPrompt', 'secondaryPrompt', 'topics');
+        $this->reset('primaryPrompt', 'secondaryPrompt', 'topics', 'photoRequirement');
         unset($this->libraries, $this->prompts);
         Flux::modal('add-library-prompt')->close();
         Flux::toast(variant: 'success', text: __('Prompt added.'));
@@ -123,7 +128,10 @@ new #[Title('Prompt libraries')] class extends Component
 
     public function importPrompts(PromptLibraryManager $manager): void
     {
-        $this->validate(['bulkPrompts' => ['required', 'string', 'max:2000000']]);
+        $this->validate([
+            'bulkPrompts' => ['required', 'string', 'max:2000000'],
+            'photoRequirement' => ['required', Rule::enum(PromptPhotoRequirement::class)],
+        ]);
 
         if (! $this->relationship || ! $this->selectedLibrary) {
             return;
@@ -136,6 +144,7 @@ new #[Title('Prompt libraries')] class extends Component
                 $this->selectedLibrary,
                 $this->bulkPrompts,
                 $this->primaryAssigneeId,
+                PromptPhotoRequirement::from($this->photoRequirement),
             );
         } catch (DomainException $exception) {
             $this->addError('bulkPrompts', $exception->getMessage());
@@ -143,7 +152,7 @@ new #[Title('Prompt libraries')] class extends Component
             return;
         }
 
-        $this->reset('bulkPrompts');
+        $this->reset('bulkPrompts', 'photoRequirement');
         unset($this->libraries, $this->prompts);
         Flux::modal('bulk-import-prompts')->close();
         Flux::toast(variant: 'success', text: trans_choice(':count prompt imported|:count prompts imported', $count, ['count' => $count]));
@@ -202,6 +211,32 @@ new #[Title('Prompt libraries')] class extends Component
         unset($this->libraries, $this->selectedLibrary, $this->prompts);
         $this->selectedLibraryId = $this->libraries->first()?->id;
         Flux::toast(variant: 'success', text: __('Library removed.'));
+    }
+
+    public function toggleExtracurricularExposure(PromptLibraryManager $manager): void
+    {
+        if (! $this->relationship || ! $this->selectedLibrary) {
+            return;
+        }
+
+        $manager->setExtracurricularExposure(
+            $this->user(),
+            $this->relationship,
+            $this->selectedLibrary,
+            ! $this->isSelectedLibraryExtracurricular(),
+        );
+
+        unset($this->relationship);
+        Flux::toast(variant: 'success', text: $this->isSelectedLibraryExtracurricular()
+            ? __('Library added to Extracurriculars.')
+            : __('Library removed from Extracurriculars.'));
+    }
+
+    public function isSelectedLibraryExtracurricular(): bool
+    {
+        return $this->relationship?->extracurricularLibraries()
+            ->whereKey($this->selectedLibraryId)
+            ->exists() ?? false;
     }
 
     #[Computed]
@@ -319,6 +354,46 @@ new #[Title('Prompt libraries')] class extends Component
         return in_array($kind, [PromptRoundKind::UniqueQuestions, PromptRoundKind::PhotoRequest], true);
     }
 
+    /** @return array<string, string> */
+    public function photoRequirementOptions(PromptRoundKind $kind): array
+    {
+        $primary = $this->primaryPerson()?->firstName() ?? __('Partner one');
+        $secondary = $this->secondaryPerson()?->firstName() ?? __('Partner two');
+
+        if ($kind === PromptRoundKind::PhotoPicker) {
+            return [];
+        }
+
+        if ($kind === PromptRoundKind::PhotoRequest) {
+            return [
+                PromptPhotoRequirement::None->value => __('Only :name uploads the requested photos', ['name' => $secondary]),
+                PromptPhotoRequirement::Primary->value => __(':name also uploads photos with the request', ['name' => $primary]),
+            ];
+        }
+
+        return [
+            PromptPhotoRequirement::None->value => __('No answer photos required'),
+            PromptPhotoRequirement::Primary->value => __(':name uploads photos', ['name' => $primary]),
+            PromptPhotoRequirement::Secondary->value => __(':name uploads photos', ['name' => $secondary]),
+            PromptPhotoRequirement::Both->value => __('Both people upload photos'),
+        ];
+    }
+
+    public function photoRequirementLabel(PromptTemplate $prompt): ?string
+    {
+        if ($prompt->kind === PromptRoundKind::PhotoPicker) {
+            return __('Both upload three photos');
+        }
+
+        if ($prompt->kind === PromptRoundKind::PhotoRequest) {
+            return $prompt->photo_requirement === PromptPhotoRequirement::Primary
+                ? __('Requester also uploads photos')
+                : __('Photographer uploads three photos');
+        }
+
+        return $this->photoRequirementOptions($prompt->kind)[$prompt->photo_requirement->value] ?? null;
+    }
+
     public function primaryRoleDescription(PromptRoundKind $kind, ?int $primaryUserId = null): string
     {
         $name = $this->primaryPerson($primaryUserId)?->firstName() ?? __('Partner one');
@@ -367,6 +442,7 @@ new #[Title('Prompt libraries')] class extends Component
     private function resetDraftAssignment(): void
     {
         $this->primaryAssigneeId = $this->partners->first()?->id;
+        $this->photoRequirement = PromptPhotoRequirement::None->value;
     }
 
     /** @return list<string> */
@@ -435,6 +511,15 @@ new #[Title('Prompt libraries')] class extends Component
                             @endif
                         </div>
                         <div class="flex flex-wrap gap-2">
+                            <flux:button
+                                type="button"
+                                size="sm"
+                                :variant="$this->isSelectedLibraryExtracurricular() ? 'primary' : 'ghost'"
+                                icon="sparkles"
+                                wire:click="toggleExtracurricularExposure"
+                            >
+                                {{ $this->isSelectedLibraryExtracurricular() ? __('In Extracurriculars') : __('Add to Extracurriculars') }}
+                            </flux:button>
                             <flux:modal.trigger name="bulk-import-prompts">
                                 <flux:button type="button" size="sm" variant="ghost" icon="arrow-up-tray">{{ __('Bulk import') }}</flux:button>
                             </flux:modal.trigger>
@@ -467,6 +552,13 @@ new #[Title('Prompt libraries')] class extends Component
                                                 @foreach ($prompt->topics as $topic)
                                                     <flux:badge size="sm" color="zinc">{{ $topic }}</flux:badge>
                                                 @endforeach
+                                            </div>
+                                        @endif
+                                        @if ($this->photoRequirementLabel($prompt))
+                                            <div class="mt-3">
+                                                <flux:badge size="sm" color="violet" icon="photo">
+                                                    {{ $this->photoRequirementLabel($prompt) }}
+                                                </flux:badge>
                                             </div>
                                         @endif
                                     </div>
@@ -570,6 +662,17 @@ new #[Title('Prompt libraries')] class extends Component
                         @if ($this->selectedLibrary->kind !== PromptRoundKind::SharedQuestion)
                             <flux:textarea wire:model="secondaryPrompt" :label="$this->secondaryLabel($this->selectedLibrary->kind)" rows="3" />
                         @endif
+                        @if ($this->photoRequirementOptions($this->selectedLibrary->kind) !== [])
+                            <flux:select wire:model="photoRequirement" :label="__('Required answer photos')">
+                                @foreach ($this->photoRequirementOptions($this->selectedLibrary->kind) as $value => $label)
+                                    <flux:select.option :value="$value">{{ $label }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
+                        @else
+                            <div class="rounded-2xl bg-violet-50/80 px-4 py-3 text-sm text-violet-800 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-400/15">
+                                {{ __('This prompt type already requires both people to upload three photos.') }}
+                            </div>
+                        @endif
                         <flux:input wire:model="topics" :label="__('Topics')" :description="__('Comma separated, such as trust, intimacy, future')" />
                         <div class="flex justify-end gap-2">
                             <flux:modal.close><flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button></flux:modal.close>
@@ -600,6 +703,13 @@ new #[Title('Prompt libraries')] class extends Component
                                     </flux:button>
                                 </div>
                             </div>
+                        @endif
+                        @if ($this->photoRequirementOptions($this->selectedLibrary->kind) !== [])
+                            <flux:select wire:model="photoRequirement" :label="__('Required answer photos for every imported prompt')">
+                                @foreach ($this->photoRequirementOptions($this->selectedLibrary->kind) as $value => $label)
+                                    <flux:select.option :value="$value">{{ $label }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
                         @endif
                         <div class="app-glass-card rounded-xl bg-zinc-100 p-4 text-sm text-zinc-600 backdrop-blur-xl dark:bg-zinc-800 dark:text-zinc-300">
                             @if ($this->selectedLibrary->kind === PromptRoundKind::SharedQuestion)

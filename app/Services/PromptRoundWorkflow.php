@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\PromptRoundKind;
+use App\Enums\PromptRoundOrigin;
 use App\Enums\PromptRoundStatus;
 use App\Enums\PromptTaskKind;
 use App\Enums\PromptTaskStatus;
@@ -47,17 +48,21 @@ class PromptRoundWorkflow
         ?PromptLibrary $library = null,
         string $promptSource = 'curated',
         ?string $aiModel = null,
+        PromptRoundOrigin $origin = PromptRoundOrigin::Scheduled,
+        ?User $requestedBy = null,
     ): PromptRound {
         if ($tasks === []) {
             throw new DomainException('A prompt round must contain at least one task.');
         }
 
         /** @var array{round: PromptRound, activated: Collection<int, PromptRoundTask>} $result */
-        $result = DB::transaction(function () use ($relationship, $kind, $tasks, $availableAt, $template, $schedule, $scheduledFor, $library, $promptSource, $aiModel): array {
+        $result = DB::transaction(function () use ($relationship, $kind, $tasks, $availableAt, $template, $schedule, $scheduledFor, $library, $promptSource, $aiModel, $origin, $requestedBy): array {
             $relationship = Relationship::query()->lockForUpdate()->findOrFail($relationship->id);
 
-            if ($relationship->rounds()->where('status', PromptRoundStatus::Active)->exists()) {
-                throw new DomainException('This relationship already has an active round.');
+            if ($relationship->rounds()->where('status', PromptRoundStatus::Active)->where('origin', $origin)->exists()) {
+                throw new DomainException($origin === PromptRoundOrigin::Extracurricular
+                    ? 'Finish your current extracurricular prompt before requesting another.'
+                    : 'This relationship already has an active round.');
             }
 
             $memberIds = $relationship->members()->pluck('users.id');
@@ -66,6 +71,8 @@ class PromptRoundWorkflow
                 'prompt_library_id' => $library?->id,
                 'relationship_prompt_schedule_id' => $schedule?->id,
                 'kind' => $kind,
+                'origin' => $origin,
+                'requested_by_user_id' => $requestedBy?->id,
                 'prompt_source' => $promptSource,
                 'ai_model' => $aiModel,
                 'status' => PromptRoundStatus::Active,
@@ -136,6 +143,14 @@ class PromptRoundWorkflow
         }
 
         return $this->submit($task, $actor, PromptTaskKind::Question, function (PromptRoundTask $lockedTask) use ($answer): void {
+            if ($lockedTask->payload['requires_photos'] ?? false) {
+                $photoCount = $lockedTask->photos()->count();
+
+                if ($photoCount < 1 || $photoCount > 3) {
+                    throw new DomainException('This prompt requires between one and three photos.');
+                }
+            }
+
             QuestionResponse::query()->updateOrCreate(
                 ['prompt_round_task_id' => $lockedTask->id],
                 ['answer' => $answer],

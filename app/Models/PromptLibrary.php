@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\PromptRoundKind;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -51,5 +52,12 @@ class PromptLibrary extends Model
     public function schedules(): HasMany
     {
         return $this->hasMany(RelationshipPromptSchedule::class);
+    }
+
+    /** @return BelongsToMany<Relationship, $this> */
+    public function extracurricularRelationships(): BelongsToMany
+    {
+        return $this->belongsToMany(Relationship::class, 'relationship_extracurricular_libraries')
+            ->withTimestamps();
     }
 }

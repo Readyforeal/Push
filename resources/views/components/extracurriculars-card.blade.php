@@ -1,3 +1,12 @@
+@php
+    $relationship = auth()->user()?->relationships()->first();
+    $promptLibraries = $relationship?->extracurricularLibraries()
+        ->where('active', true)
+        ->withCount(['prompts' => fn ($query) => $query->where('active', true)])
+        ->orderBy('name')
+        ->get() ?? collect();
+@endphp
+
 <section class="prompt-surface p-5 sm:p-6">
     <div>
         <p class="prompt-kicker">{{ __('More for the two of you') }}</p>
@@ -23,5 +32,26 @@
 
             <flux:icon.chevron-right class="size-4 shrink-0 text-zinc-300 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-violet-500 dark:text-zinc-600 dark:group-hover:text-violet-300" />
         </a>
+
+        @foreach ($promptLibraries as $library)
+            <a
+                href="{{ route('extracurriculars.show', $library) }}"
+                wire:navigate.hover
+                class="group flex items-center gap-3.5 border-t border-zinc-200/70 px-3.5 py-3 transition duration-200 hover:bg-violet-50/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 dark:border-white/8 dark:hover:bg-violet-500/8"
+            >
+                <span class="flex size-11 shrink-0 items-center justify-center rounded-[0.9rem] bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white shadow-sm shadow-violet-900/20">
+                    <flux:icon.sparkles class="size-5" />
+                </span>
+
+                <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-semibold text-zinc-950 dark:text-white">{{ $library->name }}</span>
+                    <span class="mt-0.5 block truncate text-xs text-zinc-500 dark:text-zinc-400">
+                        {{ trans_choice(':count prompt|:count prompts', $library->prompts_count, ['count' => $library->prompts_count]) }} · {{ __('Draw one on demand') }}
+                    </span>
+                </span>
+
+                <flux:icon.chevron-right class="size-4 shrink-0 text-zinc-300 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-violet-500 dark:text-zinc-600 dark:group-hover:text-violet-300" />
+            </a>
+        @endforeach
     </div>
 </section>

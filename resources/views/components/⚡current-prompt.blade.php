@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\PromptRoundKind;
+use App\Enums\PromptRoundOrigin;
 use App\Enums\PromptRoundStatus;
 use App\Enums\PromptTaskKind;
 use App\Enums\PromptTaskStatus;
@@ -26,13 +27,22 @@ new class extends Component
 
     public string $answer = '';
 
+    public ?int $roundId = null;
+
+    public bool $summary = false;
+
     /** @var array<int, TemporaryUploadedFile> */
     public array $photos = [];
 
+    /** @var array<int, TemporaryUploadedFile> */
+    public array $answerPhotos = [];
+
     public ?int $selectedPhotoId = null;
 
-    public function mount(): void
+    public function mount(?int $roundId = null, bool $summary = false): void
     {
+        $this->roundId = $roundId;
+        $this->summary = $summary;
         $this->answer = $this->task?->questionResponse?->answer ?? '';
     }
 
@@ -57,23 +67,63 @@ new class extends Component
         Flux::toast(variant: 'success', text: __('Draft saved.'));
     }
 
-    public function submitAnswer(PromptRoundWorkflow $workflow): void
+    public function submitAnswer(PromptRoundWorkflow $workflow, PhotoStorage $photoStorage): void
     {
-        $this->validate(['answer' => ['required', 'string', 'max:5000']]);
         $task = $this->task;
 
         if (! $task) {
             return;
         }
 
+        $requiresPhotos = (bool) ($task->payload['requires_photos'] ?? false);
+        $rules = ['answer' => ['required', 'string', 'max:5000']];
+
+        if ($requiresPhotos) {
+            $rules['answerPhotos'] = ['required', 'array', 'min:1', 'max:3'];
+            $rules['answerPhotos.*'] = ['required', 'file', 'extensions:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'];
+        }
+
+        $this->validate($rules, [
+            'answerPhotos.required' => __('Add at least one photo for this prompt.'),
+            'answerPhotos.min' => __('Add at least one photo for this prompt.'),
+            'answerPhotos.max' => __('Choose no more than three photos.'),
+        ]);
+
+        $storedPhotos = [];
+        $mediaDisk = (string) config('filesystems.media_disk', 'homelab_cloud');
+
         try {
+            foreach ($this->answerPhotos as $position => $photo) {
+                $stored = $photoStorage->store($photo, "rounds/{$task->prompt_round_id}/{$task->id}", $mediaDisk);
+                $storedPhotos[] = $task->photos()->create([
+                    'disk' => $mediaDisk,
+                    'path' => $stored['path'],
+                    'original_name' => $photo->getClientOriginalName(),
+                    'mime_type' => $stored['mime_type'],
+                    'size' => $stored['size'],
+                    'position' => $position + 1,
+                ]);
+            }
+
             $workflow->submitQuestion($task, $this->user(), $this->answer);
-        } catch (DomainException $exception) {
-            $this->addError('answer', $exception->getMessage());
+        } catch (Throwable $exception) {
+            if (! $exception instanceof DomainException) {
+                report($exception);
+            }
+
+            foreach ($storedPhotos as $storedPhoto) {
+                Storage::disk($storedPhoto->disk)->delete($storedPhoto->path);
+                $storedPhoto->delete();
+            }
+
+            $this->addError('answer', $exception instanceof DomainException
+                ? $exception->getMessage()
+                : __('Your answer could not be submitted. Please try again.'));
 
             return;
         }
 
+        $this->reset('answerPhotos');
         unset($this->round, $this->task, $this->latestResult);
         Flux::toast(variant: 'success', text: __('Answer submitted.'));
     }
@@ -176,6 +226,8 @@ new class extends Component
     {
         return $this->relationship?->rounds()
             ->where('status', PromptRoundStatus::Active)
+            ->when($this->roundId, fn ($query) => $query->whereKey($this->roundId))
+            ->when(! $this->roundId, fn ($query) => $query->where('origin', PromptRoundOrigin::Scheduled))
             ->latest('available_at')
             ->first();
     }
@@ -207,6 +259,8 @@ new class extends Component
     {
         return $this->relationship?->rounds()
             ->where('status', PromptRoundStatus::Revealed)
+            ->when($this->roundId, fn ($query) => $query->whereKey($this->roundId))
+            ->when(! $this->roundId, fn ($query) => $query->where('origin', PromptRoundOrigin::Scheduled))
             ->with(['tasks.assignee', 'tasks.questionResponse', 'tasks.photos', 'tasks.photoSelection.photo.task.assignee'])
             ->latest('revealed_at')
             ->first();
@@ -223,7 +277,41 @@ new class extends Component
 }; ?>
 
 <div class="transition-opacity duration-300" wire:loading.class="opacity-60">
-    @if ($this->round && $this->task?->kind === PromptTaskKind::Question)
+    @if ($summary)
+        @php
+            $summaryRound = $this->round ?? $this->latestResult;
+        @endphp
+        @if ($summaryRound)
+            <a href="{{ route('prompts.show', $summaryRound) }}" wire:navigate.hover class="prompt-surface group block p-6 transition duration-200 hover:-translate-y-0.5 hover:shadow-xl sm:p-7">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <flux:badge color="violet" size="sm">
+                                {{ $summaryRound->origin === PromptRoundOrigin::Extracurricular ? __('Extracurricular') : __('Today’s prompt') }}
+                            </flux:badge>
+                            @if ($summaryRound->status === PromptRoundStatus::Revealed)
+                                <flux:badge color="emerald" size="sm">{{ __('Completed') }}</flux:badge>
+                            @endif
+                        </div>
+                        <h2 class="mt-4 text-xl font-semibold leading-snug tracking-[-0.025em] text-zinc-950 sm:text-2xl dark:text-white">
+                            {{ $this->task?->prompt ?? $summaryRound->tasks->first()?->prompt ?? __('Your prompt is ready') }}
+                        </h2>
+                        <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+                            {{ $summaryRound->status === PromptRoundStatus::Revealed ? __('Open your shared result.') : __('Open the prompt to answer or continue.') }}
+                        </p>
+                    </div>
+                    <span class="flex size-11 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white shadow-sm transition group-hover:translate-x-0.5 dark:bg-violet-500">
+                        <flux:icon.arrow-right class="size-5" />
+                    </span>
+                </div>
+            </a>
+        @else
+            <section class="prompt-surface-muted p-6 text-center">
+                <flux:heading size="lg">{{ __('Ready for your first prompt') }}</flux:heading>
+                <flux:text class="mt-1">{{ __('It will appear here when it’s time.') }}</flux:text>
+            </section>
+        @endif
+    @elseif ($this->round && $this->task?->kind === PromptTaskKind::Question)
         @if ($this->task->status === PromptTaskStatus::Active)
             <section class="prompt-surface relative p-6 sm:p-8">
                 <div class="pointer-events-none absolute -right-20 -top-24 size-56 rounded-full bg-violet-400/10 blur-3xl dark:bg-violet-400/8"></div>
@@ -257,6 +345,40 @@ new class extends Component
                         maxlength="5000"
                         class="[&_textarea]:rounded-2xl [&_textarea]:bg-zinc-50/80 [&_textarea]:shadow-inner dark:[&_textarea]:bg-black/15"
                     />
+
+                    @if ($this->task->payload['requires_photos'] ?? false)
+                        <div class="space-y-3">
+                            <label class="group flex cursor-pointer items-center gap-4 rounded-2xl border border-dashed border-violet-300 bg-violet-50/55 p-4 transition hover:bg-violet-50 dark:border-violet-400/30 dark:bg-violet-500/8 dark:hover:bg-violet-500/12">
+                                <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-violet-600 shadow-sm dark:bg-white/8 dark:text-violet-300">
+                                    <flux:icon.photo class="size-5" />
+                                </span>
+                                <span class="min-w-0 flex-1">
+                                    <span class="block text-sm font-semibold text-zinc-900 dark:text-white">{{ __('Add photos') }}</span>
+                                    <span class="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">{{ __('This prompt requires 1–3 photos with your answer.') }}</span>
+                                </span>
+                                <input wire:model="answerPhotos" type="file" accept="image/*,.dng,.tif,.tiff,.heic,.heif" multiple class="sr-only">
+                            </label>
+
+                            <div wire:loading wire:target="answerPhotos" class="text-sm text-zinc-500">{{ __('Preparing your photos…') }}</div>
+
+                            @if (count($answerPhotos) > 0)
+                                <div class="grid grid-cols-3 gap-3">
+                                    @foreach ($answerPhotos as $photo)
+                                        @if (in_array(strtolower($photo->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'gif', 'webp'], true))
+                                            <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
+                                        @else
+                                            <div class="flex aspect-square flex-col items-center justify-center rounded-2xl bg-zinc-100 p-3 text-center dark:bg-white/8">
+                                                <flux:icon.photo class="size-6" />
+                                                <span class="mt-2 line-clamp-2 text-xs">{{ $photo->getClientOriginalName() }}</span>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
+
+                            <flux:error name="answerPhotos" />
+                        </div>
+                    @endif
 
                     <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                         <flux:button type="button" variant="ghost" wire:click="saveDraft" class="sm:px-5">
@@ -357,6 +479,16 @@ new class extends Component
                         </flux:button>
                     </div>
                 </form>
+            </section>
+        @elseif ($this->task->status === PromptTaskStatus::Locked)
+            <section class="prompt-surface-muted flex min-h-72 items-center justify-center p-8 text-center">
+                <div class="max-w-sm">
+                    <span class="mx-auto flex size-14 items-center justify-center rounded-full bg-violet-50 text-violet-500 ring-8 ring-violet-50/60 dark:bg-violet-500/15 dark:text-violet-300 dark:ring-violet-500/5">
+                        <flux:icon.chat-bubble-left-right class="size-6" />
+                    </span>
+                    <flux:heading size="lg" class="mt-6 tracking-tight">{{ __('Waiting for your partner’s request') }}</flux:heading>
+                    <flux:text class="mt-2 leading-6">{{ __('They’re deciding what they would love for you to photograph. We’ll notify you when it’s ready.') }}</flux:text>
+                </div>
             </section>
         @else
             <section class="prompt-surface flex min-h-72 items-center justify-center p-8 text-center">
@@ -467,6 +599,13 @@ new class extends Component
                     <div class="app-glass-card mt-6 rounded-2xl bg-violet-50 p-4 text-violet-900 backdrop-blur-xl dark:bg-violet-500/10 dark:text-violet-100">
                         <p class="text-xs font-semibold uppercase tracking-[0.14em] text-violet-500 dark:text-violet-300">{{ __('The request') }}</p>
                         <p class="mt-2">{{ $requestTask->questionResponse->answer }}</p>
+                        @if ($requestTask->photos->isNotEmpty())
+                            <div class="mt-4 grid grid-cols-3 gap-2">
+                                @foreach ($requestTask->photos as $photo)
+                                    <img src="{{ route('round-photos.show', $photo) }}" alt="{{ __('Photo shared with the request') }}" class="aspect-square w-full rounded-xl object-cover">
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 @endif
 
@@ -494,6 +633,13 @@ new class extends Component
                             </div>
                             <p class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">{{ $resultTask->prompt }}</p>
                             <p class="mt-2 whitespace-pre-line text-zinc-900 dark:text-white">{{ $resultTask->questionResponse?->answer }}</p>
+                            @if ($resultTask->photos->isNotEmpty())
+                                <div class="mt-4 grid grid-cols-3 gap-2">
+                                    @foreach ($resultTask->photos as $photo)
+                                        <img src="{{ route('round-photos.show', $photo) }}" alt="{{ __('Photo shared by :name', ['name' => $resultTask->assignee->name]) }}" class="aspect-square w-full rounded-xl object-cover">
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 </div>

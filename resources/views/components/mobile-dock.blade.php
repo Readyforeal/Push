@@ -4,7 +4,7 @@
             'label' => __('Home'),
             'route' => 'dashboard',
             'icon' => 'home',
-            'current' => request()->routeIs('dashboard'),
+            'current' => request()->routeIs('dashboard', 'prompts.*', 'extracurriculars.*'),
         ],
         [
             'label' => __('History'),

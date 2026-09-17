@@ -41,6 +41,11 @@ test('a photo request moves from the requester to the photographer and back for 
         ],
     ]);
 
+    $this->actingAs($photographer);
+    Livewire::test('current-prompt')
+        ->assertSee('Waiting for your partner’s request')
+        ->assertDontSee('Photos sent');
+
     $this->actingAs($requester);
     Livewire::test('current-prompt')
         ->assertSee('What would you like to see?')

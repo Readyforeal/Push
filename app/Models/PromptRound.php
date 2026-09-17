@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PromptRoundKind;
+use App\Enums\PromptRoundOrigin;
 use App\Enums\PromptRoundStatus;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
@@ -23,12 +24,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class PromptRound extends Model
 {
-    protected $fillable = ['relationship_id', 'prompt_library_id', 'prompt_template_id', 'relationship_prompt_schedule_id', 'kind', 'prompt_source', 'ai_model', 'status', 'available_at', 'scheduled_for', 'revealed_at'];
+    protected $fillable = ['relationship_id', 'prompt_library_id', 'prompt_template_id', 'relationship_prompt_schedule_id', 'requested_by_user_id', 'kind', 'origin', 'prompt_source', 'ai_model', 'status', 'available_at', 'scheduled_for', 'revealed_at'];
 
     protected function casts(): array
     {
         return [
             'kind' => PromptRoundKind::class,
+            'origin' => PromptRoundOrigin::class,
             'status' => PromptRoundStatus::class,
             'available_at' => 'immutable_datetime',
             'scheduled_for' => 'immutable_date',

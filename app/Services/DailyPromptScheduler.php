@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\PromptPhotoRequirement;
 use App\Enums\PromptRoundKind;
+use App\Enums\PromptRoundOrigin;
 use App\Enums\PromptRoundStatus;
 use App\Enums\PromptTaskKind;
 use App\Models\PromptLibrary;
@@ -32,7 +34,10 @@ class DailyPromptScheduler
         $localNow = CarbonImmutable::instance($at ?? now())->setTimezone($relationship->timezone);
         $scheduledFor = $localNow->toDateString();
 
-        if ($relationship->rounds()->where('status', PromptRoundStatus::Active)->exists()) {
+        if ($relationship->rounds()
+            ->where('status', PromptRoundStatus::Active)
+            ->where('origin', PromptRoundOrigin::Scheduled)
+            ->exists()) {
             return null;
         }
 
@@ -107,7 +112,7 @@ class DailyPromptScheduler
             ->first();
     }
 
-    private function randomTemplateForLibrary(
+    public function randomTemplateForLibrary(
         Relationship $relationship,
         PromptLibrary $library,
     ): ?PromptTemplate {
@@ -182,7 +187,7 @@ class DailyPromptScheduler
      * @param  list<User>  $members
      * @return list<array{user: User, kind: PromptTaskKind, prompt: string, depends_on?: int}>
      */
-    private function tasksFor(Relationship $relationship, PromptTemplate $template, array $members): array
+    public function tasksFor(Relationship $relationship, PromptTemplate $template, array $members): array
     {
         return $this->tasksForPrompts(
             $template->kind,
@@ -190,6 +195,7 @@ class DailyPromptScheduler
             $template->secondary_prompt,
             $members,
             $template->primary_user_id,
+            $template->photo_requirement,
         );
     }
 
@@ -203,11 +209,12 @@ class DailyPromptScheduler
         ?string $secondaryPrompt,
         array $members,
         ?int $primaryUserId = null,
+        PromptPhotoRequirement $photoRequirement = PromptPhotoRequirement::None,
     ): array {
         if ($kind === PromptRoundKind::SharedQuestion) {
             return [
-                ['user' => $members[0], 'kind' => PromptTaskKind::Question, 'prompt' => $primaryPrompt],
-                ['user' => $members[1], 'kind' => PromptTaskKind::Question, 'prompt' => $primaryPrompt],
+                ['user' => $members[0], 'kind' => PromptTaskKind::Question, 'prompt' => $primaryPrompt, 'payload' => ['requires_photos' => $photoRequirement->includesPrimary()]],
+                ['user' => $members[1], 'kind' => PromptTaskKind::Question, 'prompt' => $primaryPrompt, 'payload' => ['requires_photos' => $photoRequirement->includesSecondary()]],
             ];
         }
 
@@ -215,8 +222,8 @@ class DailyPromptScheduler
             [$primaryUser, $secondaryUser] = $this->assignedMembers($members, $primaryUserId);
 
             return [
-                ['user' => $primaryUser, 'kind' => PromptTaskKind::Question, 'prompt' => $primaryPrompt],
-                ['user' => $secondaryUser, 'kind' => PromptTaskKind::Question, 'prompt' => $secondaryPrompt ?? $primaryPrompt],
+                ['user' => $primaryUser, 'kind' => PromptTaskKind::Question, 'prompt' => $primaryPrompt, 'payload' => ['requires_photos' => $photoRequirement->includesPrimary()]],
+                ['user' => $secondaryUser, 'kind' => PromptTaskKind::Question, 'prompt' => $secondaryPrompt ?? $primaryPrompt, 'payload' => ['requires_photos' => $photoRequirement->includesSecondary()]],
             ];
         }
 
@@ -224,7 +231,7 @@ class DailyPromptScheduler
             [$requester, $sender] = $this->assignedMembers($members, $primaryUserId);
 
             return [
-                ['user' => $requester, 'kind' => PromptTaskKind::Question, 'prompt' => $primaryPrompt],
+                ['user' => $requester, 'kind' => PromptTaskKind::Question, 'prompt' => $primaryPrompt, 'payload' => ['requires_photos' => $photoRequirement->includesPrimary()]],
                 [
                     'user' => $sender,
                     'kind' => PromptTaskKind::PhotoUpload,
@@ -271,7 +278,7 @@ class DailyPromptScheduler
     }
 
     /** @return list<User> */
-    private function membersFor(Relationship $relationship): array
+    public function membersFor(Relationship $relationship): array
     {
         $memberIds = DB::table('relationship_members')
             ->where('relationship_id', $relationship->id)

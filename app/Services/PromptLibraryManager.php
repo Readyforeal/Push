@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\PromptPhotoRequirement;
 use App\Enums\PromptRoundKind;
 use App\Models\PromptLibrary;
 use App\Models\PromptTemplate;
@@ -42,6 +43,7 @@ class PromptLibraryManager
         ?string $secondaryPrompt = null,
         array $topics = [],
         ?int $primaryUserId = null,
+        PromptPhotoRequirement $photoRequirement = PromptPhotoRequirement::None,
     ): PromptTemplate {
         $this->authorizeLibrary($actor, $relationship, $library);
         $this->validatePromptPair($library, $primaryPrompt, $secondaryPrompt);
@@ -51,6 +53,7 @@ class PromptLibraryManager
         return $library->prompts()->create([
             'relationship_id' => $relationship->id,
             'primary_user_id' => $primaryUserId,
+            'photo_requirement' => $photoRequirement,
             'slug' => 'custom-'.Str::uuid(),
             'kind' => $library->kind,
             'primary_prompt' => trim($primaryPrompt),
@@ -67,6 +70,7 @@ class PromptLibraryManager
         PromptLibrary $library,
         string $contents,
         ?int $primaryUserId = null,
+        PromptPhotoRequirement $photoRequirement = PromptPhotoRequirement::None,
     ): int {
         $this->authorizeLibrary($actor, $relationship, $library);
         $primaryUserId = $this->primaryUserIdFor($relationship, $library->kind, $primaryUserId);
@@ -100,7 +104,7 @@ class PromptLibraryManager
             throw new DomainException('Add at least one prompt to import.');
         }
 
-        DB::transaction(function () use ($relationship, $library, $parsed, $primaryUserId): void {
+        DB::transaction(function () use ($relationship, $library, $parsed, $primaryUserId, $photoRequirement): void {
             $position = (int) $library->prompts()->max('position');
             $now = now();
             $inserts = [];
@@ -110,6 +114,7 @@ class PromptLibraryManager
                     'prompt_library_id' => $library->id,
                     'relationship_id' => $relationship->id,
                     'primary_user_id' => $primaryUserId,
+                    'photo_requirement' => $photoRequirement->value,
                     'slug' => 'custom-'.Str::uuid(),
                     'kind' => $library->kind->value,
                     'primary_prompt' => trim($primary),
@@ -187,6 +192,23 @@ class PromptLibraryManager
         }
 
         $library->delete();
+    }
+
+    public function setExtracurricularExposure(
+        User $actor,
+        Relationship $relationship,
+        PromptLibrary $library,
+        bool $exposed,
+    ): void {
+        $this->authorizeLibrary($actor, $relationship, $library);
+
+        if ($exposed) {
+            $relationship->extracurricularLibraries()->syncWithoutDetaching([$library->id]);
+
+            return;
+        }
+
+        $relationship->extracurricularLibraries()->detach($library->id);
     }
 
     private function authorizeLibrary(
