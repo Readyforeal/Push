@@ -1,6 +1,10 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="csrf-token" content="{{ csrf_token() }}" />
+@auth
+    <meta name="activity-route" content="{{ request()->route()?->getName() }}" />
+    <meta name="activity-endpoint" content="{{ route('activity.visits.store') }}" />
+@endauth
 <meta name="theme-color" content="#020617" id="app-theme-color" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

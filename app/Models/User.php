@@ -25,6 +25,7 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
  * @property string $name
  * @property string $email
  * @property bool $is_admin
+ * @property AppBackgroundMode $background_mode
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -98,6 +99,12 @@ class User extends Authenticatable implements PasskeyUser
     public function sharedMomentComments(): HasMany
     {
         return $this->hasMany(SharedMomentComment::class);
+    }
+
+    /** @return HasMany<PageVisit, $this> */
+    public function pageVisits(): HasMany
+    {
+        return $this->hasMany(PageVisit::class);
     }
 
     /** @return HasMany<SecretMissionPrompt, $this> */

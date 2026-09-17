@@ -17,6 +17,7 @@ test('settings index displays each settings destination', function () {
         ->assertSee(route('relationship.edit'), false)
         ->assertSee(route('prompt-schedule.edit'), false)
         ->assertSee(route('prompt-libraries.edit'), false)
+        ->assertSee(route('activity-log.index'), false)
         ->assertSee(route('notifications.edit'), false)
         ->assertSee(route('appearance.edit'), false);
 });
@@ -29,6 +30,8 @@ test('prompt administration settings are hidden from non administrators', functi
         ->assertOk()
         ->assertDontSee(route('prompt-schedule.edit'), false)
         ->assertDontSee(route('prompt-libraries.edit'), false);
+
+    $this->actingAs($user)->get(route('activity-log.index'))->assertForbidden();
 
     $this->actingAs($user)->get(route('prompt-schedule.edit'))->assertForbidden();
     $this->actingAs($user)->get(route('prompt-libraries.edit'))->assertForbidden();

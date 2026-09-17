@@ -13,6 +13,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('settings/relationship', 'pages::settings.relationship')->name('relationship.edit');
     Route::livewire('settings/prompt-schedule', 'pages::settings.prompt-schedule')->middleware('admin')->name('prompt-schedule.edit');
     Route::livewire('settings/prompt-libraries', 'pages::settings.prompt-libraries')->middleware('admin')->name('prompt-libraries.edit');
+    Route::livewire('settings/activity', 'pages::settings.activity-log')->middleware('admin')->name('activity-log.index');
     Route::livewire('settings/notifications', 'pages::settings.notifications')->name('notifications.edit');
 
     Route::livewire('settings/security', 'pages::settings.security')

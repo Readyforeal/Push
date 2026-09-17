@@ -1,6 +1,40 @@
 import './push-notifications';
 
 let navigationInProgress = false;
+let lastRecordedVisit;
+
+const recordPageVisit = () => {
+    const route = document.querySelector('meta[name="activity-route"]')?.content;
+    const endpoint = document.querySelector('meta[name="activity-endpoint"]')?.content;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+    if (!route || !endpoint || !csrfToken || route === 'activity.visits.store') {
+        return;
+    }
+
+    const signature = `${route}:${window.location.pathname}`;
+    const recordedAt = Date.now();
+
+    if (lastRecordedVisit?.signature === signature && recordedAt - lastRecordedVisit.recordedAt < 1500) {
+        return;
+    }
+
+    lastRecordedVisit = { signature, recordedAt };
+
+    fetch(endpoint, {
+        method: 'POST',
+        credentials: 'same-origin',
+        keepalive: true,
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+        },
+        body: JSON.stringify({ route }),
+    }).catch(() => {
+        // Visit logging should never interrupt navigation.
+    });
+};
 
 const animatePageEntry = () => {
     const container = document.querySelector('[data-page-transition]');
@@ -210,6 +244,7 @@ const syncBrowserChromeTheme = () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    recordPageVisit();
     animatePageEntry();
     hydrateImageFades();
     syncHomeBackgroundState();
@@ -254,6 +289,7 @@ document.addEventListener('livewire:navigated', () => {
     }
 
     requestAnimationFrame(() => {
+        recordPageVisit();
         document.documentElement.classList.remove('page-navigation-pending');
         animatePageEntry();
         hydrateImageFades();

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PageVisitController;
 use App\Http\Controllers\PushNotificationController;
 use App\Http\Controllers\RoundPhotoController;
 use App\Http\Controllers\SharedMomentPhotoController;
@@ -9,6 +10,10 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('activity/visits', PageVisitController::class)
+        ->middleware('throttle:120,1')
+        ->name('activity.visits.store');
+
     Route::view('dashboard', 'dashboard')->name('dashboard');
     Route::livewire('history', 'pages::history')->name('history');
     Route::livewire('library', 'pages::library')->name('library');

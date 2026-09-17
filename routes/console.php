@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\PageVisit;
 use App\Models\Relationship;
 use App\Services\DailyPromptScheduler;
 use App\Services\PromptReminderScheduler;
@@ -58,5 +59,14 @@ Artisan::command('homelab:check', function () {
     return 0;
 })->purpose('Verify that homelab media storage is mounted and writable');
 
+Artisan::command('activity:prune', function () {
+    $deleted = PageVisit::query()
+        ->where('visited_at', '<', now()->subDays(90))
+        ->delete();
+
+    $this->info("Deleted {$deleted} page visit(s) older than 90 days.");
+})->purpose('Remove expired page visit history');
+
 Schedule::command('prompts:schedule')->everyMinute()->withoutOverlapping();
 Schedule::command('prompts:remind')->everyMinute()->withoutOverlapping();
+Schedule::command('activity:prune')->dailyAt('03:15')->withoutOverlapping();

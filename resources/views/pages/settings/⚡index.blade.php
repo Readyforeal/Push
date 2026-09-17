@@ -59,6 +59,12 @@ new #[Title('Settings')] class extends Component {
             'route' => 'prompt-libraries.edit',
             'icon' => 'book-open',
             'color' => 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
+        ], [
+            'title' => __('Activity log'),
+            'description' => __('See recent page visits across the app.'),
+            'route' => 'activity-log.index',
+            'icon' => 'chart-bar-square',
+            'color' => 'bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300',
         ]]);
     }
 @endphp
