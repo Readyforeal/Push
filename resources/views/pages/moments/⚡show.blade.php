@@ -143,8 +143,8 @@ new #[Title('Post')] class extends Component
     data-post-page
     class="mx-auto w-full max-w-5xl pb-48 lg:pb-32"
 >
-    <div class="sticky top-0 z-40 h-0 -mx-2 px-2">
-        <div class="post-compact-header mt-[calc(env(safe-area-inset-top,0px)+0.5rem)] flex items-center gap-2.5 rounded-full border border-white/60 bg-white/72 p-2.5 shadow-lg shadow-zinc-950/10 backdrop-blur-2xl dark:border-white/10 dark:bg-zinc-950/72 dark:shadow-black/35">
+    <div class="sticky top-[calc(env(safe-area-inset-top,0px)+0.5rem)] z-40 h-0 -mx-2 px-2">
+        <div class="post-compact-header flex items-center gap-2.5 rounded-full border border-white/60 bg-white/72 p-2.5 shadow-lg shadow-zinc-950/10 backdrop-blur-2xl dark:border-white/10 dark:bg-zinc-950/72 dark:shadow-black/35">
             <a href="{{ route('moments') }}" wire:navigate.hover class="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-white/65 text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-violet-100 hover:text-violet-700 dark:bg-white/8 dark:text-white dark:ring-white/10 dark:hover:bg-violet-500/15 dark:hover:text-violet-200" aria-label="{{ __('Back to posts') }}">
                 <flux:icon.arrow-left class="size-5" />
             </a>
@@ -287,7 +287,7 @@ new #[Title('Post')] class extends Component
         </section>
     </article>
 
-    <form wire:submit="addComment" class="fixed inset-x-4 bottom-[calc(6.75rem+env(safe-area-inset-bottom,0px))] z-40 mx-auto max-w-2xl lg:bottom-6">
+    <form wire:submit="addComment" class="fixed inset-x-4 bottom-[calc(5.75rem+4pt)] z-40 mx-auto max-w-2xl lg:bottom-6">
         <div class="flex items-center gap-2 rounded-full border border-violet-200/55 bg-white/65 p-2 ps-5 shadow-[0_18px_55px_rgba(41,38,46,0.18)] backdrop-blur-2xl dark:border-violet-400/15 dark:bg-zinc-900/65">
             <label for="moment-comment" class="sr-only">{{ __('Leave a comment') }}</label>
             <input id="moment-comment" wire:model="commentBody" type="text" maxlength="2000" placeholder="{{ __('Leave a comment…') }}" class="min-w-0 flex-1 border-0 bg-transparent py-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:ring-0 dark:text-white">
