@@ -489,7 +489,7 @@ new class extends Component
                     @foreach ($this->latestResult->tasks as $resultTask)
                         <div class="app-glass-card rounded-2xl bg-zinc-50/80 p-5 backdrop-blur-xl ring-1 ring-black/[0.035] dark:bg-white/5 dark:ring-white/8">
                             <div class="flex items-center gap-2">
-                                <flux:avatar size="xs" :name="$resultTask->assignee->name" :initials="$resultTask->assignee->initials()" />
+                                <flux:avatar circle size="xs" :name="$resultTask->assignee->name" :initials="$resultTask->assignee->initials()" />
                                 <span class="text-sm font-medium">{{ $resultTask->assignee->name }}</span>
                             </div>
                             <p class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">{{ $resultTask->prompt }}</p>

@@ -141,7 +141,7 @@ new #[Title('History')] class extends Component
                                 @foreach ($round->tasks as $task)
                                     <section class="rounded-2xl bg-zinc-50/75 p-4 ring-1 ring-zinc-200/70 dark:bg-white/[0.035] dark:ring-white/8">
                                         <div class="flex items-center gap-2.5">
-                                            <flux:avatar size="xs" :name="$task->assignee->name" :initials="$task->assignee->initials()" />
+                                            <flux:avatar circle size="xs" :name="$task->assignee->name" :initials="$task->assignee->initials()" />
                                             <span class="text-sm font-semibold text-zinc-900 dark:text-white">{{ $task->assignee->name }}</span>
                                         </div>
 

@@ -72,7 +72,7 @@ new #[Title('Relationship')] class extends Component {
             @if ($this->partner)
                 <div class="app-glass-card rounded-xl border border-zinc-200 p-5 backdrop-blur-xl dark:border-zinc-700">
                     <div class="flex items-center gap-3">
-                        <flux:avatar :name="$this->partner->name" :initials="$this->partner->initials()" />
+                        <flux:avatar circle :name="$this->partner->name" :initials="$this->partner->initials()" />
                         <div>
                             <flux:heading>{{ $this->partner->name }}</flux:heading>
                             <flux:text>{{ $this->partner->email }}</flux:text>

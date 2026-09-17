@@ -52,7 +52,7 @@ new #[Title('Join your partner')] class extends Component {
     <div class="app-glass-card rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm backdrop-blur-xl dark:border-zinc-700 dark:bg-zinc-900">
         @if ($this->invitation->isPending())
             <div class="flex items-center gap-3">
-                <flux:avatar :name="$this->invitation->inviter->name" :initials="$this->invitation->inviter->initials()" />
+                <flux:avatar circle :name="$this->invitation->inviter->name" :initials="$this->invitation->inviter->initials()" />
                 <div>
                     <flux:heading>{{ $this->invitation->inviter->name }}</flux:heading>
                     <flux:text>{{ __('invited :email', ['email' => $this->invitation->email]) }}</flux:text>

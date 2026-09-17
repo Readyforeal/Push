@@ -130,8 +130,6 @@ new #[Title('Post')] class extends Component
 }; ?>
 
 @php
-    $leadPhoto = $moment->photos->first();
-    $remainingPhotos = $moment->photos->skip(1);
     $intensityLabel = match (true) {
         $moment->intensity <= 2 => __('Quiet'),
         $moment->intensity <= 4 => __('Light'),
@@ -141,74 +139,104 @@ new #[Title('Post')] class extends Component
     };
 @endphp
 
-<div class="mx-auto w-full max-w-5xl pb-48 max-lg:-mx-6 max-lg:w-[calc(100%+3rem)] lg:pb-32">
-    <article class="overflow-hidden rounded-none bg-white/70 shadow-[0_22px_70px_rgba(41,38,46,0.16)] ring-1 ring-black/5 backdrop-blur-xl dark:bg-zinc-950/70 dark:ring-white/10 lg:rounded-[2rem]">
-        <section class="relative min-h-[68svh] overflow-hidden bg-gradient-to-br from-violet-100 via-rose-100 to-zinc-100 dark:from-violet-950 dark:via-zinc-950 dark:to-black">
-            @if ($leadPhoto)
-                <img
-                    src="{{ route('moment-photos.show', $leadPhoto) }}"
-                    alt="{{ __('Post shared by :name', ['name' => $moment->author->name]) }}"
-                    class="absolute inset-0 size-full object-cover"
-                >
-            @endif
+<div
+    data-post-page
+    class="mx-auto w-full max-w-5xl pb-48 lg:pb-32"
+>
+    <div class="sticky top-0 z-40 h-0 -mx-2 px-2">
+        <div class="post-compact-header mt-[calc(env(safe-area-inset-top,0px)+0.5rem)] flex items-center gap-2.5 rounded-full border border-white/60 bg-white/72 p-2.5 shadow-lg shadow-zinc-950/10 backdrop-blur-2xl dark:border-white/10 dark:bg-zinc-950/72 dark:shadow-black/35">
+            <a href="{{ route('moments') }}" wire:navigate.hover class="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-white/65 text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-violet-100 hover:text-violet-700 dark:bg-white/8 dark:text-white dark:ring-white/10 dark:hover:bg-violet-500/15 dark:hover:text-violet-200" aria-label="{{ __('Back to posts') }}">
+                <flux:icon.arrow-left class="size-5" />
+            </a>
 
-            <div class="absolute inset-x-0 top-0 h-[72%] bg-gradient-to-b from-white/78 via-white/55 via-45% to-transparent dark:from-zinc-950/78 dark:via-zinc-950/55"></div>
+            <div class="flex min-w-0 flex-1 items-center gap-2.5 pe-3">
+                <flux:avatar circle :name="$moment->author->name" :initials="$moment->author->initials()" />
+                <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-semibold text-zinc-950 dark:text-white">
+                        {{ $moment->body ?: __('A little piece of your day.') }}
+                    </p>
+                    <div class="mt-1.5 flex items-center gap-2" aria-label="{{ __('Intensity: :intensity out of 10', ['intensity' => $moment->intensity]) }}">
+                        <span class="shrink-0 text-[0.625rem] font-semibold tabular-nums text-violet-600 dark:text-violet-300">{{ $moment->intensity }}/10</span>
+                        <div class="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-white/10">
+                            <div
+                                class="h-full rounded-full bg-gradient-to-r from-violet-400 via-violet-500 to-fuchsia-500 shadow-[0_0_8px_rgba(139,92,246,0.45)]"
+                                style="width: {{ $moment->intensity * 10 }}%;"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-            <header class="relative z-10 p-5 pt-[calc(1.25rem+env(safe-area-inset-top,0px))] sm:p-8 lg:p-10">
-                <div class="flex items-center justify-between gap-4">
-                    <a href="{{ route('moments') }}" wire:navigate.hover class="inline-flex size-11 items-center justify-center rounded-full bg-white/75 text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white dark:bg-black/35 dark:text-white dark:ring-white/15 dark:hover:bg-black/55" aria-label="{{ __('Back to posts') }}">
-                        <flux:icon.arrow-left class="size-5" />
-                    </a>
+        </div>
+    </div>
 
+    <header data-post-header class="relative -mx-2 px-2 pt-[calc(env(safe-area-inset-top,0px)+0.5rem)]">
+        <div class="post-header-shell">
+            <div class="post-header-gradient"></div>
+
+            <div class="flex items-center gap-2.5">
+                <a href="{{ route('moments') }}" wire:navigate.hover class="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-white/65 text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-violet-100 hover:text-violet-700 dark:bg-white/8 dark:text-white dark:ring-white/10 dark:hover:bg-violet-500/15 dark:hover:text-violet-200" aria-label="{{ __('Back to posts') }}">
+                    <flux:icon.arrow-left class="size-5" />
+                </a>
+
+                <div class="ms-auto flex shrink-0 items-center gap-1">
                     @if ($moment->user_id === auth()->id())
-                        <div class="flex items-center gap-2">
-                            <flux:modal.trigger name="edit-moment-detail">
-                                <button type="button" class="inline-flex size-11 items-center justify-center rounded-full bg-white/75 text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white dark:bg-black/35 dark:text-white dark:ring-white/15 dark:hover:bg-black/55" aria-label="{{ __('Edit post') }}">
-                                    <flux:icon.pencil-square class="size-5" />
-                                </button>
-                            </flux:modal.trigger>
-                            <button type="button" wire:click="deleteMoment" wire:confirm="{{ __('Delete this post, its photos, and all comments? This cannot be undone.') }}" class="inline-flex size-11 items-center justify-center rounded-full bg-white/75 text-red-600 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white dark:bg-black/35 dark:text-red-300 dark:ring-white/15 dark:hover:bg-black/55" aria-label="{{ __('Delete post') }}">
-                                <flux:icon.trash class="size-5" />
+                        <flux:modal.trigger name="edit-moment-detail">
+                            <button type="button" class="inline-flex size-10 items-center justify-center rounded-full text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-white/8 dark:hover:text-white" aria-label="{{ __('Edit post') }}">
+                                <flux:icon.pencil-square class="size-4.5" />
                             </button>
-                        </div>
+                        </flux:modal.trigger>
+                        <button type="button" wire:click="deleteMoment" wire:confirm="{{ __('Delete this post, its photos, and all comments? This cannot be undone.') }}" class="inline-flex size-10 items-center justify-center rounded-full text-zinc-500 transition hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-500/10 dark:hover:text-red-300" aria-label="{{ __('Delete post') }}">
+                            <flux:icon.trash class="size-4.5" />
+                        </button>
                     @endif
                 </div>
+            </div>
 
-                <div class="mt-9 max-w-2xl">
-                    <div class="flex items-center gap-3">
-                        <flux:avatar size="sm" :name="$moment->author->name" :initials="$moment->author->initials()" />
-                        <div>
-                            <p class="text-sm font-semibold text-zinc-950 dark:text-white">{{ $moment->author->name }}</p>
-                            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ $moment->created_at->format('F j, Y · g:i A') }}</p>
+            <div class="post-header-expanded">
+                <div class="overflow-hidden">
+                    <div class="pt-6 sm:pt-8">
+                        <div class="flex items-center gap-3">
+                            <flux:avatar circle size="sm" :name="$moment->author->name" :initials="$moment->author->initials()" />
+                            <div>
+                                <p class="text-sm font-semibold text-zinc-950 dark:text-white">{{ $moment->author->name }}</p>
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ $moment->created_at->format('F j, Y · g:i A') }}</p>
+                            </div>
+                        </div>
+
+                        @if ($moment->body)
+                            <h1 class="mt-6 max-w-4xl whitespace-pre-line text-3xl font-semibold leading-[1.08] tracking-[-0.045em] text-zinc-950 sm:text-5xl dark:text-white">{{ $moment->body }}</h1>
+                        @else
+                            <h1 class="mt-6 text-3xl font-semibold leading-[1.08] tracking-[-0.045em] text-zinc-950 sm:text-5xl dark:text-white">{{ __('A little piece of your day.') }}</h1>
+                        @endif
+
+                        <div class="mt-5 flex flex-wrap items-center gap-2 text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-zinc-500 dark:text-zinc-400">
+                            <span class="rounded-full bg-white/45 px-3 py-1.5 ring-1 ring-black/5 backdrop-blur-xl dark:bg-white/8 dark:ring-white/10">{{ $intensityLabel }} · {{ $moment->intensity }} / 10</span>
+                            <span class="rounded-full bg-white/45 px-3 py-1.5 ring-1 ring-black/5 backdrop-blur-xl dark:bg-white/8 dark:ring-white/10">{{ trans_choice(':count photo|:count photos', $moment->photos->count(), ['count' => $moment->photos->count()]) }}</span>
                         </div>
                     </div>
-
-                    @if ($moment->body)
-                        <h1 class="mt-6 whitespace-pre-line text-3xl font-semibold leading-[1.12] tracking-[-0.04em] text-zinc-950 sm:text-5xl dark:text-white">{{ $moment->body }}</h1>
-                    @else
-                        <h1 class="mt-6 text-3xl font-semibold tracking-[-0.04em] text-zinc-950 sm:text-5xl dark:text-white">{{ __('A little piece of your day.') }}</h1>
-                    @endif
-
-                    <div class="mt-5 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-600 dark:text-zinc-300">
-                        <span class="rounded-full bg-white/65 px-3 py-1.5 ring-1 ring-black/5 backdrop-blur-md dark:bg-white/10 dark:ring-white/10">{{ $intensityLabel }} · {{ $moment->intensity }} / 10</span>
-                        <span class="rounded-full bg-white/65 px-3 py-1.5 ring-1 ring-black/5 backdrop-blur-md dark:bg-white/10 dark:ring-white/10">{{ trans_choice(':count photo|:count photos', $moment->photos->count(), ['count' => $moment->photos->count()]) }}</span>
-                    </div>
                 </div>
-            </header>
+            </div>
+        </div>
+    </header>
+
+    @if ($moment->photos->isNotEmpty())
+        <section class="mt-5 space-y-5 sm:mt-7 sm:space-y-7" aria-label="{{ __('Post photos') }}">
+            @foreach ($moment->photos as $photo)
+                <figure class="flex w-full items-center justify-center overflow-hidden rounded-[1.75rem] bg-zinc-100 shadow-[0_18px_55px_rgba(15,23,42,0.12)] ring-1 ring-black/5 dark:bg-black dark:shadow-[0_24px_70px_rgba(0,0,0,0.4)] dark:ring-white/10 sm:rounded-[2.25rem]">
+                    <img
+                        src="{{ route('moment-photos.show', $photo) }}"
+                        alt="{{ __('Photo shared by :name', ['name' => $moment->author->name]) }}"
+                        class="mx-auto block h-auto max-h-[88svh] w-auto max-w-full object-contain"
+                        loading="{{ $loop->first ? 'eager' : 'lazy' }}"
+                    >
+                </figure>
+            @endforeach
         </section>
+    @endif
 
-        @foreach ($remainingPhotos as $photo)
-            <figure class="bg-zinc-100 leading-none dark:bg-black">
-                <img
-                    src="{{ route('moment-photos.show', $photo) }}"
-                    alt="{{ __('Photo shared by :name', ['name' => $moment->author->name]) }}"
-                    class="block h-auto w-full"
-                    loading="lazy"
-                >
-            </figure>
-        @endforeach
-
-        <section class="px-5 py-10 sm:px-8 lg:px-10 lg:py-14">
+    <article class="prompt-surface mt-7 p-5 sm:mt-9 sm:p-8 lg:p-10">
+        <section>
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-300">{{ __('Conversation') }}</p>
@@ -217,37 +245,39 @@ new #[Title('Post')] class extends Component
             </div>
 
             @if ($moment->comments->isNotEmpty())
-                <div class="mt-8 space-y-5">
+                <div class="mt-7 divide-y divide-zinc-200/70 dark:divide-white/8">
                     @foreach ($moment->comments as $comment)
-                        <div class="flex items-start gap-3" wire:key="detail-comment-{{ $comment->id }}">
-                            <flux:avatar size="sm" :name="$comment->author->name" :initials="$comment->author->initials()" />
-                            <div class="min-w-0 flex-1 rounded-[1.35rem] bg-zinc-50/80 px-4 py-3.5 ring-1 ring-zinc-200/70 dark:bg-white/[0.045] dark:ring-white/10">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div>
-                                        <p class="text-sm font-semibold text-zinc-950 dark:text-white">{{ $comment->author->name }}</p>
-                                        <p class="text-xs text-zinc-400">{{ $comment->created_at->diffForHumans() }}</p>
+                        <div class="py-5 first:pt-0 last:pb-0" wire:key="detail-comment-{{ $comment->id }}">
+                            <div class="flex items-center gap-3">
+                                <flux:avatar circle size="sm" :name="$comment->author->name" :initials="$comment->author->initials()" />
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-semibold text-zinc-950 dark:text-white">{{ $comment->author->name }}</p>
+                                            <p class="text-xs text-zinc-400">{{ $comment->created_at->diffForHumans() }}</p>
+                                        </div>
+                                        @if ($comment->user_id === auth()->id() && $editingCommentId !== $comment->id)
+                                            <div class="flex shrink-0 items-center">
+                                                <flux:button type="button" size="sm" variant="ghost" icon="pencil-square" aria-label="{{ __('Edit comment') }}" wire:click="startEditingComment({{ $comment->id }})" />
+                                                <flux:button type="button" size="sm" variant="ghost" icon="trash" aria-label="{{ __('Delete comment') }}" wire:click="deleteComment({{ $comment->id }})" wire:confirm="{{ __('Delete this comment?') }}" />
+                                            </div>
+                                        @endif
                                     </div>
-                                    @if ($comment->user_id === auth()->id() && $editingCommentId !== $comment->id)
-                                        <div class="flex items-center">
-                                            <flux:button type="button" size="sm" variant="ghost" icon="pencil-square" aria-label="{{ __('Edit comment') }}" wire:click="startEditingComment({{ $comment->id }})" />
-                                            <flux:button type="button" size="sm" variant="ghost" icon="trash" aria-label="{{ __('Delete comment') }}" wire:click="deleteComment({{ $comment->id }})" wire:confirm="{{ __('Delete this comment?') }}" />
-                                        </div>
-                                    @endif
                                 </div>
-
-                                @if ($editingCommentId === $comment->id)
-                                    <form wire:submit="updateComment" class="mt-3 space-y-3">
-                                        <flux:textarea wire:model="editingCommentBody" label="{{ __('Edit comment') }}" label:sr-only rows="3" maxlength="2000" />
-                                        <flux:error name="editingCommentBody" />
-                                        <div class="flex justify-end gap-2">
-                                            <flux:button type="button" size="sm" variant="ghost" wire:click="cancelEditingComment">{{ __('Cancel') }}</flux:button>
-                                            <flux:button type="submit" size="sm" variant="primary">{{ __('Save') }}</flux:button>
-                                        </div>
-                                    </form>
-                                @else
-                                    <p class="mt-2 whitespace-pre-line text-[0.9375rem] leading-6 text-zinc-700 dark:text-zinc-200">{{ $comment->body }}</p>
-                                @endif
                             </div>
+
+                            @if ($editingCommentId === $comment->id)
+                                <form wire:submit="updateComment" class="mt-4 space-y-3">
+                                    <flux:textarea wire:model="editingCommentBody" label="{{ __('Edit comment') }}" label:sr-only rows="3" maxlength="2000" />
+                                    <flux:error name="editingCommentBody" />
+                                    <div class="flex justify-end gap-2">
+                                        <flux:button type="button" size="sm" variant="ghost" wire:click="cancelEditingComment">{{ __('Cancel') }}</flux:button>
+                                        <flux:button type="submit" size="sm" variant="primary">{{ __('Save') }}</flux:button>
+                                    </div>
+                                </form>
+                            @else
+                                <p class="mt-3 whitespace-pre-line text-[0.9375rem] leading-6 text-zinc-700 dark:text-zinc-200">{{ $comment->body }}</p>
+                            @endif
                         </div>
                     @endforeach
                 </div>

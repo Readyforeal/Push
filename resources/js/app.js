@@ -105,6 +105,33 @@ const queueHomeBackgroundSync = () => {
     });
 };
 
+let postHeaderScrollFrame;
+
+const syncPostHeaderState = () => {
+    const page = document.querySelector('[data-post-page]');
+
+    if (!page) {
+        return;
+    }
+
+    const main = page.closest('[data-flux-main]');
+    const documentScrollTop = document.scrollingElement?.scrollTop ?? window.scrollY;
+    const scrollTop = Math.max(documentScrollTop, main?.scrollTop ?? 0);
+
+    page.toggleAttribute('data-compact', scrollTop > 120);
+};
+
+const queuePostHeaderSync = () => {
+    if (postHeaderScrollFrame) {
+        return;
+    }
+
+    postHeaderScrollFrame = requestAnimationFrame(() => {
+        syncPostHeaderState();
+        postHeaderScrollFrame = undefined;
+    });
+};
+
 const syncBrowserChromeTheme = () => {
     const themeColor = document.querySelector('#app-theme-color');
 
@@ -117,8 +144,11 @@ document.addEventListener('DOMContentLoaded', () => {
     animatePageEntry();
     hydrateImageFades();
     syncHomeBackgroundState();
+    syncPostHeaderState();
     syncBrowserChromeTheme();
     window.addEventListener('scroll', queueHomeBackgroundSync, { passive: true });
+    window.addEventListener('scroll', queuePostHeaderSync, { passive: true });
+    document.addEventListener('scroll', queuePostHeaderSync, { passive: true, capture: true });
 
     const appearanceObserver = new MutationObserver(syncBrowserChromeTheme);
     appearanceObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
@@ -149,6 +179,7 @@ document.addEventListener('livewire:navigated', () => {
         animatePageEntry();
         hydrateImageFades();
         syncHomeBackgroundState();
+        syncPostHeaderState();
     });
     navigationInProgress = false;
 });

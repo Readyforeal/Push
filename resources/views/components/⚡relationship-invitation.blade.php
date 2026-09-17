@@ -142,6 +142,7 @@ new class extends Component {
         <section class="prompt-surface p-6 sm:p-8">
             <div class="flex items-center gap-3">
                 <flux:avatar
+                    circle
                     :name="$this->incomingInvitation->inviter->name"
                     :initials="$this->incomingInvitation->inviter->initials()"
                     size="lg"

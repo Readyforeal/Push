@@ -123,7 +123,7 @@ new class extends Component
             <div class="absolute inset-0 bg-violet-500" style="opacity: {{ $myTint }}"></div>
             <div class="relative">
                 <div class="flex items-center gap-2">
-                    <flux:avatar size="xs" :name="auth()->user()->name" :initials="auth()->user()->initials()" />
+                    <flux:avatar circle size="xs" :name="auth()->user()->name" :initials="auth()->user()->initials()" />
                     <p class="truncate text-xs font-medium text-zinc-500 dark:text-zinc-400">{{ __('You') }}</p>
                 </div>
                 <div class="mt-4 flex items-end justify-between gap-2">
@@ -146,7 +146,7 @@ new class extends Component
             <div class="relative">
                 <div class="flex items-center gap-2">
                     @if ($this->partner)
-                        <flux:avatar size="xs" :name="$this->partner->name" :initials="$this->partner->initials()" />
+                        <flux:avatar circle size="xs" :name="$this->partner->name" :initials="$this->partner->initials()" />
                     @endif
                     <p class="truncate text-xs font-medium text-zinc-500 dark:text-zinc-400">{{ $this->partner?->name ?? __('Partner') }}</p>
                 </div>

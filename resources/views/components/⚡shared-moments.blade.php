@@ -372,7 +372,7 @@ new class extends Component
 
                 <div>
                     <div class="mb-3 flex items-center gap-2.5">
-                        <flux:avatar size="sm" :name="$latestMoment->author->name" :initials="$latestMoment->author->initials()" />
+                        <flux:avatar circle size="sm" :name="$latestMoment->author->name" :initials="$latestMoment->author->initials()" />
                         <div>
                             <p class="text-sm font-medium">{{ $latestMoment->author->name }}</p>
                             <p class="text-xs text-white/65">{{ $latestMoment->created_at->diffForHumans() }}</p>
@@ -436,7 +436,7 @@ new class extends Component
 
                             <div>
                                 <div class="mb-3 flex items-center gap-2.5">
-                                    <flux:avatar size="sm" :name="$moment->author->name" :initials="$moment->author->initials()" />
+                                    <flux:avatar circle size="sm" :name="$moment->author->name" :initials="$moment->author->initials()" />
                                     <div class="min-w-0">
                                         <p class="truncate text-sm font-semibold">{{ $moment->author->name }}</p>
                                         <p class="text-xs text-white/65">{{ $moment->created_at->diffForHumans() }}</p>
