@@ -23,7 +23,7 @@ const animatePageEntry = () => {
 
     uniqueCandidates.forEach((element, index) => {
         element.style.setProperty('--page-enter-index', index);
-        element.style.setProperty('--page-enter-delay', `${Math.min(index, 12) * 42}ms`);
+        element.style.setProperty('--page-enter-delay', `${Math.min(index, 8) * 24}ms`);
         element.classList.add('page-enter-item');
 
         const clearPageEntryStyles = (event) => {

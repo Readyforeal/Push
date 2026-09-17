@@ -149,8 +149,7 @@ new #[Title('Post')] class extends Component
                 <flux:icon.arrow-left class="size-5" />
             </a>
 
-            <div class="flex min-w-0 flex-1 items-center gap-2.5 pe-3">
-                <flux:avatar circle :name="$moment->author->name" :initials="$moment->author->initials()" />
+            <div class="flex min-w-0 flex-1 items-center gap-2.5 ps-1 pe-0.5">
                 <div class="min-w-0 flex-1">
                     <p class="truncate text-sm font-semibold text-zinc-950 dark:text-white">
                         {{ $moment->body ?: __('A little piece of your day.') }}
@@ -165,6 +164,7 @@ new #[Title('Post')] class extends Component
                         </div>
                     </div>
                 </div>
+                <flux:avatar circle :name="$moment->author->name" :initials="$moment->author->initials()" />
             </div>
 
         </div>
