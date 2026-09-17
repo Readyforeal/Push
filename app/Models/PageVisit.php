@@ -61,6 +61,7 @@ class PageVisit extends Model
             'appearance.edit' => 'Appearance settings',
             'prompt-schedule.edit' => 'Prompt schedule',
             'prompt-libraries.edit' => 'Prompt libraries',
+            'prompt-temperature.edit' => 'Prompt temperature',
             'activity-log.index' => 'Activity log',
             default => Str::headline(str_replace('.', ' ', $this->route_name)),
         };

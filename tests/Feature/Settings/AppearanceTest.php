@@ -62,7 +62,7 @@ test('a user can upload replace and remove a private app background', function (
 
     $user->refresh();
 
-    expect($user->background_mode)->toBe(AppBackgroundMode::Auto)
+    expect($user->background_mode)->toBe(AppBackgroundMode::None)
         ->and($user->background_image_disk)->toBeNull()
         ->and($user->background_image_path)->toBeNull();
     Storage::disk('homelab_cloud')->assertMissing($replacementPath);
@@ -94,13 +94,14 @@ test('a user can pin a library favorite as their app background', function () {
         ->assertSee(route('round-photos.show', $photo), false);
 });
 
-test('a user can disable the photo background or return to the latest favorite', function () {
+test('favorites do not change the background until explicitly selected in appearance settings', function () {
     [$user, $partner, $relationship] = appearanceRelationship();
     $photo = appearanceFavoritePhoto($user, $partner, $relationship, 'rounds/latest.jpg');
 
     $this->actingAs($user);
 
     Livewire::test('pages::settings.appearance')
+        ->assertDontSee('Latest favorite')
         ->call('chooseMode', AppBackgroundMode::None->value)
         ->call('saveBackground')
         ->assertHasNoErrors();
@@ -114,17 +115,10 @@ test('a user can disable the photo background or return to the latest favorite',
         ->assertOk()
         ->assertDontSee('app-photo-background', false);
 
-    Livewire::test('pages::settings.appearance')
-        ->call('chooseMode', AppBackgroundMode::Auto->value)
-        ->call('saveBackground')
-        ->assertHasNoErrors();
-
-    expect($user->fresh()->background_mode)->toBe(AppBackgroundMode::Auto);
-
     $this->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('app-photo-background', false)
-        ->assertSee(route('round-photos.show', $photo), false);
+        ->assertDontSee('app-photo-background', false)
+        ->assertDontSee(route('round-photos.show', $photo), false);
 });
 
 test('a user cannot use a photo outside their shared library', function () {
@@ -141,7 +135,7 @@ test('a user cannot use a photo outside their shared library', function () {
 
     $outsider->refresh();
 
-    expect($outsider->background_mode)->toBe(AppBackgroundMode::Auto)
+    expect($outsider->background_mode)->toBe(AppBackgroundMode::None)
         ->and($outsider->background_photo_id)->toBeNull();
 });
 

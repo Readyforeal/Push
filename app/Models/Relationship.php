@@ -82,6 +82,12 @@ class Relationship extends Model
         return $this->hasMany(SecretMission::class);
     }
 
+    /** @return HasMany<RelationshipPromptTagRule, $this> */
+    public function promptTagRules(): HasMany
+    {
+        return $this->hasMany(RelationshipPromptTagRule::class);
+    }
+
     /** @return HasOne<PromptRound, $this> */
     public function activeRound(): HasOne
     {

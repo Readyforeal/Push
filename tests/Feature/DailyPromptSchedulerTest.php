@@ -161,6 +161,28 @@ test('a scheduled library waits when it has no curated prompts', function () {
         ->and($relationship->rounds()->count())->toBe(0);
 });
 
+test('tagged prompts wait until the shared temperature reaches their configured minimum', function () {
+    [$relationship, $firstUser, $secondUser] = dailyRelationship();
+    $library = dailyLibrary('temperature-aware-library', PromptRoundKind::SharedQuestion);
+    $template = dailyTemplate('temperature-aware-prompt', PromptRoundKind::SharedQuestion, 1, library: $library);
+    $template->update(['topics' => ['intimacy']]);
+    $relationship->promptTagRules()->create([
+        'tag' => 'intimacy',
+        'minimum_temperature' => 8,
+    ]);
+    $relationship->temperatureCheckIns()->create(['user_id' => $firstUser->id, 'value' => 9]);
+    $relationship->temperatureCheckIns()->create(['user_id' => $secondUser->id, 'value' => 4]);
+    customSlot($relationship, $library, 2, '09:00', 1);
+    $scheduler = app(DailyPromptScheduler::class);
+    $date = CarbonImmutable::parse('2026-09-15 10:00:00', 'America/Chicago');
+
+    expect($scheduler->scheduleFor($relationship, $date))->toBeNull();
+
+    $relationship->temperatureCheckIns()->create(['user_id' => $secondUser->id, 'value' => 8]);
+
+    expect($scheduler->scheduleFor($relationship, $date)?->prompt_template_id)->toBe($template->id);
+});
+
 /** @return array{Relationship, User, User} */
 function dailyRelationship(): array
 {

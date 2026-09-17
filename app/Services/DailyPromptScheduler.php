@@ -24,6 +24,7 @@ class DailyPromptScheduler
 
     public function __construct(
         private PromptRoundWorkflow $workflow,
+        private PromptTemperaturePolicy $temperaturePolicy,
     ) {}
 
     public function scheduleFor(
@@ -70,11 +71,11 @@ class DailyPromptScheduler
             $template = $this->randomTemplateForLibrary($relationship, $library);
         }
 
-        if (! $template) {
+        if (! $template || (! $library && ! $this->temperaturePolicy->allows($relationship, $template))) {
             return null;
         }
 
-        $kind = $library?->kind ?? $template->kind;
+        $kind = $library ? $library->kind : $template->kind;
         $tasks = $this->tasksFor($relationship, $template, $members);
 
         return $this->workflow->startRound(
@@ -116,32 +117,36 @@ class DailyPromptScheduler
         Relationship $relationship,
         PromptLibrary $library,
     ): ?PromptTemplate {
-        $query = PromptTemplate::query()
+        /** @var Collection<int, PromptTemplate> $templates */
+        $templates = PromptTemplate::query()
             ->where('prompt_library_id', $library->id)
             ->where('active', true)
             ->where(function ($query) use ($relationship): void {
                 $query->whereNull('relationship_id')
                     ->orWhere('relationship_id', $relationship->id);
-            });
+            })
+            ->get();
+        $templates = $this->temperaturePolicy->filter($relationship, $templates);
+
+        if ($templates->isEmpty()) {
+            return null;
+        }
+
         $usageCounts = $relationship->rounds()
             ->whereNotNull('prompt_template_id')
             ->selectRaw('prompt_template_id, COUNT(*) as usage_count')
             ->groupBy('prompt_template_id')
             ->pluck('usage_count', 'prompt_template_id');
-        $unused = (clone $query)
+        $unused = $templates
             ->whereNotIn('id', $usageCounts->keys())
-            ->inRandomOrder()
+            ->shuffle()
             ->first();
 
         if ($unused) {
             return $unused;
         }
 
-        $candidateIds = $query->pluck('id');
-
-        if ($candidateIds->isEmpty()) {
-            return null;
-        }
+        $candidateIds = $templates->pluck('id');
 
         $minimumUsage = $candidateIds
             ->map(fn ($id) => (int) ($usageCounts[$id] ?? 0))
@@ -149,9 +154,9 @@ class DailyPromptScheduler
         $leastUsedIds = $candidateIds
             ->filter(fn ($id) => (int) ($usageCounts[$id] ?? 0) === $minimumUsage);
 
-        return PromptTemplate::query()
+        return $templates
             ->whereIn('id', $leastUsedIds)
-            ->inRandomOrder()
+            ->shuffle()
             ->first();
     }
 
@@ -167,6 +172,12 @@ class DailyPromptScheduler
             ->orderBy('position')
             ->orderBy('id')
             ->get();
+
+        if ($templates->isEmpty()) {
+            return null;
+        }
+
+        $templates = $this->temperaturePolicy->filter($relationship, $templates);
 
         if ($templates->isEmpty()) {
             return null;

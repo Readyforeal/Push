@@ -125,23 +125,11 @@ class User extends Authenticatable implements PasskeyUser
         return $this->belongsTo(RoundPhoto::class, 'background_photo_id');
     }
 
-    public function latestFavoritePhoto(): ?RoundPhoto
-    {
-        return PhotoSelection::query()
-            ->whereHas('task', fn ($query) => $query->where('user_id', $this->id))
-            ->with('photo')
-            ->latest('id')
-            ->first()
-            ?->photo;
-    }
-
     public function appBackgroundPhoto(): ?RoundPhoto
     {
         return match ($this->background_mode) {
-            AppBackgroundMode::None => null,
             AppBackgroundMode::Photo => $this->backgroundPhoto,
-            AppBackgroundMode::Upload => null,
-            default => $this->latestFavoritePhoto(),
+            default => null,
         };
     }
 

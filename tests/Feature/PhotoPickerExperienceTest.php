@@ -66,8 +66,8 @@ test('one partner uploads three photos and the other picks a favorite', function
 
     $this->get(route('dashboard'))
         ->assertOk()
-        ->assertSee('app-photo-background', false)
-        ->assertSee(route('round-photos.show', $favorite), false);
+        ->assertDontSee('app-photo-background', false)
+        ->assertDontSee(route('round-photos.show', $favorite), false);
 
     $this->actingAs($uploader)
         ->get(route('dashboard'))

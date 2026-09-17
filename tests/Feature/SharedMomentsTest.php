@@ -48,13 +48,16 @@ test('partners can log and view shared moments with an intensity note and photos
         ->assertSee('Extracurriculars')
         ->assertSee('Latest post')
         ->assertSeeInOrder(['Latest post', 'Ready for your first prompt'])
-        ->assertSee(route('moment-photos.show', $moment->photos->first()), false)
+        ->assertSee('2 photos')
+        ->assertDontSee(route('moment-photos.show', $moment->photos->first()), false)
         ->assertDontSee('Keep something from your day');
 
     $this->get(route('moments'))
         ->assertOk()
         ->assertSee('All posts')
-        ->assertSee('A small moment worth remembering.');
+        ->assertSee('A small moment worth remembering.')
+        ->assertSee('2 photos')
+        ->assertDontSee(route('moment-photos.show', $moment->photos->first()), false);
 
     $this->get(route('moments.show', $moment))
         ->assertOk()
@@ -65,7 +68,43 @@ test('partners can log and view shared moments with an intensity note and photos
     Livewire::test('shared-moments')
         ->assertSee('Alex')
         ->assertSee('A small moment worth remembering.')
-        ->assertSee('Strong · 8');
+        ->assertSee('2 photos');
+});
+
+test('post cards reveal their cover images only when both latest temperatures are above seven', function () {
+    Storage::fake('homelab_cloud');
+    $author = User::factory()->create(['name' => 'Alex']);
+    $partner = User::factory()->create(['name' => 'Sam']);
+    $relationship = Relationship::query()->create(['timezone' => 'America/Chicago']);
+    $relationship->members()->attach([$author->id, $partner->id], ['joined_at' => now()]);
+    $moment = $relationship->sharedMoments()->create([
+        'user_id' => $author->id,
+        'intensity' => 8,
+        'body' => 'A warm day together.',
+    ]);
+    $photo = $moment->photos()->create([
+        'disk' => 'homelab_cloud',
+        'path' => 'moments/warm.jpg',
+        'original_name' => 'warm.jpg',
+        'mime_type' => 'image/jpeg',
+        'size' => 100,
+        'position' => 1,
+    ]);
+
+    $relationship->temperatureCheckIns()->create(['user_id' => $author->id, 'value' => 9]);
+    $relationship->temperatureCheckIns()->create(['user_id' => $partner->id, 'value' => 8]);
+
+    $this->actingAs($partner)
+        ->get(route('moments'))
+        ->assertOk()
+        ->assertSee(route('moment-photos.show', $photo), false);
+
+    $relationship->temperatureCheckIns()->create(['user_id' => $author->id, 'value' => 7]);
+
+    $this->get(route('moments'))
+        ->assertOk()
+        ->assertSee('1 photo')
+        ->assertDontSee(route('moment-photos.show', $photo), false);
 });
 
 test('non jpeg photos are converted in temporary storage before a post is submitted', function () {

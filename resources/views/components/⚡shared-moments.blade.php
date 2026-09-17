@@ -6,6 +6,7 @@ use App\Models\SharedMoment;
 use App\Models\SharedMomentComment;
 use App\Models\User;
 use App\Services\PhotoStorage;
+use App\Services\RelationshipTemperature;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -255,6 +257,20 @@ new class extends Component
         return $query->get();
     }
 
+    #[Computed]
+    public function currentTemperature(): int
+    {
+        return $this->relationship
+            ? app(RelationshipTemperature::class)->current($this->relationship)
+            : RelationshipTemperature::DEFAULT;
+    }
+
+    #[On('temperature-updated')]
+    public function refreshTemperature(): void
+    {
+        unset($this->currentTemperature);
+    }
+
     public function intensityLabel(int $value): string
     {
         return match (true) {
@@ -324,6 +340,7 @@ new class extends Component
 
 @php
     $editIntensityProgress = (($editIntensity - 1) / 9) * 100;
+    $hidePostImages = $this->currentTemperature <= 7;
 @endphp
 
 <section class="space-y-4">
@@ -354,11 +371,48 @@ new class extends Component
             $coverPhoto = $latestMoment->photos->first();
         @endphp
 
-        <a
-            href="{{ route('moments') }}"
-            wire:navigate.hover
-            class="group relative block min-h-80 overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-violet-500 via-violet-600 to-violet-900 shadow-[0_18px_50px_rgba(41,38,46,0.16)] ring-1 ring-black/5"
-        >
+        @if ($hidePostImages)
+            <a
+                href="{{ route('moments') }}"
+                wire:navigate.hover
+                class="prompt-surface group block overflow-hidden p-6 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl sm:p-7"
+            >
+                <div class="flex items-center justify-between gap-4">
+                    <span class="text-[0.6875rem] font-semibold uppercase tracking-[0.15em] text-violet-600 dark:text-violet-300">{{ __('Latest post') }}</span>
+                    <span class="flex size-9 items-center justify-center rounded-full bg-violet-100 text-violet-600 transition group-hover:bg-violet-600 group-hover:text-white dark:bg-violet-500/12 dark:text-violet-300">
+                        <flux:icon.arrow-up-right class="size-4" />
+                    </span>
+                </div>
+
+                <h2 class="mt-7 line-clamp-3 text-2xl font-semibold leading-8 tracking-[-0.035em] text-zinc-950 dark:text-white">
+                    {{ $latestMoment->body ?: __('A little piece of your day.') }}
+                </h2>
+
+                <div class="mt-6 flex items-center gap-3">
+                    <flux:avatar circle size="sm" :name="$latestMoment->author->name" :initials="$latestMoment->author->initials()" />
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-semibold text-zinc-900 dark:text-white">{{ $latestMoment->author->name }}</p>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ $latestMoment->created_at->diffForHumans() }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-wrap items-center gap-2 border-t border-zinc-200/70 pt-4 text-xs font-medium text-zinc-500 dark:border-white/8 dark:text-zinc-400">
+                    <span class="flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1.5 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
+                        <flux:icon.photo class="size-3.5" />
+                        {{ trans_choice(':count photo|:count photos', $latestMoment->photos->count(), ['count' => $latestMoment->photos->count()]) }}
+                    </span>
+                    <span class="flex items-center gap-1.5 rounded-full bg-zinc-100/80 px-3 py-1.5 dark:bg-white/6">
+                        <flux:icon.chat-bubble-left-right class="size-3.5" />
+                        {{ trans_choice(':count comment|:count comments', $latestMoment->comments->count(), ['count' => $latestMoment->comments->count()]) }}
+                    </span>
+                </div>
+            </a>
+        @else
+            <a
+                href="{{ route('moments') }}"
+                wire:navigate.hover
+                class="group relative block min-h-80 overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-violet-500 via-violet-600 to-violet-900 shadow-[0_18px_50px_rgba(41,38,46,0.16)] ring-1 ring-black/5"
+            >
             @if ($coverPhoto)
                 <img
                     src="{{ route('moment-photos.show', $coverPhoto) }}"
@@ -408,7 +462,8 @@ new class extends Component
                     </div>
                 </div>
             </div>
-        </a>
+            </a>
+        @endif
     @elseif ($showFeed)
         @if ($this->moments->isNotEmpty())
             <div class="flex items-center justify-between px-1 pt-2">
@@ -419,7 +474,47 @@ new class extends Component
             <div class="grid gap-5 sm:grid-cols-2" data-page-stagger>
                 @foreach ($this->moments as $moment)
                     @php($coverPhoto = $moment->photos->first())
-                    <a
+                    @if ($hidePostImages)
+                        <a
+                            href="{{ route('moments.show', $moment) }}"
+                            wire:navigate.hover
+                            wire:key="moment-{{ $moment->id }}"
+                            class="prompt-surface group flex min-h-64 flex-col p-5 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl sm:p-6"
+                        >
+                            <div class="flex items-start justify-between gap-4">
+                                <span class="rounded-full bg-violet-50 px-3 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.13em] text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
+                                    {{ $moment->created_at->format('M j, Y') }}
+                                </span>
+                                <flux:icon.arrow-up-right class="size-4 text-zinc-400 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-violet-600 dark:text-zinc-500 dark:group-hover:text-violet-300" />
+                            </div>
+
+                            <h2 class="mt-6 line-clamp-4 whitespace-pre-line text-xl font-semibold leading-7 tracking-[-0.03em] text-zinc-950 sm:text-2xl sm:leading-8 dark:text-white">
+                                {{ $moment->body ?: __('A little piece of your day.') }}
+                            </h2>
+
+                            <div class="mt-auto pt-7">
+                                <div class="flex items-center gap-3">
+                                    <flux:avatar circle size="sm" :name="$moment->author->name" :initials="$moment->author->initials()" />
+                                    <div class="min-w-0">
+                                        <p class="truncate text-sm font-semibold text-zinc-900 dark:text-white">{{ $moment->author->name }}</p>
+                                        <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ $moment->created_at->diffForHumans() }}</p>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-zinc-200/70 pt-4 text-xs font-medium text-zinc-500 dark:border-white/8 dark:text-zinc-400">
+                                    <span class="flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1.5 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300">
+                                        <flux:icon.photo class="size-3.5" />
+                                        {{ trans_choice(':count photo|:count photos', $moment->photos->count(), ['count' => $moment->photos->count()]) }}
+                                    </span>
+                                    <span class="flex items-center gap-1.5 rounded-full bg-zinc-100/80 px-3 py-1.5 dark:bg-white/6">
+                                        <flux:icon.chat-bubble-left-right class="size-3.5" />
+                                        {{ trans_choice(':count comment|:count comments', $moment->comments->count(), ['count' => $moment->comments->count()]) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    @else
+                        <a
                         href="{{ route('moments.show', $moment) }}"
                         wire:navigate.hover
                         wire:key="moment-{{ $moment->id }}"
@@ -475,7 +570,8 @@ new class extends Component
                                 </div>
                             </div>
                         </div>
-                    </a>
+                        </a>
+                    @endif
                 @endforeach
             </div>
         @else

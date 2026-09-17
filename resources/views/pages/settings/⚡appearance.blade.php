@@ -20,7 +20,7 @@ new #[Title('Appearance settings')] class extends Component
 {
     use PreparesPhotoUploads, WithFileUploads;
 
-    public string $backgroundMode = AppBackgroundMode::Auto->value;
+    public string $backgroundMode = AppBackgroundMode::None->value;
 
     public ?int $backgroundPhotoId = null;
 
@@ -30,7 +30,9 @@ new #[Title('Appearance settings')] class extends Component
     {
         $user = $this->user();
 
-        $this->backgroundMode = ($user->background_mode ?? AppBackgroundMode::Auto)->value;
+        $this->backgroundMode = $user->background_mode === AppBackgroundMode::Auto
+            ? AppBackgroundMode::None->value
+            : ($user->background_mode ?? AppBackgroundMode::None)->value;
         $this->backgroundPhotoId = $user->background_photo_id;
     }
 
@@ -65,7 +67,7 @@ new #[Title('Appearance settings')] class extends Component
 
     public function chooseMode(string $mode): void
     {
-        abort_unless(in_array($mode, [AppBackgroundMode::Auto->value, AppBackgroundMode::None->value], true), 422);
+        abort_unless($mode === AppBackgroundMode::None->value, 422);
 
         $this->backgroundMode = $mode;
         $this->backgroundPhotoId = null;
@@ -184,8 +186,8 @@ new #[Title('Appearance settings')] class extends Component
         $path = $user->background_image_path;
         $disk = $user->background_image_disk ?: 'local';
         $mode = $user->background_mode === AppBackgroundMode::Upload
-            ? AppBackgroundMode::Auto
-            : ($user->background_mode ?? AppBackgroundMode::Auto);
+            ? AppBackgroundMode::None
+            : ($user->background_mode ?? AppBackgroundMode::None);
 
         $user->update([
             'background_mode' => $mode,
@@ -237,33 +239,15 @@ new #[Title('Appearance settings')] class extends Component
             <form wire:submit="saveBackground" class="space-y-5">
                 <div>
                     <flux:heading>{{ __('App background') }}</flux:heading>
-                    <flux:text class="mt-1">{{ __('Upload your own image, follow your latest pick, or pin a favorite from your Library.') }}</flux:text>
+                    <flux:text class="mt-1">{{ __('Choose no image, upload your own, or explicitly pin a favorite from your Library.') }}</flux:text>
                 </div>
 
-                <div class="grid gap-3 sm:grid-cols-2">
-                    <button
-                        type="button"
-                        wire:click="chooseMode('auto')"
-                        @class([
-                            'app-glass-card flex min-h-28 items-start gap-4 rounded-2xl border p-4 text-left transition',
-                            'border-violet-500 bg-violet-50/80 ring-2 ring-violet-500/15 dark:border-violet-400 dark:bg-violet-500/10' => $backgroundMode === AppBackgroundMode::Auto->value,
-                            'border-zinc-200 bg-white hover:border-violet-300 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-violet-500/60' => $backgroundMode !== AppBackgroundMode::Auto->value,
-                        ])
-                    >
-                        <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300">
-                            <flux:icon.sparkles class="size-5" />
-                        </span>
-                        <span>
-                            <span class="block font-medium text-zinc-900 dark:text-white">{{ __('Latest favorite') }}</span>
-                            <span class="mt-1 block text-sm leading-5 text-zinc-500 dark:text-zinc-400">{{ __('Automatically changes when you pick a new favorite.') }}</span>
-                        </span>
-                    </button>
-
+                <div>
                     <button
                         type="button"
                         wire:click="chooseMode('none')"
                         @class([
-                            'app-glass-card flex min-h-28 items-start gap-4 rounded-2xl border p-4 text-left transition',
+                            'app-glass-card flex min-h-24 w-full items-start gap-4 rounded-2xl border p-4 text-left transition',
                             'border-violet-500 bg-violet-50/80 ring-2 ring-violet-500/15 dark:border-violet-400 dark:bg-violet-500/10' => $backgroundMode === AppBackgroundMode::None->value,
                             'border-zinc-200 bg-white hover:border-violet-300 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-violet-500/60' => $backgroundMode !== AppBackgroundMode::None->value,
                         ])

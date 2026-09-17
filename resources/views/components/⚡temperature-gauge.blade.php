@@ -34,6 +34,7 @@ new class extends Component
         ]);
 
         unset($this->myLatest);
+        $this->dispatch('temperature-updated');
         Flux::modal('temperature-check-in')->close();
         Flux::toast(variant: 'success', text: __('Temperature shared.'));
     }

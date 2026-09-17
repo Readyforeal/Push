@@ -60,6 +60,12 @@ new #[Title('Settings')] class extends Component {
             'icon' => 'book-open',
             'color' => 'bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300',
         ], [
+            'title' => __('Prompt temperature'),
+            'description' => __('Set which prompt tags are safe at each temperature.'),
+            'route' => 'prompt-temperature.edit',
+            'icon' => 'adjustments-horizontal',
+            'color' => 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300',
+        ], [
             'title' => __('Activity log'),
             'description' => __('See recent page visits across the app.'),
             'route' => 'activity-log.index',
