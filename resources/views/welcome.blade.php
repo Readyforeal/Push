@@ -38,7 +38,7 @@
                         {{ __('A little space to stay close.') }}
                     </h1>
                     <p class="mx-auto mt-6 max-w-lg text-base leading-7 text-zinc-500 text-pretty sm:text-lg sm:leading-8 dark:text-zinc-400">
-                        {{ __('Daily prompts, shared moments, and thoughtful surprises—kept between you and your person.') }}
+                        {{ __('Daily prompts, shared posts, and thoughtful surprises—kept between you and your person.') }}
                     </p>
 
                     <div class="mt-9 flex justify-center">

@@ -48,5 +48,5 @@ test('paired users see secret missions in extracurriculars instead of the moment
         ->assertSee('Extracurriculars')
         ->assertSee('Secret Missions')
         ->assertSee(route('missions'))
-        ->assertDontSee('Latest moment');
+        ->assertDontSee('Latest post');
 });

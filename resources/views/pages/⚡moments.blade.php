@@ -3,7 +3,7 @@
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Moments')] class extends Component {}; ?>
+new #[Title('Posts')] class extends Component {}; ?>
 
 <div class="mx-auto flex w-full max-w-3xl flex-col gap-8 pb-6 sm:pt-5">
     <header class="px-1">
@@ -12,7 +12,7 @@ new #[Title('Moments')] class extends Component {}; ?>
             <span>{{ __('Together') }}</span>
         </div>
         <h1 class="text-[2.15rem] font-semibold leading-none tracking-[-0.04em] text-zinc-950 sm:text-5xl dark:text-white">
-            {{ __('Moments') }}
+            {{ __('Posts') }}
         </h1>
         <p class="mt-3 max-w-xl text-base leading-7 text-zinc-500 sm:text-lg dark:text-zinc-400">
             {{ __('A private record of the things you chose to keep.') }}

@@ -94,7 +94,7 @@ new class extends Component
                 Storage::disk($mediaDisk)->delete($storedPath);
             }
 
-            $this->addError('photos', __('This moment could not be saved. Please try again.'));
+            $this->addError('photos', __('This post could not be created. Please try again.'));
 
             return;
         }
@@ -103,7 +103,7 @@ new class extends Component
         $this->intensity = 5;
         unset($this->moments);
         Flux::modal('log-shared-moment')->close();
-        Flux::toast(variant: 'success', text: __('Moment saved.'));
+        Flux::toast(variant: 'success', text: __('Post created.'));
     }
 
     public function startEditingMoment(int $momentId): void
@@ -137,7 +137,7 @@ new class extends Component
         $this->editIntensity = 5;
         unset($this->moments);
         Flux::modal('edit-shared-moment')->close();
-        Flux::toast(variant: 'success', text: __('Moment updated.'));
+        Flux::toast(variant: 'success', text: __('Post updated.'));
     }
 
     public function deleteMoment(int $momentId): void
@@ -153,7 +153,7 @@ new class extends Component
         }
 
         unset($this->commentBodies[$momentId], $this->moments);
-        Flux::toast(variant: 'success', text: __('Moment deleted.'));
+        Flux::toast(variant: 'success', text: __('Post deleted.'));
     }
 
     public function addComment(int $momentId): void
@@ -319,18 +319,18 @@ new class extends Component
         <div class="prompt-surface p-6 sm:p-7">
             <div class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-300">
                 <flux:icon.sparkles class="size-3.5" />
-                <span>{{ __('Moments') }}</span>
+                <span>{{ __('Posts') }}</span>
             </div>
             <flux:heading size="lg" class="mt-2 tracking-tight">{{ __('Keep something from your day') }}</flux:heading>
             <flux:text class="mt-1 max-w-xl">
                 {{ $this->relationship
-                    ? __('A private, shared log for whatever feels worth remembering.')
-                    : __('Keep moments for yourself now. Your full history will be shared once you pair with your partner.') }}
+                    ? __('A private, shared feed for whatever feels worth posting.')
+                    : __('Create posts for yourself now. Your full history will be shared once you pair with your partner.') }}
             </flux:text>
 
             <flux:modal.trigger name="log-shared-moment">
                 <flux:button variant="primary" icon="plus" class="mt-5 w-full justify-center">
-                    {{ __('Log a moment') }}
+                    {{ __('Create post') }}
                 </flux:button>
             </flux:modal.trigger>
         </div>
@@ -350,7 +350,7 @@ new class extends Component
             @if ($coverPhoto)
                 <img
                     src="{{ route('moment-photos.show', $coverPhoto) }}"
-                    alt="{{ __('Latest moment shared by :name', ['name' => $latestMoment->author->name]) }}"
+                    alt="{{ __('Latest post shared by :name', ['name' => $latestMoment->author->name]) }}"
                     class="absolute inset-0 size-full object-cover transition duration-700 ease-out group-hover:scale-[1.025]"
                 >
             @endif
@@ -360,7 +360,7 @@ new class extends Component
             <div class="relative flex min-h-80 flex-col justify-between p-6 text-white sm:p-7">
                 <div class="flex items-start justify-between gap-4">
                     <span class="rounded-full bg-black/20 px-3 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.14em] ring-1 ring-white/20 backdrop-blur-md">
-                        {{ __('Latest moment') }}
+                        {{ __('Latest post') }}
                     </span>
                     @if ($latestMoment->photos->count() > 1)
                         <span class="flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5 text-xs font-medium ring-1 ring-white/20 backdrop-blur-md">
@@ -390,7 +390,7 @@ new class extends Component
                             {{ $this->intensityLabel($latestMoment->intensity) }} · {{ $latestMoment->intensity }} / 10
                         </span>
                         <span class="flex items-center gap-1.5 text-sm font-medium">
-                            {{ __('View moments') }}
+                            {{ __('View posts') }}
                             <flux:icon.arrow-right class="size-4 transition group-hover:translate-x-0.5" />
                         </span>
                     </div>
@@ -400,7 +400,7 @@ new class extends Component
     @elseif ($showFeed)
         @if ($this->moments->isNotEmpty())
             <div class="flex items-center justify-between px-1 pt-2">
-                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500">{{ __('All moments') }}</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500">{{ __('All posts') }}</p>
                 <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ trans_choice(':count post|:count posts', $this->moments->count(), ['count' => $this->moments->count()]) }}</span>
             </div>
 
@@ -416,7 +416,7 @@ new class extends Component
                         @if ($coverPhoto)
                             <img
                                 src="{{ route('moment-photos.show', $coverPhoto) }}"
-                                alt="{{ __('Moment shared by :name', ['name' => $moment->author->name]) }}"
+                                alt="{{ __('Post shared by :name', ['name' => $moment->author->name]) }}"
                                 class="absolute inset-0 size-full object-cover transition duration-700 ease-out group-hover:scale-[1.035]"
                                 loading="lazy"
                             >
@@ -446,7 +446,7 @@ new class extends Component
                                 @if ($moment->body)
                                     <p class="line-clamp-4 whitespace-pre-line text-xl font-medium leading-7 tracking-[-0.025em] sm:text-2xl sm:leading-8">{{ $moment->body }}</p>
                                 @else
-                                    <p class="text-xl font-medium tracking-[-0.025em] text-white/90">{{ __('A moment worth keeping.') }}</p>
+                                    <p class="text-xl font-medium tracking-[-0.025em] text-white/90">{{ __('A little piece of your day.') }}</p>
                                 @endif
 
                                 <div class="mt-5 flex items-center justify-between text-sm text-white/75">
@@ -471,7 +471,7 @@ new class extends Component
                 <div class="max-w-sm">
                     <flux:icon.sparkles class="mx-auto size-7 text-zinc-400" />
                     <flux:heading class="mt-4">{{ __('Nothing here yet') }}</flux:heading>
-                    <flux:text class="mt-1">{{ __('Your shared moments will collect here.') }}</flux:text>
+                    <flux:text class="mt-1">{{ __('Your shared posts will collect here.') }}</flux:text>
                 </div>
             </div>
         @endif
@@ -485,7 +485,7 @@ new class extends Component
     >
         <form wire:submit="logMoment" class="space-y-6">
             <div>
-                <flux:heading size="xl" class="tracking-tight">{{ __('Log a moment') }}</flux:heading>
+                <flux:heading size="xl" class="tracking-tight">{{ __('Create post') }}</flux:heading>
                 <flux:subheading>{{ __('Add as much or as little context as you want.') }}</flux:subheading>
             </div>
 
@@ -557,7 +557,7 @@ new class extends Component
                     <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
                 </flux:modal.close>
                 <flux:button type="submit" variant="primary" icon="plus" wire:loading.attr="disabled" wire:target="logMoment">
-                    <span wire:loading.remove wire:target="logMoment">{{ __('Save moment') }}</span>
+                    <span wire:loading.remove wire:target="logMoment">{{ __('Create post') }}</span>
                     <span wire:loading wire:target="logMoment">{{ __('Saving…') }}</span>
                 </flux:button>
             </div>
@@ -572,8 +572,8 @@ new class extends Component
     >
         <form wire:submit="updateMoment" class="space-y-6">
             <div>
-                <flux:heading size="xl" class="tracking-tight">{{ __('Edit moment') }}</flux:heading>
-                <flux:subheading>{{ __('Adjust the note or how strongly this moment felt.') }}</flux:subheading>
+                <flux:heading size="xl" class="tracking-tight">{{ __('Edit post') }}</flux:heading>
+                <flux:subheading>{{ __('Adjust the post text or its intensity.') }}</flux:subheading>
             </div>
 
             <div>

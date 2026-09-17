@@ -13,7 +13,7 @@
             'current' => request()->routeIs('history'),
         ],
         [
-            'label' => __('Moments'),
+            'label' => __('Posts'),
             'route' => 'moments',
             'icon' => 'sparkles',
             'current' => request()->routeIs('moments*'),

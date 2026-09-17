@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Moment')] class extends Component
+new #[Title('Post')] class extends Component
 {
     public SharedMoment $moment;
 
@@ -66,7 +66,7 @@ new #[Title('Moment')] class extends Component
 
         $this->refreshMoment();
         Flux::modal('edit-moment-detail')->close();
-        Flux::toast(variant: 'success', text: __('Moment updated.'));
+        Flux::toast(variant: 'success', text: __('Post updated.'));
     }
 
     public function deleteMoment(): void
@@ -147,7 +147,7 @@ new #[Title('Moment')] class extends Component
             @if ($leadPhoto)
                 <img
                     src="{{ route('moment-photos.show', $leadPhoto) }}"
-                    alt="{{ __('Moment shared by :name', ['name' => $moment->author->name]) }}"
+                    alt="{{ __('Post shared by :name', ['name' => $moment->author->name]) }}"
                     class="absolute inset-0 size-full object-cover"
                 >
             @endif
@@ -156,18 +156,18 @@ new #[Title('Moment')] class extends Component
 
             <header class="relative z-10 p-5 pt-[calc(1.25rem+env(safe-area-inset-top,0px))] sm:p-8 lg:p-10">
                 <div class="flex items-center justify-between gap-4">
-                    <a href="{{ route('moments') }}" wire:navigate.hover class="inline-flex size-11 items-center justify-center rounded-full bg-white/75 text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white dark:bg-black/35 dark:text-white dark:ring-white/15 dark:hover:bg-black/55" aria-label="{{ __('Back to moments') }}">
+                    <a href="{{ route('moments') }}" wire:navigate.hover class="inline-flex size-11 items-center justify-center rounded-full bg-white/75 text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white dark:bg-black/35 dark:text-white dark:ring-white/15 dark:hover:bg-black/55" aria-label="{{ __('Back to posts') }}">
                         <flux:icon.arrow-left class="size-5" />
                     </a>
 
                     @if ($moment->user_id === auth()->id())
                         <div class="flex items-center gap-2">
                             <flux:modal.trigger name="edit-moment-detail">
-                                <button type="button" class="inline-flex size-11 items-center justify-center rounded-full bg-white/75 text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white dark:bg-black/35 dark:text-white dark:ring-white/15 dark:hover:bg-black/55" aria-label="{{ __('Edit moment') }}">
+                                <button type="button" class="inline-flex size-11 items-center justify-center rounded-full bg-white/75 text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white dark:bg-black/35 dark:text-white dark:ring-white/15 dark:hover:bg-black/55" aria-label="{{ __('Edit post') }}">
                                     <flux:icon.pencil-square class="size-5" />
                                 </button>
                             </flux:modal.trigger>
-                            <button type="button" wire:click="deleteMoment" wire:confirm="{{ __('Delete this moment, its photos, and all comments? This cannot be undone.') }}" class="inline-flex size-11 items-center justify-center rounded-full bg-white/75 text-red-600 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white dark:bg-black/35 dark:text-red-300 dark:ring-white/15 dark:hover:bg-black/55" aria-label="{{ __('Delete moment') }}">
+                            <button type="button" wire:click="deleteMoment" wire:confirm="{{ __('Delete this post, its photos, and all comments? This cannot be undone.') }}" class="inline-flex size-11 items-center justify-center rounded-full bg-white/75 text-red-600 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-white dark:bg-black/35 dark:text-red-300 dark:ring-white/15 dark:hover:bg-black/55" aria-label="{{ __('Delete post') }}">
                                 <flux:icon.trash class="size-5" />
                             </button>
                         </div>
@@ -186,7 +186,7 @@ new #[Title('Moment')] class extends Component
                     @if ($moment->body)
                         <h1 class="mt-6 whitespace-pre-line text-3xl font-semibold leading-[1.12] tracking-[-0.04em] text-zinc-950 sm:text-5xl dark:text-white">{{ $moment->body }}</h1>
                     @else
-                        <h1 class="mt-6 text-3xl font-semibold tracking-[-0.04em] text-zinc-950 sm:text-5xl dark:text-white">{{ __('A moment worth keeping.') }}</h1>
+                        <h1 class="mt-6 text-3xl font-semibold tracking-[-0.04em] text-zinc-950 sm:text-5xl dark:text-white">{{ __('A little piece of your day.') }}</h1>
                     @endif
 
                     <div class="mt-5 flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-zinc-600 dark:text-zinc-300">
@@ -271,8 +271,8 @@ new #[Title('Moment')] class extends Component
     <flux:modal name="edit-moment-detail" focusable class="max-w-lg">
         <form wire:submit="updateMoment" class="space-y-5">
             <div>
-                <flux:heading size="xl">{{ __('Edit moment') }}</flux:heading>
-                <flux:subheading>{{ __('Refine the note or how strongly this moment felt.') }}</flux:subheading>
+                <flux:heading size="xl">{{ __('Edit post') }}</flux:heading>
+                <flux:subheading>{{ __('Refine the post text or its intensity.') }}</flux:subheading>
             </div>
             <flux:input wire:model="editIntensity" type="number" min="1" max="10" :label="__('Intensity')" />
             <flux:textarea wire:model="editBody" :label="__('Post text')" rows="6" maxlength="5000" />

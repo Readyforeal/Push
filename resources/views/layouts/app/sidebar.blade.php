@@ -28,7 +28,7 @@
                         {{ __('History') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="sparkles" :href="route('moments')" :current="request()->routeIs('moments*')" wire:navigate.hover>
-                        {{ __('Moments') }}
+                        {{ __('Posts') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="gift" :href="route('missions')" :current="request()->routeIs('missions')" wire:navigate.hover>
                         {{ __('Missions') }}

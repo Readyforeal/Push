@@ -45,14 +45,14 @@ test('partners can log and view shared moments with an intensity note and photos
     $this->get(route('dashboard'))
         ->assertOk()
         ->assertSee('Extracurriculars')
-        ->assertSee('Latest moment')
-        ->assertSeeInOrder(['Latest moment', 'Ready for your first prompt'])
+        ->assertSee('Latest post')
+        ->assertSeeInOrder(['Latest post', 'Ready for your first prompt'])
         ->assertSee(route('moment-photos.show', $moment->photos->first()), false)
         ->assertDontSee('Keep something from your day');
 
     $this->get(route('moments'))
         ->assertOk()
-        ->assertSee('All moments')
+        ->assertSee('All posts')
         ->assertSee('A small moment worth remembering.');
 
     $this->get(route('moments.show', $moment))
@@ -116,7 +116,7 @@ test('an unpaired user can save a private personal moment', function () {
     $this->actingAs($user);
 
     Livewire::test('shared-moments')
-        ->assertSee('Keep moments for yourself now.')
+        ->assertSee('Create posts for yourself now.')
         ->set('body', 'A personal moment before pairing.')
         ->call('logMoment')
         ->assertHasNoErrors()
