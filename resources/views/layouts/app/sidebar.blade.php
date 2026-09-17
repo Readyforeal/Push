@@ -56,7 +56,7 @@
 
         <!-- Mobile Header -->
         @unless (request()->routeIs('moments.show'))
-            <flux:header class="pt-[calc(env(safe-area-inset-top,0px)+1.25rem)] pb-2 lg:hidden" data-mobile-header>
+            <flux:header class="border-transparent! bg-transparent! pt-[calc(env(safe-area-inset-top,0px)+1.25rem)] pb-2 shadow-none! backdrop-blur-none! lg:hidden" data-mobile-header>
                 <x-app-logo href="{{ route('dashboard') }}" wire:navigate.hover />
 
                 <flux:spacer />

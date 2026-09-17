@@ -174,15 +174,15 @@
     }
 
     .app-photo-background [data-flux-header] {
-        border-color: rgb(255 255 255 / 42%) !important;
-        background-color: rgb(248 250 252 / 72%) !important;
-        -webkit-backdrop-filter: blur(28px) saturate(1.2) !important;
-        backdrop-filter: blur(28px) saturate(1.2) !important;
+        border-color: transparent !important;
+        background-color: transparent !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
     }
 
     .dark .app-photo-background [data-flux-header] {
-        border-color: rgb(255 255 255 / 8%) !important;
-        background-color: rgb(2 6 23 / 78%) !important;
+        border-color: transparent !important;
+        background-color: transparent !important;
     }
 
     .app-photo-background [data-mobile-dock] nav {
@@ -195,8 +195,17 @@
         background-color: rgb(2 6 23 / 62%) !important;
     }
 
-    .app-photo-background [data-home-card-stack] {
+    .app-photo-background [data-home-heading] {
         margin-top: clamp(8rem, 28dvh, 19rem);
+    }
+
+    .app-photo-background .temperature-surface {
+        --app-card-tint: rgb(248 250 252 / 44%);
+        --app-card-blur: 10px;
+    }
+
+    .dark .app-photo-background .temperature-surface {
+        --app-card-tint: rgb(15 23 42 / 48%);
     }
 
     .home-shell::before {
@@ -319,6 +328,16 @@
 
     .prompt-surface-muted {
         @apply overflow-hidden rounded-[1.75rem] border border-zinc-200/80 bg-white/55 shadow-[0_1px_2px_rgba(15,23,42,0.02)] backdrop-blur-lg dark:border-white/10 dark:bg-zinc-900/45;
+    }
+
+    .temperature-surface {
+        background-color: rgb(255 255 255 / 72%);
+        -webkit-backdrop-filter: blur(10px) saturate(1.08);
+        backdrop-filter: blur(10px) saturate(1.08);
+    }
+
+    .dark .temperature-surface {
+        background-color: rgb(15 23 42 / 68%);
     }
 
     .prompt-kicker {

@@ -11,7 +11,7 @@ test('guests are redirected to the login page', function () {
 });
 
 test('authenticated users can visit the dashboard', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['name' => 'Jamie Parker']);
     $this->actingAs($user);
 
     $response = $this->get(route('dashboard'));
@@ -23,7 +23,11 @@ test('authenticated users can visit the dashboard', function () {
         ->assertSee('data-app-brand', false)
         ->assertSee('Push')
         ->assertSee('data-home-screen', false)
+        ->assertSee('data-home-heading', false)
         ->assertSee('data-home-card-stack', false)
+        ->assertSee(', Jamie.')
+        ->assertDontSee(', Jamie Parker.')
+        ->assertDontSee('A little space to slow down and stay close.')
         ->assertSee('data-dock-item="dashboard"', false)
         ->assertSeeInOrder([
             'data-dock-item="dashboard"',

@@ -98,7 +98,7 @@ new class extends Component
     $partnerTint = $partnerValue ? 0.04 + ($partnerValue * 0.022) : 0.035;
 @endphp
 
-<section class="prompt-surface p-5 sm:p-6" wire:poll.30s>
+<section class="prompt-surface temperature-surface p-5 sm:p-6" wire:poll.30s>
     <div class="flex items-center justify-between gap-4">
         <div class="flex min-w-0 items-center gap-3">
             <div class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-500 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:ring-violet-400/15">
