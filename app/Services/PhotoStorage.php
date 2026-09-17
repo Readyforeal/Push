@@ -62,10 +62,12 @@ class PhotoStorage
                 throw new RuntimeException('The thumbnail could not be written.');
             }
 
-            return $this->stageTemporaryJpeg(
+            $url = $this->stageTemporaryJpeg(
                 $temporaryThumbnail,
                 pathinfo($upload->getClientOriginalName(), PATHINFO_FILENAME).'-preview.jpg',
             )->temporaryUrl();
+
+            return $this->sameOriginUrl($url);
         } catch (\Throwable $exception) {
             @unlink($temporaryThumbnail);
 
@@ -406,5 +408,18 @@ class PhotoStorage
     private function thumbnailQuality(): int
     {
         return max(40, min(90, (int) config('services.photo.thumbnail_quality', 68)));
+    }
+
+    private function sameOriginUrl(string $url): string
+    {
+        $path = parse_url($url, PHP_URL_PATH);
+
+        if (! is_string($path) || $path === '') {
+            throw new RuntimeException('The thumbnail preview URL could not be created.');
+        }
+
+        $query = parse_url($url, PHP_URL_QUERY);
+
+        return $path.(is_string($query) && $query !== '' ? "?{$query}" : '');
     }
 }

@@ -89,7 +89,8 @@ test('non jpeg photos are converted in temporary storage before a post is submit
         ->toBeInstanceOf(TemporaryUploadedFile::class)
         ->and($prepared->getMimeType())->toBe('image/jpeg')
         ->and($prepared->getClientOriginalName())->toBe('camera-roll.png')
-        ->and($previewUrl)->toBeString()->not->toBeEmpty();
+        ->and($previewUrl)->toBeString()->toStartWith('/')
+        ->and($previewUrl)->not->toContain('://');
 
     $this->get($previewUrl)
         ->assertOk()
