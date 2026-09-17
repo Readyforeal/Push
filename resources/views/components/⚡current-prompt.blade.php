@@ -372,11 +372,11 @@ new class extends Component
                     @if ($this->task->payload['requires_photos'] ?? false)
                         <div
                             class="space-y-3"
-                            x-data="{ uploading: false, progress: 0 }"
-                            x-on:livewire-upload-start="uploading = true; progress = 0"
-                            x-on:livewire-upload-progress="progress = $event.detail.progress"
-                            x-on:livewire-upload-finish="uploading = false"
-                            x-on:livewire-upload-error="uploading = false"
+                            x-data="photoUploadPreview()"
+                            x-on:livewire-upload-start="startUpload()"
+                            x-on:livewire-upload-progress="updateProgress($event)"
+                            x-on:livewire-upload-finish="finishUpload()"
+                            x-on:livewire-upload-error="finishUpload()"
                         >
                             <label class="group flex cursor-pointer items-center gap-4 rounded-2xl border border-dashed border-violet-300 bg-violet-50/55 p-4 transition hover:bg-violet-50 dark:border-violet-400/30 dark:bg-violet-500/8 dark:hover:bg-violet-500/12">
                                 <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-violet-600 shadow-sm dark:bg-white/8 dark:text-violet-300">
@@ -386,12 +386,12 @@ new class extends Component
                                     <span class="block text-sm font-semibold text-zinc-900 dark:text-white">{{ __('Add photos') }}</span>
                                     <span class="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">{{ __('This prompt requires 1–3 photos with your answer.') }}</span>
                                 </span>
-                                <input wire:model="answerPhotos" type="file" accept="image/*,.dng,.heic,.heif,.tif,.tiff" multiple class="sr-only">
+                                <input wire:model="answerPhotos" x-on:change="selectFiles($event)" type="file" accept="image/*,.dng,.heic,.heif,.tif,.tiff" multiple class="sr-only">
                             </label>
 
                             <div x-show="uploading" x-cloak class="space-y-2">
                                 <div class="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                                    <span x-text="progress < 100 ? `Uploading ${progress}%` : 'Creating large JPEG previews…'"></span>
+                                    <span x-text="progress < 100 ? `Uploading ${progress}%` : 'Finishing photos…'"></span>
                                     <span x-show="progress < 100" x-text="`${progress}%`"></span>
                                 </div>
                                 <div class="h-1.5 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-white/10">
@@ -399,8 +399,14 @@ new class extends Component
                                 </div>
                             </div>
 
+                            <div x-show="previews.length > 0" x-cloak class="grid grid-cols-3 gap-3">
+                                <template x-for="preview in previews" :key="preview.url">
+                                    <img :src="preview.url" :alt="preview.name" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
+                                </template>
+                            </div>
+
                             @if (count($answerPhotos) > 0)
-                                <div class="grid grid-cols-3 gap-3">
+                                <div x-show="previews.length === 0" class="grid grid-cols-3 gap-3">
                                     @foreach ($answerPhotos as $photo)
                                         <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
                                     @endforeach
@@ -472,11 +478,11 @@ new class extends Component
                 <form
                     wire:submit="submitPhotos"
                     class="mt-6 space-y-5"
-                    x-data="{ uploading: false, progress: 0 }"
-                    x-on:livewire-upload-start="uploading = true; progress = 0"
-                    x-on:livewire-upload-progress="progress = $event.detail.progress"
-                    x-on:livewire-upload-finish="uploading = false"
-                    x-on:livewire-upload-error="uploading = false"
+                    x-data="photoUploadPreview()"
+                    x-on:livewire-upload-start="startUpload()"
+                    x-on:livewire-upload-progress="updateProgress($event)"
+                    x-on:livewire-upload-finish="finishUpload()"
+                    x-on:livewire-upload-error="finishUpload()"
                 >
                     <label class="group flex cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-zinc-300 bg-zinc-50/70 px-6 py-12 text-center transition duration-200 hover:border-rose-300 hover:bg-rose-50/50 dark:border-white/15 dark:bg-black/10 dark:hover:border-rose-400/50 dark:hover:bg-rose-500/5">
                         <span class="flex size-12 items-center justify-center rounded-full bg-white text-zinc-400 shadow-sm ring-1 ring-zinc-200 transition group-hover:scale-105 group-hover:text-rose-500 dark:bg-white/8 dark:ring-white/10">
@@ -484,12 +490,12 @@ new class extends Component
                         </span>
                         <span class="mt-3 font-medium text-zinc-900 dark:text-white">{{ __('Choose three photos') }}</span>
                         <span class="mt-1 text-sm text-zinc-500">{{ __('RAW, HEIC, and everyday photos are prepared as large JPEGs') }}</span>
-                        <input wire:model="photos" type="file" accept="image/*,.dng,.heic,.heif,.tif,.tiff" multiple class="sr-only">
+                        <input wire:model="photos" x-on:change="selectFiles($event)" type="file" accept="image/*,.dng,.heic,.heif,.tif,.tiff" multiple class="sr-only">
                     </label>
 
                     <div x-show="uploading" x-cloak class="space-y-2">
                         <div class="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                            <span x-text="progress < 100 ? `Uploading ${progress}%` : 'Creating large JPEG previews…'"></span>
+                            <span x-text="progress < 100 ? `Uploading ${progress}%` : 'Finishing photos…'"></span>
                             <span x-show="progress < 100" x-text="`${progress}%`"></span>
                         </div>
                         <div class="h-1.5 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-white/10">
@@ -497,8 +503,14 @@ new class extends Component
                         </div>
                     </div>
 
+                    <div x-show="previews.length > 0" x-cloak class="grid grid-cols-3 gap-3">
+                        <template x-for="preview in previews" :key="preview.url">
+                            <img :src="preview.url" :alt="preview.name" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
+                        </template>
+                    </div>
+
                     @if (count($photos) > 0)
-                        <div class="grid grid-cols-3 gap-3">
+                        <div x-show="previews.length === 0" class="grid grid-cols-3 gap-3">
                             @foreach ($photos as $photo)
                                 <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
                             @endforeach

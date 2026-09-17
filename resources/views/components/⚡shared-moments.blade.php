@@ -116,6 +116,7 @@ new class extends Component
         unset($this->moments);
         Flux::modal('log-shared-moment')->close();
         Flux::toast(variant: 'success', text: __('Post created.'));
+        $this->dispatch('moment-created');
     }
 
     public function startEditingMoment(int $momentId): void
@@ -493,16 +494,18 @@ new class extends Component
         name="log-shared-moment"
         :show="$errors->has('intensity') || $errors->has('body') || $errors->has('photos') || $errors->has('photos.*')"
         focusable
-        class="max-w-xl"
+        class="w-[calc(100vw-2rem)] max-w-xl"
     >
         <form
             wire:submit="logMoment"
             class="space-y-6"
-            x-data="{ uploading: false, progress: 0 }"
-            x-on:livewire-upload-start="uploading = true; progress = 0"
-            x-on:livewire-upload-progress="progress = $event.detail.progress"
-            x-on:livewire-upload-finish="uploading = false"
-            x-on:livewire-upload-error="uploading = false"
+            x-data="photoUploadPreview()"
+            x-on:livewire-upload-start="startUpload()"
+            x-on:livewire-upload-progress="updateProgress($event)"
+            x-on:livewire-upload-finish="finishUpload()"
+            x-on:livewire-upload-error="finishUpload()"
+            x-on:moment-created.window="clearPreviews()"
+            x-on:modal-close.document="clearPreviews()"
         >
             <div>
                 <flux:heading size="xl" class="tracking-tight">{{ __('Create post') }}</flux:heading>
@@ -543,12 +546,12 @@ new class extends Component
                     <flux:icon.photo class="size-6 text-zinc-400 transition group-hover:text-violet-500" />
                     <span class="mt-2 text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ __('Add photos') }}</span>
                     <span class="mt-1 text-xs text-zinc-400">{{ __('Up to six photos, 500 MB each') }}</span>
-                    <input wire:model="photos" type="file" accept="image/*,.dng,.heic,.heif,.tif,.tiff" multiple class="sr-only">
+                    <input wire:model="photos" x-on:change="selectFiles($event)" type="file" accept="image/*,.dng,.heic,.heif,.tif,.tiff" multiple class="sr-only">
                 </label>
 
                 <div x-show="uploading" x-cloak class="mt-3">
                     <div class="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                        <span x-text="progress < 100 ? `Uploading ${progress}%` : 'Creating large JPEG previews…'"></span>
+                        <span x-text="progress < 100 ? `Uploading ${progress}%` : 'Finishing photos…'"></span>
                         <span x-show="progress < 100" x-text="`${progress}%`"></span>
                     </div>
                     <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-white/10">
@@ -556,8 +559,14 @@ new class extends Component
                     </div>
                 </div>
 
+                <div x-show="previews.length > 0" x-cloak class="mt-3 grid grid-cols-3 gap-2">
+                    <template x-for="preview in previews" :key="preview.url">
+                        <img :src="preview.url" :alt="preview.name" class="aspect-square w-full rounded-xl object-cover">
+                    </template>
+                </div>
+
                 @if (count($photos) > 0)
-                    <div class="mt-3 grid grid-cols-3 gap-2">
+                    <div x-show="previews.length === 0" class="mt-3 grid grid-cols-3 gap-2">
                         @foreach ($photos as $photo)
                             <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-xl object-cover">
                         @endforeach
