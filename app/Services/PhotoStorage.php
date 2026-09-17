@@ -154,7 +154,7 @@ class PhotoStorage
 
         try {
             $source->setOption('dng:use-camera-wb', 'true');
-            $source->readImage($upload->getRealPath().'[0]');
+            $this->readFirstImage($source, $upload);
             $source->setIteratorIndex(0);
             $photo = clone $source->getImage();
 
@@ -189,6 +189,51 @@ class PhotoStorage
             $photo?->destroy();
             $source->clear();
             $source->destroy();
+        }
+    }
+
+    private function readFirstImage(Imagick $source, UploadedFile $upload): void
+    {
+        $path = $upload->getRealPath();
+        $extension = strtolower($upload->getClientOriginalExtension());
+        $mimeType = strtolower((string) $upload->getMimeType());
+        $decoder = match ($mimeType) {
+            'image/jpeg' => 'JPEG',
+            'image/png' => 'PNG',
+            'image/gif' => 'GIF',
+            'image/webp' => 'WEBP',
+            'image/heic', 'image/heif' => 'HEIC',
+            'image/tiff', 'image/x-tiff' => 'TIFF',
+            default => null,
+        };
+        $compatibleExtensions = match ($mimeType) {
+            'image/jpeg' => ['jpg', 'jpeg'],
+            'image/png' => ['png'],
+            'image/gif' => ['gif'],
+            'image/webp' => ['webp'],
+            'image/heic', 'image/heif' => ['heic', 'heif'],
+            'image/tiff', 'image/x-tiff' => ['tif', 'tiff', 'dng'],
+            default => [],
+        };
+
+        if ($decoder !== null && ! in_array($extension, $compatibleExtensions, true)) {
+            $source->readImage("{$decoder}:{$path}[0]");
+
+            return;
+        }
+
+        try {
+            $source->readImage($path.'[0]');
+        } catch (\ImagickException $exception) {
+            $fallbackDecoder = $decoder ?? ($extension === 'dng' ? 'TIFF' : null);
+
+            if ($fallbackDecoder === null) {
+                throw $exception;
+            }
+
+            $source->clear();
+            $source->setOption('dng:use-camera-wb', 'true');
+            $source->readImage("{$fallbackDecoder}:{$path}[0]");
         }
     }
 }
