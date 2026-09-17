@@ -5,6 +5,7 @@ use App\Models\Relationship;
 use App\Models\SecretMission;
 use App\Models\SecretMissionPrompt;
 use App\Models\User;
+use App\Notifications\SecretMissionClaimedNotification;
 use App\Notifications\SecretMissionCompletedNotification;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
@@ -57,6 +58,8 @@ test('a claimed mission stays active until completion and source prompts remain 
         ->and($mission->beneficiary_user_id)->toBe($secondUser->id)
         ->and($mission->status)->toBe(SecretMissionStatus::Active)
         ->and($prompt->fresh())->not->toBeNull();
+
+    Notification::assertSentTo($secondUser, SecretMissionClaimedNotification::class, fn ($notification) => $notification->partnerName === $firstUser->firstName());
 
     $component
         ->call('claimMission')

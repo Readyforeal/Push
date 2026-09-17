@@ -64,9 +64,9 @@ test('prompt progress and result events notify the waiting partner', function ()
     app(SendRoundResultReadyNotification::class)->handle(new PromptRoundRevealed($round, $secondUser));
 
     Notification::assertSentTo($firstUser, PromptReadyNotification::class);
-    Notification::assertSentTo($secondUser, PartnerAnsweredPromptNotification::class, fn ($notification) => $notification->partnerName === $firstUser->name);
+    Notification::assertSentTo($secondUser, PartnerAnsweredPromptNotification::class, fn ($notification) => $notification->partnerName === $firstUser->firstName());
     Notification::assertNotSentTo($firstUser, PartnerAnsweredPromptNotification::class);
-    Notification::assertSentTo($firstUser, RoundResultReadyNotification::class, fn ($notification) => $notification->partnerName === $secondUser->name);
+    Notification::assertSentTo($firstUser, RoundResultReadyNotification::class, fn ($notification) => $notification->partnerName === $secondUser->firstName());
     Notification::assertNotSentTo($secondUser, RoundResultReadyNotification::class);
 });
 

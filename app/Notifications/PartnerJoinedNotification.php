@@ -3,18 +3,11 @@
 namespace App\Notifications;
 
 use Illuminate\Notifications\Notification;
-use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
-class PartnerJoinedNotification extends Notification
+class PartnerJoinedNotification extends WebPushNotification
 {
     public function __construct(public readonly string $partnerName) {}
-
-    /** @return array<int, class-string> */
-    public function via(object $notifiable): array
-    {
-        return [WebPushChannel::class];
-    }
 
     public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
     {

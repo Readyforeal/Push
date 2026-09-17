@@ -8,10 +8,14 @@ use App\Models\PromptLibrary;
 use App\Models\PromptTemplate;
 use App\Models\Relationship;
 use App\Models\User;
+use App\Notifications\ExtracurricularReadyNotification;
+use App\Notifications\PartnerAnsweredPromptNotification;
+use App\Notifications\PromptReadyNotification;
 use App\Services\DailyPromptScheduler;
 use App\Services\ExtracurricularPromptManager;
 use App\Services\PromptRoundWorkflow;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
@@ -45,6 +49,7 @@ test('curated question prompts can require answer photos from either or both peo
 });
 
 test('extracurricular libraries issue one persistent on demand round per local day', function () {
+    Notification::fake();
     $first = User::factory()->create();
     $second = User::factory()->create();
     $relationship = Relationship::query()->create(['timezone' => 'America/Chicago']);
@@ -60,9 +65,18 @@ test('extracurricular libraries issue one persistent on demand round per local d
         ->and($round->requested_by_user_id)->toBe($first->id)
         ->and($manager->request($second, $relationship, $library)->is($round))->toBeTrue();
 
-    foreach ($round->tasks as $task) {
-        $workflow->submitQuestion($task, $task->assignee, 'Done.');
-    }
+    Notification::assertNotSentTo($first, PromptReadyNotification::class);
+    Notification::assertNotSentTo($second, PromptReadyNotification::class);
+
+    $firstTask = $round->tasks->firstWhere('user_id', $first->id);
+    $secondTask = $round->tasks->firstWhere('user_id', $second->id);
+    $workflow->submitQuestion($firstTask, $first, 'Done.');
+
+    Notification::assertSentTo($second, ExtracurricularReadyNotification::class, fn ($notification) => $notification->partnerName === $first->firstName());
+    Notification::assertNotSentTo($second, PartnerAnsweredPromptNotification::class);
+
+    $workflow->submitQuestion($secondTask, $second, 'Done.');
+    Notification::assertNotSentTo($first, ExtracurricularReadyNotification::class);
 
     expect($round->fresh()->status)->toBe(PromptRoundStatus::Revealed);
 

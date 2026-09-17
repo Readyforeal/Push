@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Enums\PromptRoundKind;
+use App\Enums\PromptRoundOrigin;
 use App\Enums\PromptTaskKind;
 use App\Events\PromptRoundTaskActivated;
 use App\Notifications\PromptReadyNotification;
@@ -18,10 +19,14 @@ class SendPromptReadyNotification
             'dependency.questionResponse',
         ]);
 
+        if ($task->round->origin === PromptRoundOrigin::Extracurricular) {
+            return;
+        }
+
         if ($task->round->kind === PromptRoundKind::PhotoRequest
             && $task->kind === PromptTaskKind::PhotoUpload) {
             $request = $task->dependency->questionResponse->answer;
-            $requester = $task->dependency->assignee->name;
+            $requester = $task->dependency->assignee->firstName();
             $notification = new PromptReadyNotification(
                 title: "{$requester} sent a photo request",
                 body: Str::limit($request, 120),

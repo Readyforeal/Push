@@ -163,7 +163,7 @@ Requires=tailscaled.service
 Type=simple
 User=www-data
 Group=www-data
-WorkingDirectory=/var/www/push
+WorkingDirectory=/var/www/Push
 ExecStart=/usr/bin/php artisan schedule:work
 Restart=always
 RestartSec=5
@@ -180,9 +180,51 @@ sudo systemctl enable --now push-scheduler
 sudo systemctl status push-scheduler
 ```
 
-A queue worker should be configured separately if `QUEUE_CONNECTION` remains
-`database` and queued jobs are introduced. Current web-push sends are performed
-by the application flow, while daily prompt creation depends on the scheduler.
+The scheduler creates due prompts and checks every minute for unanswered prompts
+that need their 9 PM reminder in the relationship timezone.
+
+## 5. Keep push notifications running
+
+Push notifications are queued so page actions do not wait on Apple or browser
+push services. With `QUEUE_CONNECTION=database`, create
+`/etc/systemd/system/push-queue.service`:
+
+```ini
+[Unit]
+Description=Push Laravel queue worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/Push
+ExecStart=/usr/bin/php artisan queue:work database --sleep=2 --tries=3 --timeout=60 --max-time=3600
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable the worker and verify both background services:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now push-queue
+sudo systemctl status push-queue
+sudo systemctl status push-scheduler
+```
+
+After each deployment, restart long-running workers so they load the new code:
+
+```bash
+sudo systemctl restart push-queue push-scheduler
+```
+
+Use `php artisan queue:failed` to inspect notifications that exhausted their
+three delivery attempts.
 
 ## Request path
 

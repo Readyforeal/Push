@@ -6,6 +6,15 @@ use App\Enums\SecretMissionStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $relationship_id
+ * @property int $assignee_user_id
+ * @property int $beneficiary_user_id
+ * @property SecretMissionStatus $status
+ * @property-read User $assignee
+ * @property-read User $beneficiary
+ */
 class SecretMission extends Model
 {
     protected $fillable = [

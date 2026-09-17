@@ -3,10 +3,9 @@
 namespace App\Notifications;
 
 use Illuminate\Notifications\Notification;
-use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
-class PromptReadyNotification extends Notification
+class PromptReadyNotification extends WebPushNotification
 {
     public function __construct(
         public string $title = 'A new prompt is ready',
@@ -14,12 +13,6 @@ class PromptReadyNotification extends Notification
         public string $tag = 'prompt-ready',
         public ?string $url = null,
     ) {}
-
-    /** @return array<int, class-string> */
-    public function via(object $notifiable): array
-    {
-        return [WebPushChannel::class];
-    }
 
     public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
     {

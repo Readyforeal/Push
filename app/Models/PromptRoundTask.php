@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property array<string, mixed>|null $payload
  * @property CarbonImmutable|null $activated_at
  * @property CarbonImmutable|null $submitted_at
+ * @property CarbonImmutable|null $reminded_at
  * @property-read PromptRound $round
  * @property-read User $assignee
  * @property-read QuestionResponse|null $questionResponse
@@ -38,6 +39,7 @@ class PromptRoundTask extends Model
         'position',
         'activated_at',
         'submitted_at',
+        'reminded_at',
     ];
 
     protected function casts(): array
@@ -48,6 +50,7 @@ class PromptRoundTask extends Model
             'payload' => 'array',
             'activated_at' => 'immutable_datetime',
             'submitted_at' => 'immutable_datetime',
+            'reminded_at' => 'immutable_datetime',
         ];
     }
 

@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $prompt_template_id
  * @property int|null $relationship_prompt_schedule_id
  * @property PromptRoundKind $kind
+ * @property PromptRoundOrigin $origin
  * @property PromptRoundStatus $status
  * @property CarbonImmutable $available_at
  * @property CarbonImmutable|null $scheduled_for

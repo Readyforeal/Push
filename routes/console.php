@@ -2,6 +2,7 @@
 
 use App\Models\Relationship;
 use App\Services\DailyPromptScheduler;
+use App\Services\PromptReminderScheduler;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -23,6 +24,16 @@ Artisan::command('prompts:schedule {--force : Ignore the local delivery hour}', 
 
     $this->info("Scheduled {$scheduled} daily prompt round(s).");
 })->purpose('Schedule the next daily prompt for eligible couples');
+
+Artisan::command('prompts:remind', function (PromptReminderScheduler $scheduler) {
+    $notified = 0;
+
+    Relationship::query()->each(function (Relationship $relationship) use ($scheduler, &$notified): void {
+        $notified += $scheduler->remind($relationship);
+    });
+
+    $this->info("Queued prompt reminders for {$notified} user(s).");
+})->purpose('Remind users about unanswered prompts after 9 PM in their relationship timezone');
 
 Artisan::command('homelab:check', function () {
     $disk = (string) config('filesystems.media_disk', 'homelab_cloud');
@@ -48,3 +59,4 @@ Artisan::command('homelab:check', function () {
 })->purpose('Verify that homelab media storage is mounted and writable');
 
 Schedule::command('prompts:schedule')->everyMinute()->withoutOverlapping();
+Schedule::command('prompts:remind')->everyMinute()->withoutOverlapping();

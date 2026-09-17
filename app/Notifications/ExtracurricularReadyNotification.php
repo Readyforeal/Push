@@ -5,22 +5,21 @@ namespace App\Notifications;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushMessage;
 
-class TestPushNotification extends WebPushNotification
+class ExtracurricularReadyNotification extends WebPushNotification
 {
     public function __construct(
-        public readonly string $title,
-        public readonly string $body,
+        public string $partnerName,
+        public int $roundId,
     ) {}
 
     public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
     {
         return (new WebPushMessage)
-            ->title($this->title)
-            ->body($this->body)
+            ->title("{$this->partnerName} finished their part")
+            ->body('There’s an extracurricular waiting for you too.')
             ->icon('/apple-touch-icon.png')
             ->badge('/apple-touch-icon.png')
-            ->tag('push-test')
-            ->data(['url' => route('notifications.edit')])
-            ->options(['TTL' => 300, 'urgency' => 'high']);
+            ->tag("extracurricular-ready-{$this->roundId}")
+            ->data(['url' => route('prompts.show', $this->roundId)]);
     }
 }

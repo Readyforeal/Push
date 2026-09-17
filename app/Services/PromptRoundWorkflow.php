@@ -7,6 +7,7 @@ use App\Enums\PromptRoundOrigin;
 use App\Enums\PromptRoundStatus;
 use App\Enums\PromptTaskKind;
 use App\Enums\PromptTaskStatus;
+use App\Events\ExtracurricularTaskCompleted;
 use App\Events\PromptPhotoSelected;
 use App\Events\PromptQuestionAnswered;
 use App\Events\PromptRoundRevealed;
@@ -251,6 +252,10 @@ class PromptRoundWorkflow
 
         foreach ($result['activated'] as $activatedTask) {
             PromptRoundTaskActivated::dispatch($activatedTask);
+        }
+
+        if (! $result['revealed'] && $result['round']->origin === PromptRoundOrigin::Extracurricular) {
+            ExtracurricularTaskCompleted::dispatch($result['round'], $actor);
         }
 
         if (! $result['revealed']

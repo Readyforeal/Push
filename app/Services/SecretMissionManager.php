@@ -7,6 +7,7 @@ use App\Models\Relationship;
 use App\Models\SecretMission;
 use App\Models\SecretMissionPrompt;
 use App\Models\User;
+use App\Notifications\SecretMissionClaimedNotification;
 use App\Notifications\SecretMissionCompletedNotification;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +75,7 @@ class SecretMissionManager
     {
         $this->authorizeMember($actor, $relationship);
 
-        return DB::transaction(function () use ($actor, $relationship): SecretMission {
+        $mission = DB::transaction(function () use ($actor, $relationship): SecretMission {
             $relationship = Relationship::query()->lockForUpdate()->findOrFail($relationship->id);
 
             if ($relationship->secretMissions()
@@ -111,6 +112,10 @@ class SecretMissionManager
                 'accepted_at' => now(),
             ]);
         });
+
+        $mission->beneficiary->notify(new SecretMissionClaimedNotification($actor->firstName()));
+
+        return $mission;
     }
 
     public function complete(User $actor, Relationship $relationship, SecretMission $mission): SecretMission
@@ -136,7 +141,7 @@ class SecretMissionManager
             return $mission->fresh(['beneficiary']);
         });
 
-        $mission->beneficiary->notify(new SecretMissionCompletedNotification($actor->name));
+        $mission->beneficiary->notify(new SecretMissionCompletedNotification($actor->firstName()));
 
         return $mission;
     }

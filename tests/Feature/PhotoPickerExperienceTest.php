@@ -168,7 +168,7 @@ test('the uploader receives a personalized notification after a favorite is pick
 
     app(SendPhotoSelectedNotification::class)->handle(new PromptPhotoSelected($selection, $picker));
 
-    Notification::assertSentTo($uploader, PhotoPickedNotification::class, fn ($notification) => $notification->partnerName === $picker->name);
+    Notification::assertSentTo($uploader, PhotoPickedNotification::class, fn ($notification) => $notification->partnerName === $picker->firstName());
     Notification::assertNotSentTo($picker, PhotoPickedNotification::class);
 
     $notification = new PhotoPickedNotification('Taylor');

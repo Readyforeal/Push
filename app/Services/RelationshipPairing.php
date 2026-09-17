@@ -104,7 +104,7 @@ class RelationshipPairing
             return ['relationship' => $relationship, 'inviter' => $invitation->inviter];
         });
 
-        $result['inviter']->notify(new PartnerJoinedNotification($invitee->name));
+        $result['inviter']->notify(new PartnerJoinedNotification($invitee->firstName()));
 
         return $result['relationship']->fresh(['members']);
     }

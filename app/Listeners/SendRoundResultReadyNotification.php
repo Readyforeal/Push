@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Enums\PromptRoundKind;
+use App\Enums\PromptRoundOrigin;
 use App\Events\PromptRoundRevealed;
 use App\Notifications\RoundResultReadyNotification;
 
@@ -10,7 +11,8 @@ class SendRoundResultReadyNotification
 {
     public function handle(PromptRoundRevealed $event): void
     {
-        if (in_array($event->round->kind, [PromptRoundKind::PhotoPicker, PromptRoundKind::PhotoRequest], true)) {
+        if ($event->round->origin === PromptRoundOrigin::Extracurricular
+            || in_array($event->round->kind, [PromptRoundKind::PhotoPicker, PromptRoundKind::PhotoRequest], true)) {
             return;
         }
 
@@ -19,7 +21,7 @@ class SendRoundResultReadyNotification
                 continue;
             }
 
-            $member->notify(new RoundResultReadyNotification($event->completedBy->name));
+            $member->notify(new RoundResultReadyNotification($event->completedBy->firstName()));
         }
     }
 }
