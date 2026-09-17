@@ -168,6 +168,7 @@ new #[Title('Appearance settings')] class extends Component
         }
 
         $this->reset('backgroundUpload');
+        $this->clearPhotoPreviews('backgroundUpload');
 
         $backgroundUrl = $user->fresh()->appBackgroundUrl();
 
@@ -200,6 +201,7 @@ new #[Title('Appearance settings')] class extends Component
 
         $this->backgroundMode = $mode->value;
         $this->reset('backgroundUpload');
+        $this->clearPhotoPreviews('backgroundUpload');
         $this->dispatch('app-background-updated', url: $user->fresh()->appBackgroundUrl());
         $this->dispatch('background-preference-saved');
     }
@@ -292,8 +294,8 @@ new #[Title('Appearance settings')] class extends Component
                     ])
                 >
                     <div class="relative aspect-[16/7] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                        @if ($backgroundUpload && ! $errors->has('backgroundUpload'))
-                            <img src="{{ $backgroundUpload->temporaryUrl() }}" alt="{{ __('New custom background preview') }}" class="size-full object-cover">
+                        @if (filled($photoPreviewUrls['backgroundUpload'][0] ?? null) && ! $errors->has('backgroundUpload'))
+                            <img src="{{ $photoPreviewUrls['backgroundUpload'][0] }}" alt="{{ __('New custom background preview') }}" class="size-full object-cover">
                         @elseif ($this->uploadedBackgroundUrl)
                             <img src="{{ $this->uploadedBackgroundUrl }}" alt="{{ __('Your custom app background') }}" class="size-full object-cover">
                         @else

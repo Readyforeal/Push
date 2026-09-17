@@ -112,6 +112,7 @@ new class extends Component
         }
 
         $this->reset('body', 'photos');
+        $this->clearPhotoPreviews('photos');
         $this->intensity = 5;
         unset($this->moments);
         Flux::modal('log-shared-moment')->close();
@@ -565,10 +566,10 @@ new class extends Component
                     </template>
                 </div>
 
-                @if (count($photos) > 0)
+                @if (count($photoPreviewUrls['photos'] ?? []) > 0)
                     <div x-show="previews.length === 0" class="mt-3 grid grid-cols-3 gap-2">
-                        @foreach ($photos as $photo)
-                            <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-xl object-cover">
+                        @foreach ($photoPreviewUrls['photos'] as $previewUrl)
+                            <img src="{{ $previewUrl }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-xl object-cover">
                         @endforeach
                     </div>
                 @endif

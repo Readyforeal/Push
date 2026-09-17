@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Image\ImageManager;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -15,21 +16,65 @@ use Symfony\Component\Process\Process;
 
 class PhotoStorage
 {
+    public function __construct(private readonly ImageManager $images) {}
+
     /**
-     * Convert a browser-incompatible upload while it is still in Livewire's
-     * local temporary storage so the component can show a real JPEG preview.
+     * Normalize every upload once while it is still in local temporary storage.
+     * The resulting JPEG is both the submission payload and the final stored file.
      */
     public function prepareForPreview(TemporaryUploadedFile $upload): TemporaryUploadedFile
     {
-        if (! $this->requiresConversion($upload)) {
-            $this->assertReadableImage($upload);
-
-            return $upload;
-        }
-
         $this->assertFastConversionFormat($upload);
 
         $temporaryJpeg = $this->makeJpeg($upload);
+        $prepared = $this->stageTemporaryJpeg($temporaryJpeg, $upload->getClientOriginalName());
+        $sourceFilename = $upload->getFilename();
+        $upload->delete();
+        Storage::disk(FileUploadConfiguration::disk())->delete(FileUploadConfiguration::path($sourceFilename.'.json'));
+
+        return $prepared;
+    }
+
+    public function temporaryThumbnailUrl(TemporaryUploadedFile $upload): string
+    {
+        $temporaryDirectory = storage_path('app/private/photo-tmp');
+        File::ensureDirectoryExists($temporaryDirectory);
+        $temporaryThumbnail = tempnam($temporaryDirectory, 'push-thumbnail-');
+
+        if (! is_string($temporaryThumbnail)) {
+            throw new RuntimeException('A temporary thumbnail could not be created.');
+        }
+
+        try {
+            $thumbnail = $this->images
+                ->fromUpload($upload)
+                ->usingImagick()
+                ->orient()
+                ->scale(
+                    width: $this->thumbnailDimension(),
+                    height: $this->thumbnailDimension(),
+                )
+                ->toJpeg()
+                ->quality($this->thumbnailQuality())
+                ->toBytes();
+
+            if (file_put_contents($temporaryThumbnail, $thumbnail, LOCK_EX) === false) {
+                throw new RuntimeException('The thumbnail could not be written.');
+            }
+
+            return $this->stageTemporaryJpeg(
+                $temporaryThumbnail,
+                pathinfo($upload->getClientOriginalName(), PATHINFO_FILENAME).'-preview.jpg',
+            )->temporaryUrl();
+        } catch (\Throwable $exception) {
+            @unlink($temporaryThumbnail);
+
+            throw new RuntimeException('The photo thumbnail could not be created.', previous: $exception);
+        }
+    }
+
+    private function stageTemporaryJpeg(string $temporaryJpeg, string $originalName): TemporaryUploadedFile
+    {
         $disk = FileUploadConfiguration::disk();
         $storage = Storage::disk($disk);
         $filename = Str::random(40).'.jpg';
@@ -49,7 +94,7 @@ class PhotoStorage
             }
 
             if (! $storage->put($metadataPath, json_encode([
-                'name' => $upload->getClientOriginalName(),
+                'name' => $originalName,
                 'type' => 'image/jpeg',
                 'size' => filesize($temporaryJpeg) ?: 0,
                 'hash' => $filename,
@@ -64,10 +109,6 @@ class PhotoStorage
             fclose($stream);
             @unlink($temporaryJpeg);
         }
-
-        $sourceFilename = $upload->getFilename();
-        $upload->delete();
-        $storage->delete(FileUploadConfiguration::path($sourceFilename.'.json'));
 
         return TemporaryUploadedFile::createFromLivewire($filename);
     }
@@ -113,6 +154,7 @@ class PhotoStorage
     private function assertFastConversionFormat(UploadedFile $upload): void
     {
         if (! $this->isRawUpload($upload) && ! in_array(strtolower((string) $upload->getMimeType()), [
+            'image/jpeg',
             'image/png',
             'image/gif',
             'image/webp',
@@ -199,17 +241,24 @@ class PhotoStorage
                 $photo->autoOrientate();
             }
 
-            if ($photo->getImageWidth() > 4096 || $photo->getImageHeight() > 4096) {
-                $photo->thumbnailImage(4096, 4096, true);
+            $maxDimension = $this->maximumDimension();
+
+            if ($photo->getImageWidth() > $maxDimension || $photo->getImageHeight() > $maxDimension) {
+                $photo->thumbnailImage($maxDimension, $maxDimension, true);
             }
 
             $photo->setImageBackgroundColor('white');
             $photo->setImageAlphaChannel(Imagick::ALPHACHANNEL_REMOVE);
             $photo->transformImageColorspace(Imagick::COLORSPACE_SRGB);
+            $photo->setImageDepth(8);
             $photo->setImageFormat('jpeg');
             $photo->setImageCompression(Imagick::COMPRESSION_JPEG);
-            $photo->setImageCompressionQuality(90);
+            $photo->setImageCompressionQuality($this->jpegQuality());
+            $photo->setInterlaceScheme(Imagick::INTERLACE_PLANE);
+            $photo->setOption('jpeg:optimize-coding', 'true');
+            $photo->setOption('jpeg:sampling-factor', '2x2');
             $photo->stripImage();
+            $photo->setImagePage(0, 0, 0, 0);
             $photo->writeImage($temporaryPath);
 
             return $temporaryPath;
@@ -337,5 +386,25 @@ class PhotoStorage
             $source->setOption('dng:use-camera-wb', 'true');
             $source->readImage("{$fallbackDecoder}:{$path}[0]");
         }
+    }
+
+    private function maximumDimension(): int
+    {
+        return max(640, min(8192, (int) config('services.photo.max_dimension', 2560)));
+    }
+
+    private function jpegQuality(): int
+    {
+        return max(50, min(95, (int) config('services.photo.jpeg_quality', 82)));
+    }
+
+    private function thumbnailDimension(): int
+    {
+        return max(160, min(1280, (int) config('services.photo.thumbnail_dimension', 480)));
+    }
+
+    private function thumbnailQuality(): int
+    {
+        return max(40, min(90, (int) config('services.photo.thumbnail_quality', 68)));
     }
 }

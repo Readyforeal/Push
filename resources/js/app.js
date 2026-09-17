@@ -26,6 +26,7 @@ window.photoUploadPreview = () => ({
 
     finishUpload() {
         this.uploading = false;
+        this.clearPreviews();
     },
 
     clearPreviews() {

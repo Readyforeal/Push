@@ -141,6 +141,7 @@ new class extends Component
         }
 
         $this->reset('answerPhotos');
+        $this->clearPhotoPreviews('answerPhotos');
         unset($this->round, $this->task, $this->latestResult);
         Flux::toast(variant: 'success', text: __('Answer submitted.'));
     }
@@ -204,6 +205,7 @@ new class extends Component
         }
 
         $this->reset('photos');
+        $this->clearPhotoPreviews('photos');
         unset($this->round, $this->task, $this->latestResult);
         Flux::toast(variant: 'success', text: __('Photos sent to your partner.'));
     }
@@ -405,10 +407,10 @@ new class extends Component
                                 </template>
                             </div>
 
-                            @if (count($answerPhotos) > 0)
+                            @if (count($photoPreviewUrls['answerPhotos'] ?? []) > 0)
                                 <div x-show="previews.length === 0" class="grid grid-cols-3 gap-3">
-                                    @foreach ($answerPhotos as $photo)
-                                        <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
+                                    @foreach ($photoPreviewUrls['answerPhotos'] as $previewUrl)
+                                        <img src="{{ $previewUrl }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
                                     @endforeach
                                 </div>
                             @endif
@@ -509,10 +511,10 @@ new class extends Component
                         </template>
                     </div>
 
-                    @if (count($photos) > 0)
+                    @if (count($photoPreviewUrls['photos'] ?? []) > 0)
                         <div x-show="previews.length === 0" class="grid grid-cols-3 gap-3">
-                            @foreach ($photos as $photo)
-                                <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
+                            @foreach ($photoPreviewUrls['photos'] as $previewUrl)
+                                <img src="{{ $previewUrl }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
                             @endforeach
                         </div>
                     @endif

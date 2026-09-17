@@ -102,9 +102,13 @@ Restart Nginx and PHP-FPM after changing them.
 
 Photo inputs accept JPEG, HEIC, TIFF, and Apple ProRAW/DNG assets. For RAW
 photos, the app uses ExifTool to extract the large JPEG preview already embedded
-by the camera rather than developing the sensor data. ImageMagick then applies
-orientation, constrains the longest edge to 4096 pixels, and writes a quality-90
-JPEG. This keeps conversion practical on a small Droplet. Install both tools:
+by the camera rather than developing the sensor data. Every upload, including an
+existing JPEG, is normalized once: ImageMagick applies orientation, strips
+metadata, constrains the longest edge to 2560 pixels, and writes an optimized
+progressive quality-82 JPEG. Laravel's Intervention-backed image API separately
+creates a 480-pixel temporary preview, so preview rendering never requires the
+large saved file. This keeps storage, bandwidth, and conversion practical on a
+small Droplet. Install both tools:
 
 ```bash
 sudo apt install -y imagemagick php8.4-imagick libimage-exiftool-perl
@@ -118,6 +122,12 @@ PHP 8.4. ExifTool should print a version number and all four ImageMagick formats
 should report `yes`. If ExifTool lives outside the service user's `PATH`, set
 `PHOTO_EXIFTOOL_BINARY` to its absolute path in `.env`, then run
 `php artisan optimize:clear` followed by `php artisan optimize`.
+
+The output defaults can be tuned with `PHOTO_MAX_DIMENSION`,
+`PHOTO_JPEG_QUALITY`, `PHOTO_THUMBNAIL_DIMENSION`, and
+`PHOTO_THUMBNAIL_JPEG_QUALITY`. The defaults in `.env.example` are intended to
+retain strong full-screen quality on modern phones without preserving
+camera-sized files.
 
 Existing database records retain the disk on which they were created, so local
 development photos remain readable and are not silently moved or deleted. For

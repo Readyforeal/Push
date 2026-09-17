@@ -83,11 +83,17 @@ test('non jpeg photos are converted in temporary storage before a post is submit
         ->assertHasNoErrors();
 
     $prepared = $component->get('photos')[0];
+    $previewUrl = $component->get('photoPreviewUrls')['photos'][0] ?? null;
 
     expect($prepared)
         ->toBeInstanceOf(TemporaryUploadedFile::class)
         ->and($prepared->getMimeType())->toBe('image/jpeg')
-        ->and($prepared->getClientOriginalName())->toBe('camera-roll.png');
+        ->and($prepared->getClientOriginalName())->toBe('camera-roll.png')
+        ->and($previewUrl)->toBeString()->not->toBeEmpty();
+
+    $this->get($previewUrl)
+        ->assertOk()
+        ->assertHeader('Content-Type', 'image/jpeg');
 
     $component->call('logMoment')->assertHasNoErrors();
 
@@ -95,6 +101,41 @@ test('non jpeg photos are converted in temporary storage before a post is submit
 
     expect($photo->mime_type)->toBe('image/jpeg')
         ->and($photo->path)->toEndWith('.jpg');
+});
+
+test('jpeg uploads are resized and compressed before reaching permanent storage', function () {
+    if (! extension_loaded('imagick') || Imagick::queryFormats('JPEG') === []) {
+        $this->markTestSkipped('ImageMagick with JPEG support is required.');
+    }
+
+    config([
+        'services.photo.max_dimension' => 800,
+        'services.photo.jpeg_quality' => 75,
+    ]);
+    Storage::fake('homelab_cloud');
+    $author = User::factory()->create();
+
+    $this->actingAs($author);
+    $component = Livewire::test('shared-moments')
+        ->set('body', 'An optimized photo.')
+        ->set('photos', [UploadedFile::fake()->image('large-camera-photo.jpg', 1600, 1200)])
+        ->assertHasNoErrors();
+
+    $prepared = $component->get('photos')[0];
+    $dimensions = getimagesize($prepared->getRealPath());
+    $preparedSize = $prepared->getSize();
+
+    expect($dimensions)
+        ->not->toBeFalse()
+        ->and($dimensions[0])->toBe(800)
+        ->and($dimensions[1])->toBe(600);
+
+    $component->call('logMoment')->assertHasNoErrors();
+
+    $photo = SharedMoment::query()->sole()->photos()->sole();
+
+    expect($photo->size)->toBe($preparedSize)
+        ->and($photo->mime_type)->toBe('image/jpeg');
 });
 
 test('a raw photo uses its embedded jpeg preview before a post is submitted', function () {
