@@ -6,8 +6,8 @@
         ->get() ?? collect();
 @endphp
 
-<section class="prompt-surface p-5 sm:p-6">
-    <div>
+<section class="prompt-surface overflow-hidden">
+    <div class="px-5 pb-4 pt-5 sm:px-6 sm:pt-6">
         <p class="prompt-kicker">{{ __('More for the two of you') }}</p>
         <h2 class="mt-1.5 text-xl font-semibold tracking-[-0.025em] text-zinc-950 dark:text-white">
             {{ __('Extracurriculars') }}
@@ -17,11 +17,11 @@
         </p>
     </div>
 
-    <div class="mt-4 overflow-hidden rounded-2xl border border-zinc-200/70 bg-white/45 dark:border-white/8 dark:bg-white/[0.025]">
+    <div class="divide-y divide-zinc-200/70 border-t border-zinc-200/70 dark:divide-white/8 dark:border-white/8">
         <a
             href="{{ route('missions') }}"
             wire:navigate.hover
-            class="group flex items-center gap-3.5 px-3.5 py-3 transition duration-200 hover:bg-violet-50/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 dark:hover:bg-violet-500/8"
+            class="group flex items-center gap-3.5 px-5 py-4 transition duration-200 hover:bg-violet-50/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 sm:px-6 dark:hover:bg-violet-500/8"
         >
             <span class="flex size-11 shrink-0 items-center justify-center rounded-[0.9rem] bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm shadow-violet-900/20">
                 <flux:icon.gift class="size-5" />
@@ -39,7 +39,7 @@
             <a
                 href="{{ route('extracurriculars.show', $library) }}"
                 wire:navigate.hover
-                class="group flex items-center gap-3.5 border-t border-zinc-200/70 px-3.5 py-3 transition duration-200 hover:bg-violet-50/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 dark:border-white/8 dark:hover:bg-violet-500/8"
+                class="group flex items-center gap-3.5 px-5 py-4 transition duration-200 hover:bg-violet-50/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500 sm:px-6 dark:hover:bg-violet-500/8"
             >
                 <span class="flex size-11 shrink-0 items-center justify-center rounded-[0.9rem] bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white shadow-sm shadow-violet-900/20">
                     <flux:icon.sparkles class="size-5" />
