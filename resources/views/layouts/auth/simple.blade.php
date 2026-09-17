@@ -11,7 +11,7 @@
 
             <a href="{{ route('home') }}" class="mx-auto flex items-center gap-2.5 rounded-full font-semibold tracking-[-0.02em] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-4 dark:focus-visible:ring-offset-zinc-950" wire:navigate aria-label="{{ __('Push home') }}">
                 <span class="flex size-9 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm shadow-violet-900/20 dark:bg-violet-500">
-                    <flux:icon.heart class="size-4.5" />
+                    <x-app-logo-icon class="size-5" />
                 </span>
                 <span>Push</span>
             </a>

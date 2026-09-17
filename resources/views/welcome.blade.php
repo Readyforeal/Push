@@ -13,7 +13,7 @@
             <header class="mx-auto flex w-full max-w-6xl items-center justify-between">
                 <a href="{{ route('home') }}" class="flex items-center gap-2.5 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-4 dark:focus-visible:ring-offset-zinc-950" aria-label="{{ __('Push home') }}">
                     <span class="flex size-9 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm shadow-violet-900/20 dark:bg-violet-500">
-                        <flux:icon.heart class="size-4.5" />
+                        <x-app-logo-icon class="size-5" />
                     </span>
                     <span class="text-lg font-semibold tracking-[-0.025em]">Push</span>
                 </a>
@@ -28,7 +28,7 @@
             <div class="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center py-16 sm:py-24">
                 <section class="text-center">
                     <div class="mx-auto flex size-16 items-center justify-center rounded-[1.35rem] bg-white/75 text-violet-600 shadow-[0_20px_60px_rgba(76,29,149,0.12)] ring-1 ring-white backdrop-blur-xl dark:bg-white/8 dark:text-violet-300 dark:ring-white/10">
-                        <flux:icon.heart class="size-7" />
+                        <x-app-logo-icon class="size-8" />
                     </div>
 
                     <p class="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-violet-600 dark:text-violet-300">
