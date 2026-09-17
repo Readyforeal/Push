@@ -18,7 +18,7 @@ test('partners can log and view shared moments with an intensity note and photos
     $relationship->members()->attach([$author->id, $partner->id], ['joined_at' => now()]);
 
     $this->actingAs($author);
-    Livewire::test('shared-moments')
+    $component = Livewire::test('shared-moments')
         ->assertSee('Keep something from your day')
         ->set('intensity', 8)
         ->set('body', 'A small moment worth remembering.')
@@ -27,11 +27,11 @@ test('partners can log and view shared moments with an intensity note and photos
             UploadedFile::fake()->image('second.jpg'),
         ])
         ->call('logMoment')
-        ->assertHasNoErrors()
-        ->assertSee('A small moment worth remembering.')
-        ->assertSee('Strong · 8');
+        ->assertHasNoErrors();
 
     $moment = SharedMoment::query()->with('photos')->sole();
+
+    $component->assertRedirect(route('moments.show', $moment));
 
     expect($moment->relationship_id)->toBe($relationship->id)
         ->and($moment->user_id)->toBe($author->id)
@@ -84,12 +84,18 @@ test('non jpeg photos are converted in temporary storage before a post is submit
 
     $prepared = $component->get('photos')[0];
     $previewUrl = $prepared->temporaryUrl();
+    $preparedFilename = $prepared->getFilename();
+
+    $component->set('intensity', 9)->assertHasNoErrors();
+    $preparedAfterUpdate = $component->get('photos')[0];
 
     expect($prepared)
         ->toBeInstanceOf(TemporaryUploadedFile::class)
         ->and($prepared->getMimeType())->toBe('image/jpeg')
         ->and($prepared->getClientOriginalName())->toBe('camera-roll.png')
-        ->and($previewUrl)->toBeString();
+        ->and($previewUrl)->toBeString()
+        ->and($preparedAfterUpdate)->toBeInstanceOf(TemporaryUploadedFile::class)
+        ->and($preparedAfterUpdate->getFilename())->toBe($preparedFilename);
 
     $this->get($previewUrl)
         ->assertOk()
@@ -219,14 +225,15 @@ test('an unpaired user can save a private personal moment', function () {
 
     $this->actingAs($user);
 
-    Livewire::test('shared-moments')
+    $component = Livewire::test('shared-moments')
         ->assertSee('Create posts for yourself now.')
         ->set('body', 'A personal moment before pairing.')
         ->call('logMoment')
-        ->assertHasNoErrors()
-        ->assertSee('A personal moment before pairing.');
+        ->assertHasNoErrors();
 
     $moment = SharedMoment::query()->sole();
+
+    $component->assertRedirect(route('moments.show', $moment));
 
     expect($moment->relationship_id)->toBeNull()
         ->and($moment->user_id)->toBe($user->id);

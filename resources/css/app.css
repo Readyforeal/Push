@@ -426,7 +426,6 @@ select:focus[data-flux-control] {
         transition: opacity 90ms ease-out;
     }
 
-    .page-motion-enabled [data-page-transition] img:not([data-no-image-fade]):not(.image-load-complete),
     .page-motion-enabled img.image-load-fade:not(.image-load-complete) {
         opacity: 0;
     }

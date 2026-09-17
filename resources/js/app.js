@@ -59,14 +59,25 @@ const animatePageEntry = () => {
 const prepareImageFade = (image) => {
     if (
         !(image instanceof HTMLImageElement)
-        || image.dataset.imageFadeReady === 'true'
         || image.hasAttribute('data-no-image-fade')
     ) {
         return;
     }
 
+    const source = image.currentSrc || image.src;
+
+    if (image.dataset.imageFadeSource === source) {
+        if (image.complete) {
+            image.classList.add('image-load-complete');
+        }
+
+        return;
+    }
+
     image.dataset.imageFadeReady = 'true';
+    image.dataset.imageFadeSource = source;
     image.classList.add('image-load-fade');
+    image.classList.remove('image-load-complete');
 
     const reveal = async () => {
         try {
@@ -223,12 +234,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     imageFadeObserver.observe(document.body, { childList: true, subtree: true });
 });
+document.addEventListener('livewire:init', () => {
+    window.Livewire.hook('morphed', ({ el }) => hydrateImageFades(el));
+});
 document.addEventListener('livewire:navigate', () => {
     navigationInProgress = true;
     document.documentElement.classList.add('page-navigation-pending');
 });
 document.addEventListener('livewire:navigating', () => {
     navigationInProgress = true;
+    window.Flux?.modals?.()?.close?.();
 });
 document.addEventListener('livewire:navigated', () => {
     const container = document.querySelector('[data-page-transition]');

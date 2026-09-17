@@ -76,8 +76,10 @@ new class extends Component
         $mediaDisk = (string) config('filesystems.media_disk', 'homelab_cloud');
         $storageOwner = $relationship ? "relationships/{$relationship->id}" : "users/{$user->id}";
 
+        $moment = null;
+
         try {
-            DB::transaction(function () use ($relationship, $user, $validated, $mediaDisk, $storageOwner, $photoStorage, &$storedPaths): void {
+            DB::transaction(function () use ($relationship, $user, $validated, $mediaDisk, $storageOwner, $photoStorage, &$storedPaths, &$moment): void {
                 $moment = SharedMoment::query()->create([
                     'relationship_id' => $relationship?->id,
                     'user_id' => $user->id,
@@ -111,12 +113,10 @@ new class extends Component
             return;
         }
 
-        $this->reset('body', 'photos');
-        $this->intensity = 5;
-        unset($this->moments);
+        abort_unless($moment instanceof SharedMoment, 500);
+
         Flux::modal('log-shared-moment')->close();
-        Flux::toast(variant: 'success', text: __('Post created.'));
-        $this->dispatch('moment-created');
+        $this->redirectRoute('moments.show', ['moment' => $moment], navigate: true);
     }
 
     public function startEditingMoment(int $momentId): void
@@ -323,7 +323,6 @@ new class extends Component
 }; ?>
 
 @php
-    $intensityProgress = (($intensity - 1) / 9) * 100;
     $editIntensityProgress = (($editIntensity - 1) / 9) * 100;
 @endphp
 
@@ -505,24 +504,35 @@ new class extends Component
                 <flux:subheading>{{ __('Add as much or as little context as you want.') }}</flux:subheading>
             </div>
 
-            <div>
+            <div
+                x-data="{
+                    intensity: $wire.entangle('intensity'),
+                    label() {
+                        if (this.intensity <= 2) return @js(__('Quiet'));
+                        if (this.intensity <= 4) return @js(__('Light'));
+                        if (this.intensity <= 6) return @js(__('Notable'));
+                        if (this.intensity <= 8) return @js(__('Strong'));
+                        return @js(__('Intense'));
+                    },
+                }"
+            >
                 <div class="flex items-end justify-between gap-4">
                     <div>
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ __('Intensity') }}</p>
-                        <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500">{{ $this->intensityLabel($intensity) }}</p>
+                        <p class="mt-1 text-xs text-zinc-400 dark:text-zinc-500" x-text="label()"></p>
                     </div>
-                    <p class="text-lg font-semibold text-violet-600 dark:text-violet-300">{{ $intensity }} / 10</p>
+                    <p class="text-lg font-semibold text-violet-600 dark:text-violet-300"><span x-text="intensity"></span> / 10</p>
                 </div>
                 <input
                     type="range"
                     min="1"
                     max="10"
                     step="1"
-                    wire:model.live="intensity"
+                    x-model.number="intensity"
                     class="temperature-slider mt-4 w-full"
-                    style="--temperature-progress: {{ $intensityProgress }}%;"
+                    :style="`--temperature-progress: ${((intensity - 1) / 9) * 100}%;`"
                     aria-label="{{ __('Intensity') }}"
-                    aria-valuetext="{{ $intensity }} out of 10, {{ $this->intensityLabel($intensity) }}"
+                    :aria-valuetext="`${intensity} {{ __('out of 10') }}, ${label()}`"
                 >
             </div>
 
@@ -551,7 +561,12 @@ new class extends Component
                 @if (count($photos) > 0)
                     <div class="mt-3 grid grid-cols-3 gap-2">
                         @foreach ($photos as $photo)
-                            <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-xl object-cover">
+                            <img
+                                wire:key="moment-upload-preview-{{ $photo->getFilename() }}"
+                                src="{{ $photo->temporaryUrl() }}"
+                                alt="{{ __('Selected photo preview') }}"
+                                class="aspect-square w-full rounded-xl object-cover"
+                            >
                         @endforeach
                     </div>
                 @endif
