@@ -1,5 +1,6 @@
 <?php
 
+use App\Concerns\PreparesPhotoUploads;
 use App\Enums\AppBackgroundMode;
 use App\Models\PhotoSelection;
 use App\Models\User;
@@ -17,7 +18,7 @@ use Livewire\WithFileUploads;
 
 new #[Title('Appearance settings')] class extends Component
 {
-    use WithFileUploads;
+    use PreparesPhotoUploads, WithFileUploads;
 
     public string $backgroundMode = AppBackgroundMode::Auto->value;
 
@@ -82,8 +83,14 @@ new #[Title('Appearance settings')] class extends Component
         $this->backgroundPhotoId = null;
     }
 
-    public function updatedBackgroundUpload(): void
+    public function updatedBackgroundUpload(PhotoStorage $photoStorage): void
     {
+        $this->preparePhotoUploads('backgroundUpload', $photoStorage);
+
+        if ($this->photoPreparationFailed('backgroundUpload')) {
+            return;
+        }
+
         $this->validateOnly('backgroundUpload', [
             'backgroundUpload' => ['required', 'file', 'extensions:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
         ]);
@@ -93,6 +100,12 @@ new #[Title('Appearance settings')] class extends Component
 
     public function saveBackground(PhotoStorage $photoStorage): void
     {
+        if ($this->photoPreparationFailed('backgroundUpload')) {
+            $this->addError('backgroundUpload', __('Choose the failed photo again before saving your background.'));
+
+            return;
+        }
+
         $this->validate([
             'backgroundMode' => ['required', Rule::enum(AppBackgroundMode::class)],
             'backgroundPhotoId' => ['nullable', 'integer'],
@@ -273,14 +286,8 @@ new #[Title('Appearance settings')] class extends Component
                     ])
                 >
                     <div class="relative aspect-[16/7] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                        @if ($backgroundUpload && ! $errors->has('backgroundUpload') && in_array(strtolower($backgroundUpload->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'gif', 'webp'], true))
+                        @if ($backgroundUpload && ! $errors->has('backgroundUpload'))
                             <img src="{{ $backgroundUpload->temporaryUrl() }}" alt="{{ __('New custom background preview') }}" class="size-full object-cover">
-                        @elseif ($backgroundUpload && ! $errors->has('backgroundUpload'))
-                            <div class="flex size-full flex-col items-center justify-center bg-gradient-to-br from-violet-100 via-zinc-100 to-zinc-200 text-zinc-500 dark:from-violet-950/40 dark:via-zinc-900 dark:to-zinc-800 dark:text-zinc-300">
-                                <flux:icon.photo class="size-9" />
-                                <span class="mt-2 max-w-xs truncate px-4 text-sm">{{ $backgroundUpload->getClientOriginalName() }}</span>
-                                <span class="mt-1 text-xs font-semibold uppercase tracking-wider text-violet-500">{{ __('Converts to JPEG when saved') }}</span>
-                            </div>
                         @elseif ($this->uploadedBackgroundUrl)
                             <img src="{{ $this->uploadedBackgroundUrl }}" alt="{{ __('Your custom app background') }}" class="size-full object-cover">
                         @else
@@ -365,7 +372,10 @@ new #[Title('Appearance settings')] class extends Component
                 <flux:error name="backgroundPhotoId" />
 
                 <div class="flex items-center gap-4">
-                    <flux:button type="submit" variant="primary">{{ __('Save background') }}</flux:button>
+                    <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="backgroundUpload,saveBackground">
+                        <span wire:loading.remove wire:target="backgroundUpload,saveBackground">{{ __('Save background') }}</span>
+                        <span wire:loading wire:target="backgroundUpload,saveBackground">{{ __('Working…') }}</span>
+                    </flux:button>
                     <span
                         x-data="{ shown: false, timeout: null }"
                         x-on:background-preference-saved.window="shown = true; clearTimeout(timeout); timeout = setTimeout(() => shown = false, 2000)"

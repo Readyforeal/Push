@@ -1,5 +1,6 @@
 <?php
 
+use App\Concerns\PreparesPhotoUploads;
 use App\Models\Relationship;
 use App\Models\SharedMoment;
 use App\Models\SharedMomentComment;
@@ -18,7 +19,7 @@ use Livewire\WithFileUploads;
 
 new class extends Component
 {
-    use WithFileUploads;
+    use PreparesPhotoUploads, WithFileUploads;
 
     public int $intensity = 5;
 
@@ -44,8 +45,19 @@ new class extends Component
 
     public string $editingCommentBody = '';
 
+    public function updatedPhotos(PhotoStorage $photoStorage): void
+    {
+        $this->preparePhotoUploads('photos', $photoStorage);
+    }
+
     public function logMoment(PhotoStorage $photoStorage): void
     {
+        if ($this->photoPreparationFailed('photos')) {
+            $this->addError('photos', __('Remove the failed photo or choose it again before creating this post.'));
+
+            return;
+        }
+
         $validated = $this->validate([
             'intensity' => ['required', 'integer', 'between:1,10'],
             'body' => ['nullable', 'string', 'max:5000'],
@@ -526,20 +538,12 @@ new class extends Component
                     <input wire:model="photos" type="file" accept="image/*,.dng,.tif,.tiff,.heic,.heif" multiple class="sr-only">
                 </label>
 
-                <div wire:loading wire:target="photos" class="mt-2 text-xs text-zinc-400">{{ __('Preparing photos…') }}</div>
+                <div wire:loading wire:target="photos" class="mt-2 text-xs text-zinc-400">{{ __('Uploading and converting to JPEG…') }}</div>
 
                 @if (count($photos) > 0)
                     <div class="mt-3 grid grid-cols-3 gap-2">
                         @foreach ($photos as $photo)
-                            @if (in_array(strtolower($photo->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'gif', 'webp'], true))
-                                <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-xl object-cover">
-                            @else
-                                <div class="flex aspect-square w-full flex-col items-center justify-center rounded-xl bg-zinc-100 p-2 text-center text-zinc-500 dark:bg-white/8 dark:text-zinc-300">
-                                    <flux:icon.photo class="size-5" />
-                                    <span class="mt-1 line-clamp-2 text-[11px]">{{ $photo->getClientOriginalName() }}</span>
-                                    <span class="mt-1 text-[9px] font-semibold uppercase tracking-wider text-violet-500">{{ __('Converts to JPEG') }}</span>
-                                </div>
-                            @endif
+                            <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-xl object-cover">
                         @endforeach
                     </div>
                 @endif
@@ -556,9 +560,9 @@ new class extends Component
                 <flux:modal.close>
                     <flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button>
                 </flux:modal.close>
-                <flux:button type="submit" variant="primary" icon="plus" wire:loading.attr="disabled" wire:target="logMoment">
-                    <span wire:loading.remove wire:target="logMoment">{{ __('Create post') }}</span>
-                    <span wire:loading wire:target="logMoment">{{ __('Saving…') }}</span>
+                <flux:button type="submit" variant="primary" icon="plus" wire:loading.attr="disabled" wire:target="photos,logMoment">
+                    <span wire:loading.remove wire:target="photos,logMoment">{{ __('Create post') }}</span>
+                    <span wire:loading wire:target="photos,logMoment">{{ __('Working…') }}</span>
                 </flux:button>
             </div>
         </form>

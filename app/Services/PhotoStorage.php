@@ -3,22 +3,78 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Imagick;
+use Livewire\Features\SupportFileUploads\FileUploadConfiguration;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use RuntimeException;
 
 class PhotoStorage
 {
+    /**
+     * Convert a browser-incompatible upload while it is still in Livewire's
+     * local temporary storage so the component can show a real JPEG preview.
+     */
+    public function prepareForPreview(TemporaryUploadedFile $upload): TemporaryUploadedFile
+    {
+        if (! $this->requiresConversion($upload)) {
+            $this->assertReadableImage($upload);
+
+            return $upload;
+        }
+
+        $temporaryJpeg = $this->makeJpeg($upload);
+        $disk = FileUploadConfiguration::disk();
+        $storage = Storage::disk($disk);
+        $filename = Str::random(40).'.jpg';
+        $path = FileUploadConfiguration::path($filename);
+        $metadataPath = $path.'.json';
+        $stream = fopen($temporaryJpeg, 'rb');
+
+        if ($stream === false) {
+            @unlink($temporaryJpeg);
+
+            throw new RuntimeException('The prepared photo could not be read.');
+        }
+
+        try {
+            if (! $storage->writeStream($path, $stream)) {
+                throw new RuntimeException('The prepared JPEG could not be written.');
+            }
+
+            if (! $storage->put($metadataPath, json_encode([
+                'name' => $upload->getClientOriginalName(),
+                'type' => 'image/jpeg',
+                'size' => filesize($temporaryJpeg) ?: 0,
+                'hash' => $filename,
+            ], JSON_THROW_ON_ERROR))) {
+                throw new RuntimeException('The prepared JPEG metadata could not be written.');
+            }
+        } catch (\Throwable $exception) {
+            $storage->delete([$path, $metadataPath]);
+
+            throw new RuntimeException('The prepared photo could not be saved.', previous: $exception);
+        } finally {
+            fclose($stream);
+            @unlink($temporaryJpeg);
+        }
+
+        $sourceFilename = $upload->getFilename();
+        $upload->delete();
+        $storage->delete(FileUploadConfiguration::path($sourceFilename.'.json'));
+
+        return TemporaryUploadedFile::createFromLivewire($filename);
+    }
+
     /**
      * @return array{path: string, mime_type: string, size: int}
      */
     public function store(UploadedFile $upload, string $directory, string $disk): array
     {
         if (! $this->requiresConversion($upload)) {
-            if (@getimagesize($upload->getRealPath()) === false) {
-                throw new RuntimeException('This file could not be read as an image.');
-            }
+            $this->assertReadableImage($upload);
 
             $path = $upload->store($directory, $disk);
 
@@ -28,35 +84,66 @@ class PhotoStorage
 
             return [
                 'path' => $path,
-                'mime_type' => $upload->getMimeType() ?: 'application/octet-stream',
+                'mime_type' => 'image/jpeg',
                 'size' => $upload->getSize(),
             ];
         }
 
-        return $this->convertToJpeg($upload, $directory, $disk);
+        return $this->convertAndStore($upload, $directory, $disk);
     }
 
     private function requiresConversion(UploadedFile $upload): bool
     {
-        return in_array(strtolower($upload->getClientOriginalExtension()), [
-            'dng',
-            'heic',
-            'heif',
-            'tif',
-            'tiff',
-        ], true);
+        return $upload->getMimeType() !== 'image/jpeg';
+    }
+
+    private function assertReadableImage(UploadedFile $upload): void
+    {
+        if (@getimagesize($upload->getRealPath()) === false) {
+            throw new RuntimeException('This file could not be read as an image.');
+        }
     }
 
     /**
      * @return array{path: string, mime_type: string, size: int}
      */
-    private function convertToJpeg(UploadedFile $upload, string $directory, string $disk): array
+    private function convertAndStore(UploadedFile $upload, string $directory, string $disk): array
     {
-        if (! extension_loaded('imagick')) {
-            throw new RuntimeException('RAW photo conversion is not available on this server.');
+        $temporaryPath = $this->makeJpeg($upload);
+        $path = trim($directory, '/').'/'.Str::uuid().'.jpg';
+        $stream = fopen($temporaryPath, 'rb');
+
+        if ($stream === false) {
+            @unlink($temporaryPath);
+
+            throw new RuntimeException('The converted photo could not be read.');
         }
 
-        $temporaryPath = tempnam(sys_get_temp_dir(), 'push-photo-');
+        try {
+            if (! Storage::disk($disk)->writeStream($path, $stream)) {
+                throw new RuntimeException('The converted photo could not be stored.');
+            }
+
+            return [
+                'path' => $path,
+                'mime_type' => 'image/jpeg',
+                'size' => filesize($temporaryPath) ?: 0,
+            ];
+        } finally {
+            fclose($stream);
+            @unlink($temporaryPath);
+        }
+    }
+
+    private function makeJpeg(UploadedFile $upload): string
+    {
+        if (! extension_loaded('imagick')) {
+            throw new RuntimeException('Photo conversion is not available on this server.');
+        }
+
+        $temporaryDirectory = storage_path('app/private/photo-tmp');
+        File::ensureDirectoryExists($temporaryDirectory);
+        $temporaryPath = tempnam($temporaryDirectory, 'push-photo-');
 
         if (! is_string($temporaryPath)) {
             throw new RuntimeException('A temporary photo could not be created.');
@@ -66,7 +153,8 @@ class PhotoStorage
         $photo = null;
 
         try {
-            $source->readImage($upload->getRealPath());
+            $source->setOption('dng:use-camera-wb', 'true');
+            $source->readImage($upload->getRealPath().'[0]');
             $source->setIteratorIndex(0);
             $photo = clone $source->getImage();
 
@@ -84,38 +172,23 @@ class PhotoStorage
 
             $photo->setImageBackgroundColor('white');
             $photo->setImageAlphaChannel(Imagick::ALPHACHANNEL_REMOVE);
+            $photo->transformImageColorspace(Imagick::COLORSPACE_SRGB);
             $photo->setImageFormat('jpeg');
             $photo->setImageCompression(Imagick::COMPRESSION_JPEG);
-            $photo->setImageCompressionQuality(92);
+            $photo->setImageCompressionQuality(90);
             $photo->stripImage();
             $photo->writeImage($temporaryPath);
 
-            $path = trim($directory, '/').'/'.Str::uuid().'.jpg';
-            $stream = fopen($temporaryPath, 'rb');
-
-            if ($stream === false) {
-                throw new RuntimeException('The converted photo could not be read.');
-            }
-
-            try {
-                Storage::disk($disk)->writeStream($path, $stream);
-            } finally {
-                fclose($stream);
-            }
-
-            return [
-                'path' => $path,
-                'mime_type' => 'image/jpeg',
-                'size' => filesize($temporaryPath) ?: 0,
-            ];
+            return $temporaryPath;
         } catch (\ImagickException $exception) {
-            throw new RuntimeException('This RAW photo could not be converted.', previous: $exception);
+            @unlink($temporaryPath);
+
+            throw new RuntimeException('This photo could not be converted to JPEG.', previous: $exception);
         } finally {
             $photo?->clear();
             $photo?->destroy();
             $source->clear();
             $source->destroy();
-            @unlink($temporaryPath);
         }
     }
 }

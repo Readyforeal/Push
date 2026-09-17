@@ -1,5 +1,6 @@
 <?php
 
+use App\Concerns\PreparesPhotoUploads;
 use App\Enums\PromptRoundKind;
 use App\Enums\PromptRoundOrigin;
 use App\Enums\PromptRoundStatus;
@@ -23,7 +24,7 @@ use Livewire\WithFileUploads;
 
 new class extends Component
 {
-    use WithFileUploads;
+    use PreparesPhotoUploads, WithFileUploads;
 
     public string $answer = '';
 
@@ -38,6 +39,16 @@ new class extends Component
     public array $answerPhotos = [];
 
     public ?int $selectedPhotoId = null;
+
+    public function updatedPhotos(PhotoStorage $photoStorage): void
+    {
+        $this->preparePhotoUploads('photos', $photoStorage);
+    }
+
+    public function updatedAnswerPhotos(PhotoStorage $photoStorage): void
+    {
+        $this->preparePhotoUploads('answerPhotos', $photoStorage);
+    }
 
     public function mount(?int $roundId = null, bool $summary = false): void
     {
@@ -69,6 +80,12 @@ new class extends Component
 
     public function submitAnswer(PromptRoundWorkflow $workflow, PhotoStorage $photoStorage): void
     {
+        if ($this->photoPreparationFailed('answerPhotos')) {
+            $this->addError('answerPhotos', __('Choose the failed photo again before submitting your answer.'));
+
+            return;
+        }
+
         $task = $this->task;
 
         if (! $task) {
@@ -130,6 +147,12 @@ new class extends Component
 
     public function submitPhotos(PromptRoundWorkflow $workflow, PhotoStorage $photoStorage): void
     {
+        if ($this->photoPreparationFailed('photos')) {
+            $this->addError('photos', __('Choose the failed photo again before sending your photos.'));
+
+            return;
+        }
+
         $this->validate([
             'photos' => ['required', 'array', 'size:3'],
             'photos.*' => ['required', 'file', 'extensions:jpg,jpeg,png,gif,webp,tif,tiff,dng,heic,heif', 'max:512000'],
@@ -359,19 +382,12 @@ new class extends Component
                                 <input wire:model="answerPhotos" type="file" accept="image/*,.dng,.tif,.tiff,.heic,.heif" multiple class="sr-only">
                             </label>
 
-                            <div wire:loading wire:target="answerPhotos" class="text-sm text-zinc-500">{{ __('Preparing your photos…') }}</div>
+                            <div wire:loading wire:target="answerPhotos" class="text-sm text-zinc-500">{{ __('Uploading and converting to JPEG…') }}</div>
 
                             @if (count($answerPhotos) > 0)
                                 <div class="grid grid-cols-3 gap-3">
                                     @foreach ($answerPhotos as $photo)
-                                        @if (in_array(strtolower($photo->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'gif', 'webp'], true))
-                                            <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
-                                        @else
-                                            <div class="flex aspect-square flex-col items-center justify-center rounded-2xl bg-zinc-100 p-3 text-center dark:bg-white/8">
-                                                <flux:icon.photo class="size-6" />
-                                                <span class="mt-2 line-clamp-2 text-xs">{{ $photo->getClientOriginalName() }}</span>
-                                            </div>
-                                        @endif
+                                        <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
                                     @endforeach
                                 </div>
                             @endif
@@ -384,8 +400,9 @@ new class extends Component
                         <flux:button type="button" variant="ghost" wire:click="saveDraft" class="sm:px-5">
                             {{ __('Save draft') }}
                         </flux:button>
-                        <flux:button type="submit" variant="primary" icon="paper-airplane" class="sm:px-5">
-                            {{ $this->round->kind === PromptRoundKind::PhotoRequest ? __('Send request') : __('Submit answer') }}
+                        <flux:button type="submit" variant="primary" icon="paper-airplane" class="sm:px-5" wire:loading.attr="disabled" wire:target="answerPhotos,submitAnswer">
+                            <span wire:loading.remove wire:target="answerPhotos,submitAnswer">{{ $this->round->kind === PromptRoundKind::PhotoRequest ? __('Send request') : __('Submit answer') }}</span>
+                            <span wire:loading wire:target="answerPhotos,submitAnswer">{{ __('Working…') }}</span>
                         </flux:button>
                     </div>
 
@@ -447,20 +464,12 @@ new class extends Component
                         <input wire:model="photos" type="file" accept="image/*,.dng,.tif,.tiff,.heic,.heif" multiple class="sr-only">
                     </label>
 
-                    <div wire:loading wire:target="photos" class="text-sm text-zinc-500">{{ __('Preparing your photos…') }}</div>
+                    <div wire:loading wire:target="photos" class="text-sm text-zinc-500">{{ __('Uploading and converting to JPEG…') }}</div>
 
                     @if (count($photos) > 0)
                         <div class="grid grid-cols-3 gap-3">
                             @foreach ($photos as $photo)
-                                @if (in_array(strtolower($photo->getClientOriginalExtension()), ['jpg', 'jpeg', 'png', 'gif', 'webp'], true))
-                                    <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
-                                @else
-                                    <div class="flex aspect-square w-full flex-col items-center justify-center rounded-2xl bg-zinc-100 p-3 text-center text-zinc-500 shadow-sm ring-1 ring-black/5 dark:bg-white/8 dark:text-zinc-300">
-                                        <flux:icon.photo class="size-6" />
-                                        <span class="mt-2 line-clamp-2 text-xs">{{ $photo->getClientOriginalName() }}</span>
-                                        <span class="mt-1 text-[10px] font-semibold uppercase tracking-wider text-violet-500">{{ __('Converts to JPEG') }}</span>
-                                    </div>
-                                @endif
+                                <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
                             @endforeach
                         </div>
                     @endif
@@ -473,9 +482,9 @@ new class extends Component
                     @endforeach
 
                     <div class="flex justify-end">
-                        <flux:button type="submit" variant="primary" icon="paper-airplane" wire:loading.attr="disabled" wire:target="submitPhotos">
-                            <span wire:loading.remove wire:target="submitPhotos">{{ __('Send these photos') }}</span>
-                            <span wire:loading wire:target="submitPhotos">{{ __('Sending…') }}</span>
+                        <flux:button type="submit" variant="primary" icon="paper-airplane" wire:loading.attr="disabled" wire:target="photos,submitPhotos">
+                            <span wire:loading.remove wire:target="photos,submitPhotos">{{ __('Send these photos') }}</span>
+                            <span wire:loading wire:target="photos,submitPhotos">{{ __('Working…') }}</span>
                         </flux:button>
                     </div>
                 </form>

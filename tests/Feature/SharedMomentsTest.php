@@ -6,6 +6,7 @@ use App\Models\SharedMomentComment;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Livewire;
 
 test('partners can log and view shared moments with an intensity note and photos', function () {
@@ -104,6 +105,35 @@ test('tiff photos are converted to browser friendly jpegs', function () {
     } finally {
         @unlink($sourcePath);
     }
+});
+
+test('non jpeg photos are converted in temporary storage before a post is submitted', function () {
+    if (! extension_loaded('imagick') || Imagick::queryFormats('PNG') === []) {
+        $this->markTestSkipped('ImageMagick with PNG support is required.');
+    }
+
+    Storage::fake('homelab_cloud');
+    $author = User::factory()->create();
+
+    $this->actingAs($author);
+    $component = Livewire::test('shared-moments')
+        ->set('body', 'A prepared photo.')
+        ->set('photos', [UploadedFile::fake()->image('camera-roll.png', 1200, 900)])
+        ->assertHasNoErrors();
+
+    $prepared = $component->get('photos')[0];
+
+    expect($prepared)
+        ->toBeInstanceOf(TemporaryUploadedFile::class)
+        ->and($prepared->getMimeType())->toBe('image/jpeg')
+        ->and($prepared->getClientOriginalName())->toBe('camera-roll.png');
+
+    $component->call('logMoment')->assertHasNoErrors();
+
+    $photo = SharedMoment::query()->sole()->photos()->sole();
+
+    expect($photo->mime_type)->toBe('image/jpeg')
+        ->and($photo->path)->toEndWith('.jpg');
 });
 
 test('guests cannot visit the moments page', function () {
