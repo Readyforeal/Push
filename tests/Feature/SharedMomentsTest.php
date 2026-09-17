@@ -83,14 +83,13 @@ test('non jpeg photos are converted in temporary storage before a post is submit
         ->assertHasNoErrors();
 
     $prepared = $component->get('photos')[0];
-    $previewUrl = $component->get('photoPreviewUrls')['photos'][0] ?? null;
+    $previewUrl = $prepared->temporaryUrl();
 
     expect($prepared)
         ->toBeInstanceOf(TemporaryUploadedFile::class)
         ->and($prepared->getMimeType())->toBe('image/jpeg')
         ->and($prepared->getClientOriginalName())->toBe('camera-roll.png')
-        ->and($previewUrl)->toBeString()->toStartWith('/')
-        ->and($previewUrl)->not->toContain('://');
+        ->and($previewUrl)->toBeString();
 
     $this->get($previewUrl)
         ->assertOk()

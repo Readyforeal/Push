@@ -168,7 +168,6 @@ new #[Title('Appearance settings')] class extends Component
         }
 
         $this->reset('backgroundUpload');
-        $this->clearPhotoPreviews('backgroundUpload');
 
         $backgroundUrl = $user->fresh()->appBackgroundUrl();
 
@@ -201,7 +200,6 @@ new #[Title('Appearance settings')] class extends Component
 
         $this->backgroundMode = $mode->value;
         $this->reset('backgroundUpload');
-        $this->clearPhotoPreviews('backgroundUpload');
         $this->dispatch('app-background-updated', url: $user->fresh()->appBackgroundUrl());
         $this->dispatch('background-preference-saved');
     }
@@ -280,22 +278,15 @@ new #[Title('Appearance settings')] class extends Component
                     </button>
                 </div>
 
-                <div
-                    x-data="photoUploadPreview()"
-                    x-on:livewire-upload-start="startUpload()"
-                    x-on:livewire-upload-progress="updateProgress($event)"
-                    x-on:livewire-upload-finish="finishUpload()"
-                    x-on:livewire-upload-error="finishUpload()"
-                    x-on:background-preference-saved.window="clearPreviews()"
-                    @class([
+                <div @class([
                         'app-glass-card overflow-hidden rounded-2xl border transition',
                         'border-violet-500 ring-2 ring-violet-500/15 dark:border-violet-400' => $backgroundMode === AppBackgroundMode::Upload->value,
                         'border-zinc-200 dark:border-zinc-700' => $backgroundMode !== AppBackgroundMode::Upload->value,
                     ])
                 >
                     <div class="relative aspect-[16/7] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                        @if (filled($photoPreviewUrls['backgroundUpload'][0] ?? null) && ! $errors->has('backgroundUpload'))
-                            <img src="{{ $photoPreviewUrls['backgroundUpload'][0] }}" alt="{{ __('New custom background preview') }}" class="size-full object-cover">
+                        @if ($backgroundUpload && ! $errors->has('backgroundUpload'))
+                            <img src="{{ $backgroundUpload->temporaryUrl() }}" alt="{{ __('New custom background preview') }}" class="size-full object-cover">
                         @elseif ($this->uploadedBackgroundUrl)
                             <img src="{{ $this->uploadedBackgroundUrl }}" alt="{{ __('Your custom app background') }}" class="size-full object-cover">
                         @else
@@ -304,21 +295,14 @@ new #[Title('Appearance settings')] class extends Component
                             </div>
                         @endif
 
-                        <template x-if="previews[0]">
-                            <img :src="previews[0].url" :alt="previews[0].name" class="absolute inset-0 size-full object-cover">
-                        </template>
-
                         @if ($backgroundMode === AppBackgroundMode::Upload->value)
                             <span class="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg">
                                 <flux:icon.check class="size-4" />
                             </span>
                         @endif
 
-                        <div x-show="uploading" x-cloak class="absolute inset-0 flex flex-col items-center justify-center bg-black/35 px-8 text-white backdrop-blur-sm">
-                            <p class="text-sm font-medium" x-text="progress < 100 ? `Uploading ${progress}%` : 'Finishing photo…'"></p>
-                            <div class="mt-3 h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-white/20">
-                                <div class="h-full rounded-full bg-white transition-[width] duration-200" :style="`width: ${progress}%`"></div>
-                            </div>
+                        <div wire:loading.flex wire:target="backgroundUpload" class="absolute inset-0 flex-col items-center justify-center bg-black/35 px-8 text-white backdrop-blur-sm">
+                            <p class="text-sm font-medium">{{ __('Preparing JPEG preview…') }}</p>
                         </div>
                     </div>
 
@@ -328,20 +312,22 @@ new #[Title('Appearance settings')] class extends Component
                             <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ __('RAW, HEIC, and everyday photos are prepared as a large JPEG.') }}</p>
                         </div>
 
-                        <div class="flex flex-wrap items-center gap-2">
+                        <div class="min-w-0 flex-1 sm:max-w-xs">
                             @if ($this->uploadedBackgroundUrl && ! $backgroundUpload)
-                                <flux:button type="button" size="sm" wire:click="chooseUpload">
+                                <flux:button type="button" size="sm" wire:click="chooseUpload" class="mb-3">
                                     {{ __('Use image') }}
                                 </flux:button>
                             @endif
 
-                            <label class="inline-flex cursor-pointer items-center justify-center rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-400">
-                                <input wire:model="backgroundUpload" x-on:change="selectFiles($event)" type="file" accept="image/*,.dng,.heic,.heif,.tif,.tiff" class="sr-only">
-                                {{ $this->uploadedBackgroundUrl ? __('Replace') : __('Choose image') }}
-                            </label>
+                            <flux:input
+                                type="file"
+                                wire:model="backgroundUpload"
+                                :label="$this->uploadedBackgroundUrl ? __('Replace image') : __('Choose image')"
+                                accept="image/*,.dng,.raw,.heic,.heif,.tif,.tiff"
+                            />
 
                             @if ($this->uploadedBackgroundUrl)
-                                <flux:button type="button" size="sm" variant="ghost" wire:click="removeUploadedBackground" wire:confirm="{{ __('Remove your uploaded background?') }}">
+                                <flux:button type="button" size="sm" variant="ghost" class="mt-2" wire:click="removeUploadedBackground" wire:confirm="{{ __('Remove your uploaded background?') }}">
                                     {{ __('Remove') }}
                                 </flux:button>
                             @endif

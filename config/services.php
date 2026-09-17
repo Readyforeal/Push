@@ -26,8 +26,6 @@ return [
         'exiftool_binary' => env('PHOTO_EXIFTOOL_BINARY', 'exiftool'),
         'max_dimension' => env('PHOTO_MAX_DIMENSION', 2560),
         'jpeg_quality' => env('PHOTO_JPEG_QUALITY', 82),
-        'thumbnail_dimension' => env('PHOTO_THUMBNAIL_DIMENSION', 480),
-        'thumbnail_quality' => env('PHOTO_THUMBNAIL_JPEG_QUALITY', 68),
     ],
 
     'ses' => [

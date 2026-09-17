@@ -112,7 +112,6 @@ new class extends Component
         }
 
         $this->reset('body', 'photos');
-        $this->clearPhotoPreviews('photos');
         $this->intensity = 5;
         unset($this->moments);
         Flux::modal('log-shared-moment')->close();
@@ -500,13 +499,6 @@ new class extends Component
         <form
             wire:submit="logMoment"
             class="space-y-6"
-            x-data="photoUploadPreview()"
-            x-on:livewire-upload-start="startUpload()"
-            x-on:livewire-upload-progress="updateProgress($event)"
-            x-on:livewire-upload-finish="finishUpload()"
-            x-on:livewire-upload-error="finishUpload()"
-            x-on:moment-created.window="clearPreviews()"
-            x-on:modal-close.document="clearPreviews()"
         >
             <div>
                 <flux:heading size="xl" class="tracking-tight">{{ __('Create post') }}</flux:heading>
@@ -543,33 +535,23 @@ new class extends Component
             />
 
             <div>
-                <label class="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/70 px-5 py-7 text-center transition hover:border-violet-300 hover:bg-violet-50/50 dark:border-white/15 dark:bg-black/10 dark:hover:border-violet-400/50 dark:hover:bg-violet-500/5">
-                    <flux:icon.photo class="size-6 text-zinc-400 transition group-hover:text-violet-500" />
-                    <span class="mt-2 text-sm font-medium text-zinc-800 dark:text-zinc-100">{{ __('Add photos') }}</span>
-                    <span class="mt-1 text-xs text-zinc-400">{{ __('Up to six photos, 500 MB each') }}</span>
-                    <input wire:model="photos" x-on:change="selectFiles($event)" type="file" accept="image/*,.dng,.heic,.heif,.tif,.tiff" multiple class="sr-only">
-                </label>
+                <flux:input
+                    type="file"
+                    wire:model="photos"
+                    :label="__('Photos')"
+                    :description="__('Up to six photos, 500 MB each. RAW, HEIC, TIFF, and everyday photos become optimized JPEGs.')"
+                    accept="image/*,.dng,.raw,.heic,.heif,.tif,.tiff"
+                    multiple
+                />
 
-                <div x-show="uploading" x-cloak class="mt-3">
-                    <div class="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                        <span x-text="progress < 100 ? `Uploading ${progress}%` : 'Finishing photos…'"></span>
-                        <span x-show="progress < 100" x-text="`${progress}%`"></span>
-                    </div>
-                    <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-white/10">
-                        <div class="h-full rounded-full bg-violet-500 transition-[width] duration-200" :style="`width: ${progress}%`"></div>
-                    </div>
-                </div>
+                <p wire:loading wire:target="photos" class="mt-3 text-sm text-zinc-500 dark:text-zinc-400">
+                    {{ __('Preparing JPEG previews…') }}
+                </p>
 
-                <div x-show="previews.length > 0" x-cloak class="mt-3 grid grid-cols-3 gap-2">
-                    <template x-for="preview in previews" :key="preview.url">
-                        <img :src="preview.url" :alt="preview.name" class="aspect-square w-full rounded-xl object-cover">
-                    </template>
-                </div>
-
-                @if (count($photoPreviewUrls['photos'] ?? []) > 0)
-                    <div x-show="previews.length === 0" class="mt-3 grid grid-cols-3 gap-2">
-                        @foreach ($photoPreviewUrls['photos'] as $previewUrl)
-                            <img src="{{ $previewUrl }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-xl object-cover">
+                @if (count($photos) > 0)
+                    <div class="mt-3 grid grid-cols-3 gap-2">
+                        @foreach ($photos as $photo)
+                            <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-xl object-cover">
                         @endforeach
                     </div>
                 @endif

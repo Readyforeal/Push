@@ -141,7 +141,6 @@ new class extends Component
         }
 
         $this->reset('answerPhotos');
-        $this->clearPhotoPreviews('answerPhotos');
         unset($this->round, $this->task, $this->latestResult);
         Flux::toast(variant: 'success', text: __('Answer submitted.'));
     }
@@ -205,7 +204,6 @@ new class extends Component
         }
 
         $this->reset('photos');
-        $this->clearPhotoPreviews('photos');
         unset($this->round, $this->task, $this->latestResult);
         Flux::toast(variant: 'success', text: __('Photos sent to your partner.'));
     }
@@ -372,45 +370,24 @@ new class extends Component
                     />
 
                     @if ($this->task->payload['requires_photos'] ?? false)
-                        <div
-                            class="space-y-3"
-                            x-data="photoUploadPreview()"
-                            x-on:livewire-upload-start="startUpload()"
-                            x-on:livewire-upload-progress="updateProgress($event)"
-                            x-on:livewire-upload-finish="finishUpload()"
-                            x-on:livewire-upload-error="finishUpload()"
-                        >
-                            <label class="group flex cursor-pointer items-center gap-4 rounded-2xl border border-dashed border-violet-300 bg-violet-50/55 p-4 transition hover:bg-violet-50 dark:border-violet-400/30 dark:bg-violet-500/8 dark:hover:bg-violet-500/12">
-                                <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-violet-600 shadow-sm dark:bg-white/8 dark:text-violet-300">
-                                    <flux:icon.photo class="size-5" />
-                                </span>
-                                <span class="min-w-0 flex-1">
-                                    <span class="block text-sm font-semibold text-zinc-900 dark:text-white">{{ __('Add photos') }}</span>
-                                    <span class="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">{{ __('This prompt requires 1–3 photos with your answer.') }}</span>
-                                </span>
-                                <input wire:model="answerPhotos" x-on:change="selectFiles($event)" type="file" accept="image/*,.dng,.heic,.heif,.tif,.tiff" multiple class="sr-only">
-                            </label>
+                        <div class="space-y-3">
+                            <flux:input
+                                type="file"
+                                wire:model="answerPhotos"
+                                :label="__('Add photos')"
+                                :description="__('This prompt requires 1–3 photos. RAW, HEIC, and TIFF are converted to JPEG.')"
+                                accept="image/*,.dng,.raw,.heic,.heif,.tif,.tiff"
+                                multiple
+                            />
 
-                            <div x-show="uploading" x-cloak class="space-y-2">
-                                <div class="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                                    <span x-text="progress < 100 ? `Uploading ${progress}%` : 'Finishing photos…'"></span>
-                                    <span x-show="progress < 100" x-text="`${progress}%`"></span>
-                                </div>
-                                <div class="h-1.5 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-white/10">
-                                    <div class="h-full rounded-full bg-violet-500 transition-[width] duration-200" :style="`width: ${progress}%`"></div>
-                                </div>
-                            </div>
+                            <p wire:loading wire:target="answerPhotos" class="text-sm text-zinc-500 dark:text-zinc-400">
+                                {{ __('Preparing JPEG previews…') }}
+                            </p>
 
-                            <div x-show="previews.length > 0" x-cloak class="grid grid-cols-3 gap-3">
-                                <template x-for="preview in previews" :key="preview.url">
-                                    <img :src="preview.url" :alt="preview.name" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
-                                </template>
-                            </div>
-
-                            @if (count($photoPreviewUrls['answerPhotos'] ?? []) > 0)
-                                <div x-show="previews.length === 0" class="grid grid-cols-3 gap-3">
-                                    @foreach ($photoPreviewUrls['answerPhotos'] as $previewUrl)
-                                        <img src="{{ $previewUrl }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
+                            @if (count($answerPhotos) > 0)
+                                <div class="grid grid-cols-3 gap-3">
+                                    @foreach ($answerPhotos as $photo)
+                                        <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
                                     @endforeach
                                 </div>
                             @endif
@@ -480,41 +457,24 @@ new class extends Component
                 <form
                     wire:submit="submitPhotos"
                     class="mt-6 space-y-5"
-                    x-data="photoUploadPreview()"
-                    x-on:livewire-upload-start="startUpload()"
-                    x-on:livewire-upload-progress="updateProgress($event)"
-                    x-on:livewire-upload-finish="finishUpload()"
-                    x-on:livewire-upload-error="finishUpload()"
                 >
-                    <label class="group flex cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-zinc-300 bg-zinc-50/70 px-6 py-12 text-center transition duration-200 hover:border-rose-300 hover:bg-rose-50/50 dark:border-white/15 dark:bg-black/10 dark:hover:border-rose-400/50 dark:hover:bg-rose-500/5">
-                        <span class="flex size-12 items-center justify-center rounded-full bg-white text-zinc-400 shadow-sm ring-1 ring-zinc-200 transition group-hover:scale-105 group-hover:text-rose-500 dark:bg-white/8 dark:ring-white/10">
-                            <flux:icon.photo class="size-6" />
-                        </span>
-                        <span class="mt-3 font-medium text-zinc-900 dark:text-white">{{ __('Choose three photos') }}</span>
-                        <span class="mt-1 text-sm text-zinc-500">{{ __('RAW, HEIC, and everyday photos are prepared as large JPEGs') }}</span>
-                        <input wire:model="photos" x-on:change="selectFiles($event)" type="file" accept="image/*,.dng,.heic,.heif,.tif,.tiff" multiple class="sr-only">
-                    </label>
+                    <flux:input
+                        type="file"
+                        wire:model="photos"
+                        :label="__('Choose three photos')"
+                        :description="__('RAW, HEIC, TIFF, and everyday photos are prepared as optimized JPEGs.')"
+                        accept="image/*,.dng,.raw,.heic,.heif,.tif,.tiff"
+                        multiple
+                    />
 
-                    <div x-show="uploading" x-cloak class="space-y-2">
-                        <div class="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                            <span x-text="progress < 100 ? `Uploading ${progress}%` : 'Finishing photos…'"></span>
-                            <span x-show="progress < 100" x-text="`${progress}%`"></span>
-                        </div>
-                        <div class="h-1.5 overflow-hidden rounded-full bg-zinc-200/80 dark:bg-white/10">
-                            <div class="h-full rounded-full bg-violet-500 transition-[width] duration-200" :style="`width: ${progress}%`"></div>
-                        </div>
-                    </div>
+                    <p wire:loading wire:target="photos" class="text-sm text-zinc-500 dark:text-zinc-400">
+                        {{ __('Preparing JPEG previews…') }}
+                    </p>
 
-                    <div x-show="previews.length > 0" x-cloak class="grid grid-cols-3 gap-3">
-                        <template x-for="preview in previews" :key="preview.url">
-                            <img :src="preview.url" :alt="preview.name" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
-                        </template>
-                    </div>
-
-                    @if (count($photoPreviewUrls['photos'] ?? []) > 0)
-                        <div x-show="previews.length === 0" class="grid grid-cols-3 gap-3">
-                            @foreach ($photoPreviewUrls['photos'] as $previewUrl)
-                                <img src="{{ $previewUrl }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
+                    @if (count($photos) > 0)
+                        <div class="grid grid-cols-3 gap-3">
+                            @foreach ($photos as $photo)
+                                <img src="{{ $photo->temporaryUrl() }}" alt="{{ __('Selected photo preview') }}" class="aspect-square w-full rounded-2xl object-cover shadow-sm ring-1 ring-black/5">
                             @endforeach
                         </div>
                     @endif

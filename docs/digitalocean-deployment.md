@@ -102,30 +102,39 @@ Restart Nginx and PHP-FPM after changing them.
 
 Photo inputs accept JPEG, HEIC, TIFF, and Apple ProRAW/DNG assets. For RAW
 photos, the app uses ExifTool to extract the large JPEG preview already embedded
-by the camera rather than developing the sensor data. Every upload, including an
-existing JPEG, is normalized once: ImageMagick applies orientation, strips
-metadata, constrains the longest edge to 2560 pixels, and writes an optimized
-progressive quality-82 JPEG. Laravel's Intervention-backed image API separately
-creates a 480-pixel temporary preview, so preview rendering never requires the
-large saved file. This keeps storage, bandwidth, and conversion practical on a
-small Droplet. Install both tools:
+by the camera rather than developing the sensor data when the server cannot
+decode the RAW sensor data directly. Every upload, including an existing JPEG,
+is normalized once through Intervention Image's Imagick driver: it applies
+orientation, strips metadata, constrains the longest edge to 2560 pixels, and
+writes an optimized progressive quality-82 JPEG. That same temporary JPEG is
+used by Livewire for the preview and as the final upload, avoiding a second
+thumbnail pipeline. Install ImageMagick, its PHP extension, LibRaw tooling, and
+ExifTool (the compatibility fallback):
 
 ```bash
-sudo apt install -y imagemagick php8.4-imagick libimage-exiftool-perl
+sudo apt install -y imagemagick php8.4-imagick libraw-bin libraw-dev libimage-exiftool-perl
 sudo systemctl restart php8.4-fpm
 exiftool -ver
-php -r 'foreach (["PNG", "GIF", "WEBP", "JPEG"] as $f) echo $f.": ".(Imagick::queryFormats($f) ? "yes" : "no").PHP_EOL;'
+convert -version
+convert -list format | grep -E 'DNG|HEIC|TIFF|JPEG'
+convert -list delegate | grep -Ei 'raw|dng|dcraw|darktable'
+php -r 'foreach (["DNG", "HEIC", "TIFF", "JPEG"] as $f) echo $f.": ".(Imagick::queryFormats($f) ? "yes" : "no").PHP_EOL;'
 ```
 
 Use the PHP package and service version installed on the server if it is not
-PHP 8.4. ExifTool should print a version number and all four ImageMagick formats
-should report `yes`. If ExifTool lives outside the service user's `PATH`, set
+PHP 8.4. ExifTool should print a version number and all four PHP ImageMagick
+formats should report `yes`. Intervention inherits the capabilities of the
+ImageMagick binary behind Imagick; installing LibRaw after ImageMagick was built
+does not add a missing delegate to that existing build. If the delegate list has
+no RAW decoder, install an ImageMagick package built with RAW support or rebuild
+ImageMagick after installing the LibRaw development library. ExifTool remains a
+safe fallback for Apple RAW files with an embedded full-size JPEG. If ExifTool
+lives outside the service user's `PATH`, set
 `PHOTO_EXIFTOOL_BINARY` to its absolute path in `.env`, then run
 `php artisan optimize:clear` followed by `php artisan optimize`.
 
-The output defaults can be tuned with `PHOTO_MAX_DIMENSION`,
-`PHOTO_JPEG_QUALITY`, `PHOTO_THUMBNAIL_DIMENSION`, and
-`PHOTO_THUMBNAIL_JPEG_QUALITY`. The defaults in `.env.example` are intended to
+The output defaults can be tuned with `PHOTO_MAX_DIMENSION` and
+`PHOTO_JPEG_QUALITY`. The defaults in `.env.example` are intended to
 retain strong full-screen quality on modern phones without preserving
 camera-sized files.
 

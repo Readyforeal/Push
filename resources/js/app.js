@@ -2,43 +2,6 @@ import './push-notifications';
 
 let navigationInProgress = false;
 
-window.photoUploadPreview = () => ({
-    uploading: false,
-    progress: 0,
-    previews: [],
-
-    selectFiles(event) {
-        this.clearPreviews();
-        this.previews = Array.from(event.target.files ?? []).map((file) => ({
-            name: file.name,
-            url: URL.createObjectURL(file),
-        }));
-    },
-
-    startUpload() {
-        this.uploading = true;
-        this.progress = 0;
-    },
-
-    updateProgress(event) {
-        this.progress = event.detail.progress;
-    },
-
-    finishUpload() {
-        this.uploading = false;
-        this.clearPreviews();
-    },
-
-    clearPreviews() {
-        this.previews.forEach((preview) => URL.revokeObjectURL(preview.url));
-        this.previews = [];
-    },
-
-    destroy() {
-        this.clearPreviews();
-    },
-});
-
 const animatePageEntry = () => {
     const container = document.querySelector('[data-page-transition]');
 
