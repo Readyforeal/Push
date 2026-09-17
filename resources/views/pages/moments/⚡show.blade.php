@@ -143,7 +143,7 @@ new #[Title('Post')] class extends Component
     data-post-page
     class="mx-auto w-full max-w-5xl pb-48 lg:pb-32"
 >
-    <div class="sticky top-[calc(env(safe-area-inset-top,0px)+0.5rem)] z-40 h-0 -mx-2 px-2">
+    <div class="sticky top-[calc(env(safe-area-inset-top,0px)+1.25rem)] z-40 h-0 -mx-2 px-2">
         <div class="post-compact-header flex items-center gap-2.5 rounded-full border border-white/60 bg-white/72 p-2.5 shadow-lg shadow-zinc-950/10 backdrop-blur-2xl dark:border-white/10 dark:bg-zinc-950/72 dark:shadow-black/35">
             <a href="{{ route('moments') }}" wire:navigate.hover class="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-white/65 text-zinc-800 shadow-sm ring-1 ring-black/5 backdrop-blur-xl transition hover:bg-violet-100 hover:text-violet-700 dark:bg-white/8 dark:text-white dark:ring-white/10 dark:hover:bg-violet-500/15 dark:hover:text-violet-200" aria-label="{{ __('Back to posts') }}">
                 <flux:icon.arrow-left class="size-5" />

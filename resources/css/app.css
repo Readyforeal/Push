@@ -261,11 +261,12 @@
 
     .post-compact-header {
         opacity: 0;
-        transform: translateY(-0.85rem) scale(0.985);
+        transform: translateY(-1.5rem) scale(0.97);
         pointer-events: none;
+        will-change: opacity, transform;
         transition:
-            opacity 220ms ease,
-            transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+            opacity 320ms ease,
+            transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .post-header-expanded {
