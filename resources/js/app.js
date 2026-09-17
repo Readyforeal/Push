@@ -56,7 +56,15 @@ const prepareImageFade = (image) => {
     image.dataset.imageFadeReady = 'true';
     image.classList.add('image-load-fade');
 
-    const reveal = () => requestAnimationFrame(() => image.classList.add('image-load-complete'));
+    const reveal = async () => {
+        try {
+            await image.decode();
+        } catch {
+            // A failed decode will still reveal the browser's fallback rendering.
+        }
+
+        requestAnimationFrame(() => requestAnimationFrame(() => image.classList.add('image-load-complete')));
+    };
 
     if (image.complete) {
         reveal();
@@ -74,6 +82,40 @@ const hydrateImageFades = (root = document) => {
     }
 
     root.querySelectorAll?.('img').forEach(prepareImageFade);
+};
+
+let navigationWarmup;
+
+const warmPrimaryNavigation = () => {
+    window.clearTimeout(navigationWarmup);
+
+    const warm = () => {
+        if (navigator.connection?.saveData) {
+            return;
+        }
+
+        const currentUrl = new URL(window.location.href);
+        const links = [...document.querySelectorAll('[data-mobile-dock] a[wire\\:navigate\\.hover]')]
+            .filter((link) => {
+                const destination = new URL(link.href, document.baseURI);
+
+                return destination.pathname !== currentUrl.pathname || destination.search !== currentUrl.search;
+            });
+
+        links.forEach((link, index) => {
+            window.setTimeout(() => {
+                link.dispatchEvent(new MouseEvent('mouseenter'));
+            }, index * 75);
+        });
+    };
+
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(warm, { timeout: 800 });
+
+        return;
+    }
+
+    navigationWarmup = window.setTimeout(warm, 250);
 };
 
 let homeScrollFrame;
@@ -146,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     syncHomeBackgroundState();
     syncPostHeaderState();
     syncBrowserChromeTheme();
+    warmPrimaryNavigation();
     window.addEventListener('scroll', queueHomeBackgroundSync, { passive: true });
     window.addEventListener('scroll', queuePostHeaderSync, { passive: true });
     document.addEventListener('scroll', queuePostHeaderSync, { passive: true, capture: true });
@@ -180,6 +223,7 @@ document.addEventListener('livewire:navigated', () => {
         hydrateImageFades();
         syncHomeBackgroundState();
         syncPostHeaderState();
+        warmPrimaryNavigation();
     });
     navigationInProgress = false;
 });
