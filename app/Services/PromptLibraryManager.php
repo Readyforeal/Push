@@ -183,6 +183,46 @@ class PromptLibraryManager
         return $prompt->refresh();
     }
 
+    /**
+     * @param  list<string>  $topics
+     */
+    public function updatePrompt(
+        User $actor,
+        Relationship $relationship,
+        PromptTemplate $prompt,
+        string $primaryPrompt,
+        ?string $secondaryPrompt = null,
+        array $topics = [],
+        ?int $primaryUserId = null,
+        PromptPhotoRequirement $photoRequirement = PromptPhotoRequirement::None,
+    ): PromptTemplate {
+        $this->authorizeRelationship($actor, $relationship);
+
+        if ($prompt->relationship_id !== $relationship->id) {
+            throw new DomainException('Built-in prompts cannot be changed.');
+        }
+
+        $library = $prompt->library;
+
+        if (! $library) {
+            throw new DomainException('That prompt library is no longer available.');
+        }
+
+        $this->authorizeLibrary($actor, $relationship, $library);
+        $this->validatePromptPair($library, $primaryPrompt, $secondaryPrompt);
+        $primaryUserId = $this->primaryUserIdFor($relationship, $prompt->kind, $primaryUserId);
+
+        $prompt->update([
+            'primary_user_id' => $primaryUserId,
+            'photo_requirement' => $photoRequirement,
+            'primary_prompt' => trim($primaryPrompt),
+            'secondary_prompt' => filled($secondaryPrompt) ? trim((string) $secondaryPrompt) : null,
+            'topics' => $this->normalizeTopics($topics),
+        ]);
+
+        return $prompt->refresh();
+    }
+
     public function removePrompt(
         User $actor,
         Relationship $relationship,
@@ -298,11 +338,11 @@ class PromptLibraryManager
     /** @return list<int> */
     private function orderedMemberIds(Relationship $relationship): array
     {
-        return $relationship->members()
+        return array_values($relationship->members()
             ->orderBy('relationship_members.id')
             ->pluck('users.id')
             ->map(fn ($id): int => (int) $id)
-            ->all();
+            ->all());
     }
 
     /**

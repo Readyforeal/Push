@@ -35,6 +35,18 @@ new #[Title('Prompt libraries')] class extends Component
 
     public string $editLibraryDescription = '';
 
+    public ?int $editingPromptId = null;
+
+    public string $editPrimaryPrompt = '';
+
+    public string $editSecondaryPrompt = '';
+
+    public string $editTopics = '';
+
+    public ?int $editPrimaryAssigneeId = null;
+
+    public string $editPhotoRequirement = 'none';
+
     public string $primaryPrompt = '';
 
     public string $secondaryPrompt = '';
@@ -206,6 +218,81 @@ new #[Title('Prompt libraries')] class extends Component
 
         if ($primary && $secondary) {
             $this->primaryAssigneeId = $secondary->id;
+        }
+    }
+
+    public function openEditPrompt(int $promptId): void
+    {
+        if (! $this->relationship) {
+            return;
+        }
+
+        $prompt = PromptTemplate::query()
+            ->whereKey($promptId)
+            ->where('prompt_library_id', $this->selectedLibraryId)
+            ->where('relationship_id', $this->relationship->id)
+            ->firstOrFail();
+
+        $this->resetValidation();
+        $this->editingPromptId = $prompt->id;
+        $this->editPrimaryPrompt = $prompt->primary_prompt;
+        $this->editSecondaryPrompt = $prompt->secondary_prompt ?? '';
+        $this->editTopics = implode(', ', $prompt->topics ?? []);
+        $this->editPrimaryAssigneeId = $prompt->primary_user_id ?? $this->partners->first()?->id;
+        $this->editPhotoRequirement = $prompt->photo_requirement->value;
+
+        Flux::modal('edit-library-prompt')->show();
+    }
+
+    public function updatePrompt(PromptLibraryManager $manager): void
+    {
+        $this->validate([
+            'editPrimaryPrompt' => ['required', 'string', 'max:5000'],
+            'editSecondaryPrompt' => ['nullable', 'string', 'max:5000'],
+            'editTopics' => ['nullable', 'string', 'max:1000'],
+            'editPhotoRequirement' => ['required', Rule::enum(PromptPhotoRequirement::class)],
+        ]);
+
+        if (! $this->relationship || ! $this->editingPromptId) {
+            return;
+        }
+
+        try {
+            $manager->updatePrompt(
+                $this->user(),
+                $this->relationship,
+                PromptTemplate::query()->findOrFail($this->editingPromptId),
+                $this->editPrimaryPrompt,
+                $this->editSecondaryPrompt,
+                $this->parseTopics($this->editTopics),
+                $this->editPrimaryAssigneeId,
+                PromptPhotoRequirement::from($this->editPhotoRequirement),
+            );
+        } catch (DomainException $exception) {
+            $this->addError('editSecondaryPrompt', $exception->getMessage());
+
+            return;
+        }
+
+        $this->reset(
+            'editingPromptId',
+            'editPrimaryPrompt',
+            'editSecondaryPrompt',
+            'editTopics',
+            'editPrimaryAssigneeId',
+            'editPhotoRequirement',
+        );
+        unset($this->prompts);
+        Flux::modal('edit-library-prompt')->close();
+        Flux::toast(variant: 'success', text: __('Prompt updated.'));
+    }
+
+    public function swapEditAssignments(): void
+    {
+        $secondary = $this->secondaryPerson($this->editPrimaryAssigneeId);
+
+        if ($secondary) {
+            $this->editPrimaryAssigneeId = $secondary->id;
         }
     }
 
@@ -396,10 +483,10 @@ new #[Title('Prompt libraries')] class extends Component
     }
 
     /** @return array<string, string> */
-    public function photoRequirementOptions(PromptRoundKind $kind): array
+    public function photoRequirementOptions(PromptRoundKind $kind, ?int $primaryUserId = null): array
     {
-        $primary = $this->primaryPerson()?->firstName() ?? __('Partner one');
-        $secondary = $this->secondaryPerson()?->firstName() ?? __('Partner two');
+        $primary = $this->primaryPerson($primaryUserId)?->firstName() ?? __('Partner one');
+        $secondary = $this->secondaryPerson($primaryUserId)?->firstName() ?? __('Partner two');
 
         if ($kind === PromptRoundKind::PhotoPicker) {
             return [];
@@ -608,6 +695,15 @@ new #[Title('Prompt libraries')] class extends Component
                                     </div>
                                     @if ($prompt->relationship_id === $this->relationship->id)
                                         <div class="flex shrink-0 items-center gap-1">
+                                            <flux:button
+                                                type="button"
+                                                size="sm"
+                                                variant="ghost"
+                                                icon="pencil-square"
+                                                aria-label="{{ __('Edit prompt') }}"
+                                                title="{{ __('Edit prompt') }}"
+                                                wire:click="openEditPrompt({{ $prompt->id }})"
+                                            />
                                             @if ($this->usesNamedAssignments($prompt->kind))
                                                 <flux:button
                                                     type="button"
@@ -736,6 +832,51 @@ new #[Title('Prompt libraries')] class extends Component
                         <div class="flex justify-end gap-2">
                             <flux:modal.close><flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button></flux:modal.close>
                             <flux:button type="submit" variant="primary">{{ __('Add prompt') }}</flux:button>
+                        </div>
+                    </form>
+                @endif
+            </flux:modal>
+
+            <flux:modal name="edit-library-prompt" :show="$errors->has('editPrimaryPrompt') || $errors->has('editSecondaryPrompt') || $errors->has('editTopics') || $errors->has('editPhotoRequirement')" focusable class="max-w-xl">
+                @if ($this->selectedLibrary && $this->editingPromptId)
+                    <form wire:submit="updatePrompt" class="space-y-5">
+                        <div>
+                            <flux:heading size="lg">{{ __('Edit prompt') }}</flux:heading>
+                            <flux:subheading>{{ __('Changes apply the next time this prompt is drawn. Existing rounds stay unchanged.') }}</flux:subheading>
+                        </div>
+                        @if ($this->usesNamedAssignments($this->selectedLibrary->kind))
+                            <div class="app-glass-card rounded-2xl border border-zinc-200/80 bg-zinc-50/70 p-4 dark:border-white/8 dark:bg-zinc-800/55">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div>
+                                        <p class="text-sm font-semibold text-zinc-900 dark:text-white">{{ __('Who gets what') }}</p>
+                                        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{{ $this->primaryRoleDescription($this->selectedLibrary->kind, $this->editPrimaryAssigneeId) }}</p>
+                                        <p class="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">{{ $this->secondaryRoleDescription($this->selectedLibrary->kind, $this->editPrimaryAssigneeId) }}</p>
+                                    </div>
+                                    <flux:button type="button" size="sm" variant="ghost" icon="arrows-right-left" wire:click="swapEditAssignments">
+                                        {{ __('Swap') }}
+                                    </flux:button>
+                                </div>
+                            </div>
+                        @endif
+                        <flux:textarea wire:model="editPrimaryPrompt" :label="$this->primaryLabel($this->selectedLibrary->kind, $this->editPrimaryAssigneeId)" rows="3" />
+                        @if ($this->selectedLibrary->kind !== PromptRoundKind::SharedQuestion)
+                            <flux:textarea wire:model="editSecondaryPrompt" :label="$this->secondaryLabel($this->selectedLibrary->kind, $this->editPrimaryAssigneeId)" rows="3" />
+                        @endif
+                        @if ($this->photoRequirementOptions($this->selectedLibrary->kind, $this->editPrimaryAssigneeId) !== [])
+                            <flux:select wire:model="editPhotoRequirement" :label="__('Required answer photos')">
+                                @foreach ($this->photoRequirementOptions($this->selectedLibrary->kind, $this->editPrimaryAssigneeId) as $value => $label)
+                                    <flux:select.option :value="$value">{{ $label }}</flux:select.option>
+                                @endforeach
+                            </flux:select>
+                        @else
+                            <div class="rounded-2xl bg-violet-50/80 px-4 py-3 text-sm text-violet-800 ring-1 ring-violet-100 dark:bg-violet-500/10 dark:text-violet-200 dark:ring-violet-400/15">
+                                {{ __('This prompt type already requires both people to upload three photos.') }}
+                            </div>
+                        @endif
+                        <flux:input wire:model="editTopics" :label="__('Topics')" :description="__('Comma separated, such as trust, intimacy, future')" />
+                        <div class="flex justify-end gap-2">
+                            <flux:modal.close><flux:button type="button" variant="ghost">{{ __('Cancel') }}</flux:button></flux:modal.close>
+                            <flux:button type="submit" variant="primary">{{ __('Save changes') }}</flux:button>
                         </div>
                     </form>
                 @endif

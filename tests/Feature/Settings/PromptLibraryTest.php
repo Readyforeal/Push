@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PromptPhotoRequirement;
 use App\Enums\PromptRoundKind;
 use App\Models\PromptLibrary;
 use App\Models\PromptTemplate;
@@ -91,6 +92,51 @@ test('an administrator can edit a library title and description', function () {
     expect($library->refresh())
         ->name->toBe('Playful connection')
         ->description->toBe('Lighthearted prompts for having fun together.');
+});
+
+test('an administrator can edit a prompt and its assignment', function () {
+    [$user, $relationship, $partner] = promptLibraryRelationship();
+    $library = $relationship->promptLibraries()->create([
+        'name' => 'Editable prompts',
+        'slug' => 'editable-prompts-test',
+        'kind' => PromptRoundKind::UniqueQuestions,
+        'active' => true,
+    ]);
+    $prompt = $library->prompts()->create([
+        'relationship_id' => $relationship->id,
+        'primary_user_id' => $user->id,
+        'photo_requirement' => PromptPhotoRequirement::None,
+        'slug' => 'editable-prompt-test',
+        'kind' => PromptRoundKind::UniqueQuestions,
+        'primary_prompt' => 'Old first question?',
+        'secondary_prompt' => 'Old second question?',
+        'topics' => ['old'],
+        'active' => true,
+        'position' => 1,
+    ]);
+
+    $this->actingAs($user);
+    Livewire::test('pages::settings.prompt-libraries')
+        ->set('selectedLibraryId', $library->id)
+        ->call('openEditPrompt', $prompt->id)
+        ->assertSet('editPrimaryPrompt', 'Old first question?')
+        ->assertSet('editSecondaryPrompt', 'Old second question?')
+        ->set('editPrimaryPrompt', 'What made you feel supported today?')
+        ->set('editSecondaryPrompt', 'What kind of support would help tomorrow?')
+        ->set('editTopics', 'Support, Daily Check-In, support')
+        ->set('editPrimaryAssigneeId', $partner->id)
+        ->set('editPhotoRequirement', PromptPhotoRequirement::Both->value)
+        ->call('updatePrompt')
+        ->assertHasNoErrors()
+        ->assertSee('What made you feel supported today?')
+        ->assertSee('daily check-in');
+
+    expect($prompt->refresh())
+        ->primary_prompt->toBe('What made you feel supported today?')
+        ->secondary_prompt->toBe('What kind of support would help tomorrow?')
+        ->topics->toBe(['support', 'daily check-in'])
+        ->primary_user_id->toBe($partner->id)
+        ->photo_requirement->toBe(PromptPhotoRequirement::Both);
 });
 
 test('a non administrator cannot change prompt libraries', function () {
