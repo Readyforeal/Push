@@ -2,18 +2,12 @@
 
 namespace App\Models;
 
-use App\Events\SharedMomentCreated;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SharedMoment extends Model
 {
-    /** @var array<string, class-string> */
-    protected $dispatchesEvents = [
-        'created' => SharedMomentCreated::class,
-    ];
-
     protected $fillable = ['relationship_id', 'user_id', 'intensity', 'body'];
 
     protected function casts(): array

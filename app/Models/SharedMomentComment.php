@@ -2,17 +2,11 @@
 
 namespace App\Models;
 
-use App\Events\SharedMomentCommentCreated;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SharedMomentComment extends Model
 {
-    /** @var array<string, class-string> */
-    protected $dispatchesEvents = [
-        'created' => SharedMomentCommentCreated::class,
-    ];
-
     protected $fillable = ['shared_moment_id', 'user_id', 'body'];
 
     /** @return BelongsTo<SharedMoment, $this> */
